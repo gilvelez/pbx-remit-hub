@@ -278,7 +278,7 @@ export const Landing = () => {
             <div className="h-6 w-6 rounded-md bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" aria-hidden />
             <span className="font-semibold">PBX</span>
             <span className="text-slate-400">•</span>
-            <span className="text-sm text-slate-500">Philippine Bayan Exchange</span>
+            <span className="text-sm text-slate-500">Philippine Bayani Exchange</span>
           </div>
           <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} PBX. Demo experience using sandbox data; no real funds move.
