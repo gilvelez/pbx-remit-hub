@@ -28,6 +28,9 @@ class LeadService:
             result = await collection.insert_one(lead.dict(by_alias=True, exclude={"id"}))
             created_lead = await collection.find_one({"_id": result.inserted_id})
             
+            # Convert ObjectId to string for response
+            created_lead["_id"] = str(created_lead["_id"])
+            
             logger.info(f"Created lead with email: {lead.email}")
             return LeadResponse(**created_lead)
         except DuplicateKeyError:
