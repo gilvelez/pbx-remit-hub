@@ -195,6 +195,7 @@ export const Landing = () => {
       <section id="features" className="py-16 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold tracking-tight">Why teams choose PBX</h2>
+          <p className="mt-2 text-slate-600">Designed for financial innovators who want speed, trust, and compliance from day one.</p>
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
               { t: "Fast transfers", d: "Move value quickly with an instant, modern UX." },
