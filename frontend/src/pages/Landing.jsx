@@ -133,7 +133,7 @@ export const Landing = () => {
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" aria-hidden="true" />
             <span className="text-xl font-bold tracking-tight">PBX</span>
-            <span className="ml-2 hidden sm:inline text-slate-500 text-sm">Philippine Bayan Exchange</span>
+            <span className="ml-2 hidden sm:inline text-slate-500 text-sm">Philippine Bayani Exchange</span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm">
             <a href="#how" className="hover:text-slate-900 text-slate-600 transition-colors">How it works</a>
