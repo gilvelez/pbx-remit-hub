@@ -346,6 +346,22 @@ export const Landing = () => {
 
       {/* Hero */}
       <section className="relative overflow-hidden" id="demo-section">
+        {/* Filipino Hero Banner */}
+        <section
+          className="flex flex-col items-center justify-center text-center py-20 px-4"
+          style={{
+            background: "linear-gradient(135deg, #0033A0 0%, #C8102E 70%, #FCD116 100%)",
+          }}
+        >
+          <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg mb-4">
+            Para sa Bayaning Pilipino, bawat padala ay pagmamahal.
+          </h1>
+          <p className="text-lg md:text-2xl text-white/90 max-w-2xl">
+            For the Filipino Hero — every remittance is an act of love.
+          </p>
+        </section>
+
+        {/* Main Hero Content */}
         <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-50 via-white to-white" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-24 md:pb-24 grid md:grid-cols-2 gap-10 items-center">
           <div>
