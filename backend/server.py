@@ -25,6 +25,7 @@ from models.session_state import (
 # Import services
 from services.lead_service import LeadService
 from services.session_service import SessionService
+from services.plaid_service import get_plaid_service
 
 # Import auth
 from auth.basic_auth import verify_admin_auth
