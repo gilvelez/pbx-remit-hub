@@ -329,6 +329,7 @@ export const Landing = () => {
             <span className="ml-2 hidden sm:inline text-slate-500 text-sm">Philippine Bayani Exchange</span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm">
+            <a href="#about" className="hover:text-slate-900 text-slate-600 transition-colors">About</a>
             <a href="#how" className="hover:text-slate-900 text-slate-600 transition-colors">How it works</a>
             <a href="#features" className="hover:text-slate-900 text-slate-600 transition-colors">Features</a>
             <a href="#faq" className="hover:text-slate-900 text-slate-600 transition-colors">FAQ</a>
