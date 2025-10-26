@@ -1,31 +1,91 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Mail, Clock } from 'lucide-react';
+import { Download, Mail, Clock, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { getMockSubmissions } from '../data/mock';
+import { Input } from '../components/ui/input';
 import { useToast } from '../hooks/use-toast';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export const Admin = () => {
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
 
   useEffect(() => {
-    loadSubmissions();
-    // Refresh every 5 seconds to catch new submissions
-    const interval = setInterval(loadSubmissions, 5000);
-    return () => clearInterval(interval);
+    // Check if already authenticated (stored in sessionStorage)
+    const storedAuth = sessionStorage.getItem('pbx_admin_auth');
+    if (storedAuth) {
+      const { username, password } = JSON.parse(storedAuth);
+      loadSubmissions(username, password);
+    } else {
+      setIsLoading(false);
+    }
   }, []);
 
-  const loadSubmissions = () => {
-    const data = getMockSubmissions();
-    setSubmissions(data);
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError('');
+    await loadSubmissions(username, password);
+  };
+
+  const loadSubmissions = async (user, pass) => {
+    setIsLoading(true);
+    try {
+      const { data } = await axios.get(`${API}/leads`, {
+        auth: {
+          username: user,
+          password: pass
+        }
+      });
+      
+      setSubmissions(data);
+      setIsAuthenticated(true);
+      
+      // Store credentials in sessionStorage
+      sessionStorage.setItem('pbx_admin_auth', JSON.stringify({ username: user, password: pass }));
+      
+      toast({
+        title: 'Success',
+        description: `Loaded ${data.length} submissions`
+      });
+    } catch (error) {
+      console.error('Error loading submissions:', error);
+      
+      if (error.response?.status === 401) {
+        setAuthError('Invalid credentials. Please try again.');
+        setIsAuthenticated(false);
+        sessionStorage.removeItem('pbx_admin_auth');
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to load submissions',
+          variant: 'destructive'
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem('pbx_admin_auth');
+    setUsername('');
+    setPassword('');
+    setSubmissions([]);
   };
 
   const exportToCSV = () => {
     const headers = ['Email', 'Timestamp'];
     const rows = submissions.map(s => [
       s.email,
-      new Date(s.timestamp).toLocaleString()
+      new Date(s.created_at).toLocaleString()
     ]);
     
     const csvContent = [
@@ -46,6 +106,60 @@ export const Admin = () => {
       description: `Exported ${submissions.length} email submissions`,
     });
   };
+
+  // Login form
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-2xl text-center">PBX Admin Login</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Username</label>
+                <Input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="admin"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2">Password</label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  required
+                />
+              </div>
+              
+              {authError && (
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                  <AlertCircle className="h-4 w-4" />
+                  {authError}
+                </div>
+              )}
+              
+              <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700" disabled={isLoading}>
+                {isLoading ? 'Authenticating...' : 'Login'}
+              </Button>
+              
+              <div className="text-center">
+                <Button variant="outline" onClick={() => window.location.href = '/'} className="w-full">
+                  Back to landing
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50">
