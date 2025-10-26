@@ -292,7 +292,7 @@ export const Admin = () => {
         {/* Note */}
         <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
           <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> This is a demo using localStorage. In production, submissions will be saved to the database with proper authentication.
+            <strong>Note:</strong> This admin panel requires Basic Authentication (username: admin, password from .env). Data is fetched from MongoDB in real-time.
           </p>
         </div>
       </main>
