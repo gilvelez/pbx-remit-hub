@@ -57,6 +57,7 @@ class SessionService:
         )
         
         if result:
+            result["_id"] = str(result["_id"])
             logger.info(f"Updated session for user: {user_id}")
             return SessionStateResponse(**result)
         return None
