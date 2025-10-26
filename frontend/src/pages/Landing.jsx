@@ -255,10 +255,7 @@ export const Landing = () => {
   );
 
   const PreviewModal = () => {
-    const amount = parseFloat(demoAmount) || 0;
-    const quotedRate = 56.10;
-    const fee = 1.00;
-    const estPhp = (amount * quotedRate).toFixed(2);
+    if (!previewData) return null;
     
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPreview(false)}>
@@ -271,24 +268,24 @@ export const Landing = () => {
             <div className="space-y-4">
               <div className="p-4 bg-slate-50 rounded-lg">
                 <div className="text-sm text-slate-500">You send</div>
-                <div className="text-2xl font-bold">${amount.toFixed(2)} USD</div>
+                <div className="text-2xl font-bold">${previewData.amount.toFixed(2)} USD</div>
               </div>
               <div className="flex items-center justify-center">
                 <ArrowRight className="h-6 w-6 text-slate-400" />
               </div>
               <div className="p-4 bg-slate-50 rounded-lg">
                 <div className="text-sm text-slate-500">They receive (estimated)</div>
-                <div className="text-2xl font-bold">₱{estPhp}</div>
-                <div className="text-xs text-slate-500 mt-1">Rate: 1 USD = {quotedRate} PHP</div>
+                <div className="text-2xl font-bold">₱{previewData.php.toLocaleString()}</div>
+                <div className="text-xs text-slate-500 mt-1">Rate: ₱{previewData.fx} per USD (demo)</div>
               </div>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Destination</span>
-                  <span className="font-medium">{demoDestination}</span>
+                  <span className="font-medium">{previewData.destination}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Fee</span>
-                  <span className="font-medium">${fee.toFixed(2)}</span>
+                  <span className="font-medium">${previewData.fee.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Delivery</span>
@@ -296,7 +293,7 @@ export const Landing = () => {
                 </div>
                 <div className="pt-2 border-t flex justify-between font-semibold">
                   <span>Total cost</span>
-                  <span>${(amount + fee).toFixed(2)}</span>
+                  <span>${(previewData.amount + previewData.fee).toFixed(2)}</span>
                 </div>
               </div>
               <Button className="w-full bg-sky-600 hover:bg-sky-700" onClick={handleConfirmTransfer}>
