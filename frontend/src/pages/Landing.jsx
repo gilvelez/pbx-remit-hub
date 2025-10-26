@@ -57,7 +57,7 @@ export const Landing = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 md:pt-24 pb-20 md:pb-28 grid md:grid-cols-2 gap-10 items-center">
           <div className="text-white">
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-center md:text-left">
-              Para sa <span className="text-yellow-300 drop-shadow-md">Bayaning Pilipino</span>,<br />
+              <span className="text-yellow-300 drop-shadow-md">Para sa Bayaning Pilipino</span>,<br />
               bawat padala ay <span className="text-blue-950 drop-shadow-md">pagmamahal.</span>
             </h1>
 
