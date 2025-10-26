@@ -362,9 +362,10 @@ export const Landing = () => {
 
           {/* CTA */}
           <a
-            href="#get-started"
+            href="#join"
             className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold bg-white/95 text-slate-900 shadow-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
             aria-label="Get started with PBX"
+            data-cta="hero-banner-get-started"
           >
             Get Started
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
