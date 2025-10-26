@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, status, Depends
+from fastapi import FastAPI, APIRouter, HTTPException, status, Depends, Request, Response
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -26,6 +26,9 @@ from services.session_service import SessionService
 
 # Import auth
 from auth.basic_auth import verify_admin_auth
+
+# Import utilities
+from utils.user_helper import get_user_id, get_user_id_from_request
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
