@@ -503,7 +503,7 @@ export const Landing = () => {
             Every transfer made through PBX carries love, dreams, and legacy — connecting hearts across borders.
           </p>
           <div className="mt-6 flex justify-center gap-3">
-            <a href="#demo" className="rounded-xl bg-sky-600 px-5 py-3 text-white font-semibold shadow hover:bg-sky-700" data-cta="about-see-demo">See the Demo</a>
+            <a href="#demo-section" className="rounded-xl bg-sky-600 px-5 py-3 text-white font-semibold shadow hover:bg-sky-700" data-cta="about-see-demo">See the Demo</a>
             <a href="#join" className="rounded-xl border border-sky-600 px-5 py-3 text-sky-600 font-semibold hover:bg-sky-50" data-cta="about-join-early-access">Join Early Access</a>
           </div>
         </div>
