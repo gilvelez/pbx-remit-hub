@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, status
+from fastapi import FastAPI, APIRouter, HTTPException, status, Depends
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -6,6 +6,7 @@ import os
 import logging
 from pathlib import Path
 from typing import List
+import re
 
 # Import database connection
 from database.connection import connect_to_mongo, close_mongo_connection
@@ -22,6 +23,9 @@ from models.session_state import (
 # Import services
 from services.lead_service import LeadService
 from services.session_service import SessionService
+
+# Import auth
+from auth.basic_auth import verify_admin_auth
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
