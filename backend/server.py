@@ -535,20 +535,31 @@ async def delete_session(user_id: str):
 # Include the router in the main app
 app.include_router(api_router)
 
-# CORS middleware
-cors_origins = os.environ.get('CORS_ORIGINS', '*')
-if cors_origins == '*':
+# CORS middleware - only allow specific origins when using credentials
+cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
+
+if cors_origins_env == '*':
     # For development with credentials, we need to be more specific
-    cors_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+    # Allow localhost and common development ports
+    cors_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:8000"
+    ]
+    logger.warning("CORS_ORIGINS set to wildcard - using localhost only for development")
 else:
-    cors_origins = cors_origins.split(',')
+    # Production: use explicit origins from env
+    cors_origins = [origin.strip() for origin in cors_origins_env.split(',')]
+    logger.info(f"CORS configured for origins: {cors_origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
 
 
