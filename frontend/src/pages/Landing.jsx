@@ -617,6 +617,7 @@ export const Landing = () => {
           <p className="text-xs text-slate-500">© {new Date().getFullYear()} PBX. For demo purposes only. Not a money transmitter.</p>
         </div>
       </footer>
-    </main>
+      </main>
+    </>
   );
 };
