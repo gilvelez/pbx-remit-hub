@@ -2,7 +2,9 @@ from fastapi import FastAPI, APIRouter, HTTPException, status, Depends, Request,
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 import os
 import logging
 from pathlib import Path
