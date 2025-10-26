@@ -33,7 +33,7 @@ class ActivityItem(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
 
 class SessionState(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
