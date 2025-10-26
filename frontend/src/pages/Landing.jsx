@@ -264,53 +264,60 @@ export const Landing = () => {
     </div>
   );
 
-  const PreviewModal = () => (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPreview(false)}>
-      <Card className="relative w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
-        <button onClick={() => setShowPreview(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-          <X className="h-5 w-5" />
-        </button>
-        <CardContent className="p-6">
-          <h3 className="text-xl font-bold mb-4">Transfer preview</h3>
-          <div className="space-y-4">
-            <div className="p-4 bg-slate-50 rounded-lg">
-              <div className="text-sm text-slate-500">You send</div>
-              <div className="text-2xl font-bold">${demoAmount} USD</div>
-            </div>
-            <div className="flex items-center justify-center">
-              <ArrowRight className="h-6 w-6 text-slate-400" />
-            </div>
-            <div className="p-4 bg-slate-50 rounded-lg">
-              <div className="text-sm text-slate-500">They receive (estimated)</div>
-              <div className="text-2xl font-bold">₱{(parseFloat(demoAmount) * 56.5).toFixed(2)}</div>
-              <div className="text-xs text-slate-500 mt-1">Rate: 1 USD = 56.5 PHP (demo)</div>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Destination</span>
-                <span className="font-medium">{demoDestination}</span>
+  const PreviewModal = () => {
+    const amount = parseFloat(demoAmount) || 0;
+    const quotedRate = 56.10;
+    const fee = 1.00;
+    const estPhp = (amount * quotedRate).toFixed(2);
+    
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPreview(false)}>
+        <Card className="relative w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+          <button onClick={() => setShowPreview(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <X className="h-5 w-5" />
+          </button>
+          <CardContent className="p-6">
+            <h3 className="text-xl font-bold mb-4">Transfer preview</h3>
+            <div className="space-y-4">
+              <div className="p-4 bg-slate-50 rounded-lg">
+                <div className="text-sm text-slate-500">You send</div>
+                <div className="text-2xl font-bold">${amount.toFixed(2)} USD</div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Fee</span>
-                <span className="font-medium">$2.99</span>
+              <div className="flex items-center justify-center">
+                <ArrowRight className="h-6 w-6 text-slate-400" />
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Delivery</span>
-                <span className="font-medium">~5 minutes</span>
+              <div className="p-4 bg-slate-50 rounded-lg">
+                <div className="text-sm text-slate-500">They receive (estimated)</div>
+                <div className="text-2xl font-bold">₱{estPhp}</div>
+                <div className="text-xs text-slate-500 mt-1">Rate: 1 USD = {quotedRate} PHP</div>
               </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Destination</span>
+                  <span className="font-medium">{demoDestination}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Fee</span>
+                  <span className="font-medium">${fee.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-500">Delivery</span>
+                  <span className="font-medium">~5 minutes</span>
+                </div>
+                <div className="pt-2 border-t flex justify-between font-semibold">
+                  <span>Total cost</span>
+                  <span>${(amount + fee).toFixed(2)}</span>
+                </div>
+              </div>
+              <Button className="w-full bg-sky-600 hover:bg-sky-700" onClick={handleConfirmTransfer}>
+                Confirm transfer (sandbox)
+              </Button>
             </div>
-            <Button className="w-full bg-sky-600 hover:bg-sky-700" onClick={() => {
-              toast({ title: 'Transfer initiated (sandbox)', description: 'This is demo mode - no real funds move' });
-              setShowPreview(false);
-              setDemoAmount('');
-            }}>
-              Confirm transfer (sandbox)
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   return (
     <main className="min-h-screen bg-white text-slate-800">
