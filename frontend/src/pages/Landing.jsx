@@ -50,16 +50,17 @@ export const Landing = () => {
 
       {/* HERO (single, bilingual) */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-fuchsia-600 via-rose-500 to-amber-400" />
+        {/* Philippine Flag Gradient */}
+        <div className="absolute inset-0 -z-10 bg-gradient-to-r from-blue-900 via-red-700 to-yellow-400" />
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-transparent via-white/10 to-transparent opacity-80" />
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 md:pt-24 pb-20 md:pb-28 grid md:grid-cols-2 gap-10 items-center">
           <div className="text-white">
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-center md:text-left">
-              Para sa <span className="text-yellow-200">Bayaning Pilipino</span>,<br />
-              bawat padala ay <span className="text-sky-100">pagmamahal.</span>
+              Para sa <span className="text-yellow-300 drop-shadow-md">Bayaning Pilipino</span>,<br />
+              bawat padala ay <span className="text-white drop-shadow-lg">pagmamahal.</span>
             </h1>
-            <p className="mt-4 text-lg text-white/90 text-center md:text-left">
-              For the Filipino Hero — every remittance is an act of love.
-            </p>
+
             <div className="mt-6 flex flex-wrap gap-3 md:justify-start justify-center">
               <a
                 href="#join"
@@ -76,7 +77,9 @@ export const Landing = () => {
                 Learn more
               </a>
             </div>
-            <p className="mt-4 text-xs text-white/80 text-center md:text-left">MVP demo uses sandbox data—no real funds move.</p>
+            <p className="mt-4 text-xs text-white/90 text-center md:text-left">
+              MVP demo uses sandbox data—no real funds move.
+            </p>
           </div>
 
           {/* Demo card with RatePreview */}
