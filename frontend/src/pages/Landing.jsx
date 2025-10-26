@@ -563,9 +563,10 @@ export const Landing = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full sm:w-80"
+              disabled={isSubmitting}
             />
-            <Button type="submit" className="bg-sky-600 hover:bg-sky-700 px-6">
-              Request access
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700 px-6" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Request access'}
             </Button>
           </form>
           <p className="mt-3 text-xs text-slate-500">We'll only email about PBX launch and updates. Unsubscribe anytime.</p>
