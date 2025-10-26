@@ -45,6 +45,10 @@ class LeadService:
         cursor = collection.find().sort("created_at", -1).skip(skip).limit(limit)
         leads = await cursor.to_list(length=limit)
         
+        # Convert ObjectId to string for each lead
+        for lead in leads:
+            lead["_id"] = str(lead["_id"])
+        
         return [LeadResponse(**lead) for lead in leads]
 
     async def get_lead_by_email(self, email: str) -> Optional[LeadResponse]:
