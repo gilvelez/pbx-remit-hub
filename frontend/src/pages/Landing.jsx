@@ -153,27 +153,20 @@ export const Landing = () => {
     }
   };
 
-  const handleDemoSubmit = (e) => {
-    e.preventDefault();
-    if (!demoAmount || parseFloat(demoAmount) <= 0) {
-      toast({
-        title: 'Invalid amount',
-        description: 'Please enter a valid amount',
-        variant: 'destructive'
-      });
-      return;
-    }
+  const handlePreviewClick = (data) => {
+    setPreviewData(data);
     setShowPreview(true);
   };
 
   const handleConfirmTransfer = async () => {
+    if (!previewData) return;
+    
     try {
-      const amount = parseFloat(demoAmount);
-      const destType = demoDestination.includes('GCash') ? 'GCash' : 'PH_BANK';
+      const destType = previewData.destination.includes('GCash') ? 'GCash' : 'PH_BANK';
       const destTag = destType === 'GCash' ? '+63-917-XXX-XXXX' : 'BPI-XXXXXXXX';
       
       const { data } = await axios.post(`${API}/circle/sendFunds`, {
-        amountUSD: amount,
+        amountUSD: previewData.amount,
         destinationType: destType,
         destinationTag: destTag
       });
@@ -181,8 +174,8 @@ export const Landing = () => {
       // Add to activity at the top
       const newActivity = {
         id: data.transactionId,
-        amount: amount,
-        recipient: demoDestination,
+        amount: previewData.amount,
+        recipient: previewData.destination,
         status: 'pending',
         date: new Date().toISOString().split('T')[0],
         estPhp: data.estPhp
@@ -195,7 +188,7 @@ export const Landing = () => {
       });
       
       setShowPreview(false);
-      setDemoAmount('');
+      setPreviewData(null);
     } catch (error) {
       console.error('Error sending funds:', error);
       toast({
