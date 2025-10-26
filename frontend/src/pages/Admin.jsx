@@ -172,9 +172,14 @@ export const Admin = () => {
             <span className="text-slate-400 hidden sm:inline">•</span>
             <span className="text-sm text-slate-500 hidden sm:inline">Philippine Bayani Exchange</span>
           </div>
-          <Button variant="outline" onClick={() => window.location.href = '/'}>
-            Back to landing
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleLogout}>
+              Logout
+            </Button>
+            <Button variant="outline" onClick={() => window.location.href = '/'}>
+              Back to landing
+            </Button>
+          </div>
         </div>
       </header>
 
