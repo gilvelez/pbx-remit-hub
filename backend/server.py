@@ -96,19 +96,19 @@ async def health_check():
 
 # ============== Lead Management Routes ==============
 
-def validate_email(email: str) -> bool:
-    """Validate email with basic regex."""
-    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-    return re.match(pattern, email) is not None
-
 @api_router.post("/leads")
-async def create_lead(lead_data: LeadCreate):
+@limiter.limit("5/minute")  # Rate limit: 5 requests per minute per IP
+async def create_lead(request: Request, lead_data: LeadCreate):
     """
     Create a new lead (email submission).
+    Rate limited to 5 requests per minute per IP.
     Returns 200 with status even if email already exists.
     """
-    # Validate email format
-    if not validate_email(lead_data.email):
+    client_ip = get_client_ip(request)
+    
+    # Validate email format (additional check beyond Pydantic)
+    if not validate_email_format(lead_data.email):
+        logger.warning(f"Invalid email format from IP {client_ip}: {lead_data.email}")
         return {
             "status": "invalid_email",
             "message": "Please provide a valid email address"
@@ -117,6 +117,7 @@ async def create_lead(lead_data: LeadCreate):
     try:
         # Try to create the lead
         lead = await lead_service.create_lead(lead_data)
+        logger.info(f"Lead created from IP {client_ip}: {lead.email}")
         return {
             "status": "ok",
             "lead": {
@@ -128,6 +129,7 @@ async def create_lead(lead_data: LeadCreate):
     except ValueError as e:
         # Email already exists
         if "already registered" in str(e):
+            logger.info(f"Duplicate email attempt from IP {client_ip}: {lead_data.email}")
             return {
                 "status": "already_subscribed",
                 "message": "This email is already subscribed"
@@ -136,8 +138,14 @@ async def create_lead(lead_data: LeadCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except ValidationError as e:
+        logger.warning(f"Validation error from IP {client_ip}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data"
+        )
     except Exception as e:
-        logger.error(f"Error creating lead: {e}")
+        logger.error(f"Error creating lead from IP {client_ip}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create lead"
