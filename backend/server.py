@@ -64,6 +64,7 @@ api_router = APIRouter(prefix="/api")
 # Initialize services
 lead_service = LeadService()
 session_service = SessionService()
+plaid_service = get_plaid_service()
 
 
 # ============== Health Check Routes ==============
