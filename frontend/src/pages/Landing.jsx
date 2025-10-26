@@ -544,7 +544,7 @@ export const Landing = () => {
               className="w-full sm:w-80"
               disabled={isSubmitting}
             />
-            <Button type="submit" className="bg-sky-600 hover:bg-sky-700 px-6" disabled={isSubmitting}>
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700 px-6" disabled={isSubmitting} data-cta="submit-email">
               {isSubmitting ? 'Submitting...' : 'Request access'}
             </Button>
           </form>
