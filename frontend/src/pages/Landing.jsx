@@ -249,10 +249,7 @@ export const Landing = () => {
               <button
                 key={bank}
                 className="w-full text-left p-4 rounded-lg border-2 border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-all"
-                onClick={() => {
-                  toast({ title: 'Bank connected (sandbox)', description: `Connected to ${bank} - demo mode` });
-                  setShowPlaidModal(false);
-                }}
+                onClick={() => handleBankSelect(bank)}
               >
                 <div className="font-medium">{bank}</div>
                 <div className="text-xs text-slate-500">Sandbox account</div>
