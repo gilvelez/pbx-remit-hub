@@ -296,7 +296,7 @@ export const Landing = () => {
                   <span>${(previewData.amount + previewData.fee).toFixed(2)}</span>
                 </div>
               </div>
-              <Button className="w-full bg-sky-600 hover:bg-sky-700" onClick={handleConfirmTransfer}>
+              <Button className="w-full bg-sky-600 hover:bg-sky-700" onClick={handleConfirmTransfer} data-cta="confirm-transfer">
                 Confirm transfer (sandbox)
               </Button>
             </div>
