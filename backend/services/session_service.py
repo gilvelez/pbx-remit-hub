@@ -25,6 +25,9 @@ class SessionService:
         result = await collection.insert_one(session.dict(by_alias=True, exclude={"id"}))
         created_session = await collection.find_one({"_id": result.inserted_id})
         
+        # Convert ObjectId to string
+        created_session["_id"] = str(created_session["_id"])
+        
         logger.info(f"Created session for user: {session.user_id}")
         return SessionStateResponse(**created_session)
 
