@@ -58,7 +58,7 @@ export const Landing = () => {
           <div className="text-white">
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-center md:text-left">
               Para sa <span className="text-yellow-300 drop-shadow-md">Bayaning Pilipino</span>,<br />
-              bawat padala ay <span className="text-white drop-shadow-lg">pagmamahal.</span>
+              bawat padala ay <span className="text-blue-950 drop-shadow-md">pagmamahal.</span>
             </h1>
 
             <div className="mt-6 flex flex-wrap gap-3 md:justify-start justify-center">
