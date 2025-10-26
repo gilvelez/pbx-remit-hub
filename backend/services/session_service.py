@@ -77,6 +77,7 @@ class SessionService:
         )
         
         if result:
+            result["_id"] = str(result["_id"])
             logger.info(f"Added activity to session for user: {user_id}")
             return SessionStateResponse(**result)
         return None
