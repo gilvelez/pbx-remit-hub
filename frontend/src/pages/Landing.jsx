@@ -444,6 +444,10 @@ export const Landing = () => {
                               <option>UnionBank Account</option>
                               <option>BDO Account</option>
                             </select>
+                            
+                            {/* Live rate preview */}
+                            <RatePreview amount={demoAmount} quotedRate={56.10} fee={1.00} />
+                            
                             <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700">
                               Preview transfer
                             </Button>
