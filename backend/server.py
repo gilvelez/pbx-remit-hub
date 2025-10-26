@@ -318,6 +318,86 @@ async def get_transactions(request: Request, response: Response, limit: int = 10
         )
 
 
+# ============== Circle Mock API Routes ==============
+
+class SendFundsRequest(BaseModel):
+    amount_usd: float = Field(..., alias="amountUSD", gt=0)
+    destination_type: str = Field(..., alias="destinationType")
+    destination_tag: str = Field(..., alias="destinationTag")
+    
+    class Config:
+        populate_by_name = True
+
+@api_router.post("/circle/sendFunds")
+async def send_funds(request: Request, response: Response, send_request: SendFundsRequest):
+    """
+    Send funds via Circle (mock).
+    Simulates USD to PHP transfer with quoted rate and fees.
+    """
+    try:
+        # Validate destination type
+        if send_request.destination_type not in ["GCash", "PH_BANK"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="destinationType must be 'GCash' or 'PH_BANK'"
+            )
+        
+        # Get user ID
+        user_id = get_user_id(request, response)
+        
+        # Calculate transfer details
+        transfer_calc = calculate_php_transfer(
+            amount_usd=send_request.amount_usd,
+            quoted_rate=56.10,
+            fee_usd=1.00
+        )
+        
+        # Generate transaction ID
+        transaction_id = generate_transaction_id("txn", 10)
+        
+        # Create activity item
+        activity_item = ActivityItem(
+            id=transaction_id,
+            type="SEND",
+            amount_usd=transfer_calc["amount_usd"],
+            est_php=transfer_calc["est_php"],
+            fees_usd=transfer_calc["fee_usd"],
+            status="pending",
+            created_at=datetime.utcnow()
+        )
+        
+        # Add to session activity
+        session = await session_service.add_activity(user_id, activity_item)
+        
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Session not found"
+            )
+        
+        logger.info(f"Created transfer {transaction_id} for user {user_id}: ${send_request.amount_usd} → ₱{transfer_calc['est_php']}")
+        
+        # Return transaction details
+        return {
+            "transactionId": transaction_id,
+            "status": "pending",
+            "quotedRate": transfer_calc["quoted_rate"],
+            "feesUSD": transfer_calc["fee_usd"],
+            "estPhp": transfer_calc["est_php"],
+            "createdAt": activity_item.created_at.isoformat() + "Z",
+            "destination": format_destination_tag(send_request.destination_type, send_request.destination_tag)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error sending funds: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to send funds"
+        )
+
+
 # ============== Session Management Routes ==============
 
 @api_router.post("/sessions", response_model=SessionStateResponse, status_code=status.HTTP_201_CREATED)
