@@ -205,57 +205,57 @@ async def clear_state(request: Request, response: Response):
 @api_router.post("/plaid/mock/create-link-token")
 async def create_link_token(request: Request, response: Response):
     """
-    Create a mock Plaid Link token.
-    Returns a link token that expires in 1 hour.
+    Create a Plaid Link token.
+    Works with both MOCK and SANDBOX modes based on PLAID_MODE env var.
     """
     try:
-        token_data = generate_link_token()
-        logger.info("Generated mock Plaid link token")
+        user_id = get_user_id(request, response)
+        token_data = await plaid_service.create_link_token(user_id)
+        logger.info(f"Generated Plaid link token for user {user_id} in {plaid_service.mode} mode")
         return token_data
     except Exception as e:
         logger.error(f"Error generating link token: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate link token"
+            detail=f"Failed to generate link token: {str(e)}"
         )
 
 @api_router.post("/plaid/mock/exchange")
 async def exchange_public_token(request: Request, response: Response):
     """
-    Exchange a public token for an access token (mock).
-    Saves the access token to the user's SessionState.
+    Exchange a public token for an access token.
+    Works with both MOCK and SANDBOX modes based on PLAID_MODE env var.
     """
     try:
         # Get user ID
         user_id = get_user_id(request, response)
         
-        # Generate mock tokens
-        access_token = generate_access_token()
-        item_id = generate_item_id()
+        # Get public token from request body
+        body = await request.json()
+        public_token = body.get('public_token', 'public-sandbox-mock')
+        
+        # Exchange token
+        token_data = await plaid_service.exchange_public_token(public_token)
         
         # Update session with access token
-        session = await session_service.get_or_create_session(user_id)
-        update_data = SessionStateUpdate(access_token=access_token)
+        update_data = SessionStateUpdate(access_token=token_data["access_token"])
         await session_service.update_session(user_id, update_data)
         
-        logger.info(f"Exchanged public token for user: {user_id}")
+        logger.info(f"Exchanged public token for user: {user_id} in {plaid_service.mode} mode")
         
-        return {
-            "access_token": access_token,
-            "item_id": item_id
-        }
+        return token_data
     except Exception as e:
         logger.error(f"Error exchanging token: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to exchange token"
+            detail=f"Failed to exchange token: {str(e)}"
         )
 
 @api_router.get("/plaid/mock/accounts")
 async def get_accounts(request: Request, response: Response):
     """
-    Get mock bank accounts.
-    Seeds sample accounts if none exist, saves to SessionState.
+    Get bank accounts.
+    Seeds sample accounts in MOCK mode, fetches real accounts in SANDBOX mode.
     """
     try:
         # Get user ID
@@ -266,27 +266,40 @@ async def get_accounts(request: Request, response: Response):
         
         # Check if accounts already exist
         if not session.accounts or len(session.accounts) == 0:
-            # Seed mock accounts
-            mock_accounts = generate_mock_accounts()
-            update_data = SessionStateUpdate(accounts=mock_accounts)
+            # Get accounts based on mode
+            if plaid_service.mode == 'MOCK':
+                accounts_data = await plaid_service.get_accounts(None)
+            else:
+                # For SANDBOX, we need the access token
+                if not session.access_token:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="No access token found. Please connect your bank first."
+                    )
+                accounts_data = await plaid_service.get_accounts(session.access_token)
+            
+            # Save to session
+            update_data = SessionStateUpdate(accounts=accounts_data["accounts"])
             session = await session_service.update_session(user_id, update_data)
-            logger.info(f"Seeded {len(mock_accounts)} mock accounts for user: {user_id}")
+            logger.info(f"Fetched {len(accounts_data['accounts'])} accounts for user: {user_id} in {plaid_service.mode} mode")
         
         return {
             "accounts": session.accounts
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching accounts: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch accounts"
+            detail=f"Failed to fetch accounts: {str(e)}"
         )
 
 @api_router.get("/plaid/mock/transactions")
 async def get_transactions(request: Request, response: Response, limit: int = 10):
     """
-    Get mock transactions.
-    Seeds sample transactions if none exist, saves to SessionState.
+    Get transactions.
+    Seeds sample transactions in MOCK mode, fetches real transactions in SANDBOX mode.
     """
     try:
         # Get user ID
@@ -297,16 +310,22 @@ async def get_transactions(request: Request, response: Response, limit: int = 10
         
         # Check if transactions already exist
         if not session.transactions or len(session.transactions) == 0:
-            # Get account IDs for transactions
-            account_ids = []
-            if session.accounts:
-                account_ids = [acc.get("account_id") for acc in session.accounts if acc.get("account_id")]
+            # Get transactions based on mode
+            if plaid_service.mode == 'MOCK':
+                transactions_data = await plaid_service.get_transactions(None, limit)
+            else:
+                # For SANDBOX, we need the access token
+                if not session.access_token:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="No access token found. Please connect your bank first."
+                    )
+                transactions_data = await plaid_service.get_transactions(session.access_token, limit)
             
-            # Seed mock transactions
-            mock_transactions = generate_mock_transactions(account_ids, limit)
-            update_data = SessionStateUpdate(transactions=mock_transactions)
+            # Save to session
+            update_data = SessionStateUpdate(transactions=transactions_data["transactions"])
             session = await session_service.update_session(user_id, update_data)
-            logger.info(f"Seeded {len(mock_transactions)} mock transactions for user: {user_id}")
+            logger.info(f"Fetched {len(transactions_data['transactions'])} transactions for user: {user_id} in {plaid_service.mode} mode")
         
         # Return limited transactions
         transactions = session.transactions[:limit] if session.transactions else []
@@ -314,11 +333,13 @@ async def get_transactions(request: Request, response: Response, limit: int = 10
         return {
             "transactions": transactions
         }
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching transactions: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch transactions"
+            detail=f"Failed to fetch transactions: {str(e)}"
         )
 
 
