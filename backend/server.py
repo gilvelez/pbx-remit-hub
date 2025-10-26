@@ -380,11 +380,30 @@ async def send_funds(request: Request, response: Response, send_request: SendFun
     Simulates USD to PHP transfer with quoted rate and fees.
     """
     try:
+        client_ip = get_client_ip(request)
+        
         # Validate destination type
         if send_request.destination_type not in ["GCash", "PH_BANK"]:
+            logger.warning(f"Invalid destination type from IP {client_ip}: {send_request.destination_type}")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="destinationType must be 'GCash' or 'PH_BANK'"
+            )
+        
+        # Validate amount
+        if send_request.amount_usd <= 0:
+            logger.warning(f"Invalid amount from IP {client_ip}: {send_request.amount_usd}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Amount must be greater than 0"
+            )
+        
+        # Validate destination tag
+        if not send_request.destination_tag or len(send_request.destination_tag.strip()) == 0:
+            logger.warning(f"Empty destination tag from IP {client_ip}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Destination tag cannot be empty"
             )
         
         # Get user ID
@@ -420,7 +439,7 @@ async def send_funds(request: Request, response: Response, send_request: SendFun
                 detail="Session not found"
             )
         
-        logger.info(f"Created transfer {transaction_id} for user {user_id}: ${send_request.amount_usd} → ₱{transfer_calc['est_php']}")
+        logger.info(f"Transfer created from IP {client_ip}: {transaction_id} - ${send_request.amount_usd} → ₱{transfer_calc['est_php']}")
         
         # Return transaction details
         return {
@@ -435,6 +454,12 @@ async def send_funds(request: Request, response: Response, send_request: SendFun
         
     except HTTPException:
         raise
+    except ValidationError as e:
+        logger.warning(f"Validation error in sendFunds: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid input data"
+        )
     except Exception as e:
         logger.error(f"Error sending funds: {e}")
         raise HTTPException(
