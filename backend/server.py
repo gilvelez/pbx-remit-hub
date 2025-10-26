@@ -66,6 +66,10 @@ logger = logging.getLogger(__name__)
 # Create the main app
 app = FastAPI(title="PBX API", version="1.0.0")
 
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
