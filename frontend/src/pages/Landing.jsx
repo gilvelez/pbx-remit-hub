@@ -1,0 +1,385 @@
+import React, { useState } from 'react';
+import { ArrowRight, Shield, Zap, DollarSign, Globe, BarChart3, CheckCircle2, Clock, X } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { Input } from '../components/ui/input';
+import { Card, CardContent } from '../components/ui/card';
+import { mockBalance, addMockSubmission } from '../data/mock';
+import { useToast } from '../hooks/use-toast';
+
+export const Landing = () => {
+  const { toast } = useToast();
+  const [email, setEmail] = useState('');
+  const [showPlaidModal, setShowPlaidModal] = useState(false);
+  const [demoAmount, setDemoAmount] = useState('');
+  const [demoDestination, setDemoDestination] = useState('GCash Wallet');
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handleEmailSubmit = (e) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      toast({
+        title: 'Invalid email',
+        description: 'Please enter a valid email address',
+        variant: 'destructive'
+      });
+      return;
+    }
+    addMockSubmission(email);
+    toast({
+      title: 'Success!',
+      description: "You're on the early access list. We'll notify you soon.",
+    });
+    setEmail('');
+  };
+
+  const handleDemoSubmit = (e) => {
+    e.preventDefault();
+    if (!demoAmount || parseFloat(demoAmount) <= 0) {
+      toast({
+        title: 'Invalid amount',
+        description: 'Please enter a valid amount',
+        variant: 'destructive'
+      });
+      return;
+    }
+    setShowPreview(true);
+  };
+
+  const PlaidModal = () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPlaidModal(false)}>
+      <Card className="relative w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+        <button onClick={() => setShowPlaidModal(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+          <X className="h-5 w-5" />
+        </button>
+        <CardContent className="p-6">
+          <h3 className="text-xl font-bold mb-4">Connect your bank</h3>
+          <p className="text-sm text-slate-600 mb-6">This is a sandbox demo. In production, Plaid securely connects your bank in seconds.</p>
+          <div className="space-y-3">
+            {['Chase Bank', 'Bank of America', 'Wells Fargo', 'Citibank'].map(bank => (
+              <button
+                key={bank}
+                className="w-full text-left p-4 rounded-lg border-2 border-slate-200 hover:border-sky-500 hover:bg-sky-50 transition-all"
+                onClick={() => {
+                  toast({ title: 'Bank connected (sandbox)', description: `Connected to ${bank} - demo mode` });
+                  setShowPlaidModal(false);
+                }}
+              >
+                <div className="font-medium">{bank}</div>
+                <div className="text-xs text-slate-500">Sandbox account</div>
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const PreviewModal = () => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowPreview(false)}>
+      <Card className="relative w-full max-w-md mx-4" onClick={(e) => e.stopPropagation()}>
+        <button onClick={() => setShowPreview(false)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+          <X className="h-5 w-5" />
+        </button>
+        <CardContent className="p-6">
+          <h3 className="text-xl font-bold mb-4">Transfer preview</h3>
+          <div className="space-y-4">
+            <div className="p-4 bg-slate-50 rounded-lg">
+              <div className="text-sm text-slate-500">You send</div>
+              <div className="text-2xl font-bold">${demoAmount} USD</div>
+            </div>
+            <div className="flex items-center justify-center">
+              <ArrowRight className="h-6 w-6 text-slate-400" />
+            </div>
+            <div className="p-4 bg-slate-50 rounded-lg">
+              <div className="text-sm text-slate-500">They receive (estimated)</div>
+              <div className="text-2xl font-bold">₱{(parseFloat(demoAmount) * 56.5).toFixed(2)}</div>
+              <div className="text-xs text-slate-500 mt-1">Rate: 1 USD = 56.5 PHP (demo)</div>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Destination</span>
+                <span className="font-medium">{demoDestination}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Fee</span>
+                <span className="font-medium">$2.99</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Delivery</span>
+                <span className="font-medium">~5 minutes</span>
+              </div>
+            </div>
+            <Button className="w-full bg-sky-600 hover:bg-sky-700" onClick={() => {
+              toast({ title: 'Transfer initiated (sandbox)', description: 'This is demo mode - no real funds move' });
+              setShowPreview(false);
+              setDemoAmount('');
+            }}>
+              Confirm transfer (sandbox)
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  return (
+    <main className="min-h-screen bg-white text-slate-800">
+      {showPlaidModal && <PlaidModal />}
+      {showPreview && <PreviewModal />}
+      
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" aria-hidden="true" />
+            <span className="text-xl font-bold tracking-tight">PBX</span>
+            <span className="ml-2 hidden sm:inline text-slate-500 text-sm">Philippine Bayan Exchange</span>
+          </div>
+          <nav className="hidden md:flex items-center gap-8 text-sm">
+            <a href="#how" className="hover:text-slate-900 text-slate-600 transition-colors">How it works</a>
+            <a href="#features" className="hover:text-slate-900 text-slate-600 transition-colors">Features</a>
+            <a href="#faq" className="hover:text-slate-900 text-slate-600 transition-colors">FAQ</a>
+          </nav>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="hidden sm:inline-flex" onClick={() => {
+              document.querySelector('#demo-section')?.scrollIntoView({ behavior: 'smooth' });
+            }}>See demo</Button>
+            <Button className="bg-sky-600 hover:bg-sky-700" onClick={() => {
+              document.querySelector('#join')?.scrollIntoView({ behavior: 'smooth' });
+            }}>Get early access</Button>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="relative overflow-hidden" id="demo-section">
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-50 via-white to-white" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-24 md:pb-24 grid md:grid-cols-2 gap-10 items-center">
+          <div>
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
+              Send USD to the Philippines
+              <span className="block text-sky-600 mt-2">in minutes—simple, secure, transparent.</span>
+            </h1>
+            <p className="mt-5 text-lg text-slate-600">
+              PBX (Philippine Bayan Exchange) lets you connect a U.S. bank, convert to stablecoins, and deliver to PH wallets and bank accounts—fast. Built on trusted infrastructure.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Button className="bg-sky-600 hover:bg-sky-700" onClick={() => {
+                document.querySelector('#join')?.scrollIntoView({ behavior: 'smooth' });
+              }}>
+                Get early access
+              </Button>
+              <Button variant="outline">Watch a 90‑sec demo</Button>
+            </div>
+            <p className="mt-4 text-xs text-slate-500">MVP demo uses sandbox data—no real funds move.</p>
+          </div>
+
+          {/* Interactive Demo */}
+          <div className="relative">
+            <Card className="shadow-lg">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
+                    <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
+                  </div>
+                  <span className="text-xs text-slate-500">PBX • Demo</span>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-gradient-to-br from-sky-50 to-sky-100 p-4 border border-sky-200">
+                    <div className="text-sm text-slate-600">Balance</div>
+                    <div className="text-3xl font-bold">${mockBalance.usd.toFixed(2)}</div>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2 text-xs"
+                      onClick={() => setShowPlaidModal(true)}
+                    >
+                      Connect bank (sandbox)
+                    </Button>
+                  </div>
+
+                  <Card className="border-2 border-slate-200">
+                    <CardContent className="p-4">
+                      <div className="text-sm font-medium mb-3">Send USD → PHP</div>
+                      <form onSubmit={handleDemoSubmit} className="space-y-3">
+                        <Input
+                          type="number"
+                          placeholder="Amount in USD"
+                          value={demoAmount}
+                          onChange={(e) => setDemoAmount(e.target.value)}
+                          className="w-full"
+                        />
+                        <select 
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                          value={demoDestination}
+                          onChange={(e) => setDemoDestination(e.target.value)}
+                        >
+                          <option>GCash Wallet</option>
+                          <option>BPI Bank Account</option>
+                          <option>UnionBank Account</option>
+                          <option>BDO Account</option>
+                        </select>
+                        <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700">
+                          Preview transfer
+                        </Button>
+                      </form>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2 border-slate-200">
+                    <CardContent className="p-4">
+                      <div className="text-sm font-medium mb-2">Recent activity</div>
+                      <ul className="space-y-2 text-sm">
+                        {mockBalance.transactions.slice(0, 3).map(tx => (
+                          <li key={tx.id} className="flex items-center gap-2 text-slate-600">
+                            {tx.status === 'completed' ? 
+                              <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
+                              <Clock className="h-4 w-4 text-yellow-500" />
+                            }
+                            ${tx.amount} → {tx.recipient} • {tx.status}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+            <div className="pointer-events-none absolute -top-6 -right-6 h-28 w-28 rounded-full bg-yellow-300/40 blur-2xl" aria-hidden="true" />
+          </div>
+        </div>
+      </section>
+
+      {/* Trust strip */}
+      <section className="py-8 border-y border-slate-100 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-xs uppercase tracking-widest text-slate-500 mb-4">Built on trusted infrastructure</p>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-slate-600">
+            <span className="text-sm font-medium">Plaid (Bank connections)</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-sm font-medium">Circle (USDC rails)</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-sm font-medium">Secure Cloud</span>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section id="how" className="py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold tracking-tight">How PBX works</h2>
+          <p className="mt-2 text-slate-600">Three simple steps. Our MVP uses sandbox data while we onboard partners.</p>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            {[
+              { n: '01', t: 'Connect your bank', d: 'Link a U.S. bank account via Plaid in seconds (sandbox in MVP).', icon: Shield },
+              { n: '02', t: 'Convert to stablecoin', d: 'We illustrate USDC conversion on Circle rails for speed and transparency.', icon: Zap },
+              { n: '03', t: 'Deliver to PH', d: 'Send to GCash or PH bank accounts. Track status in real time.', icon: Globe },
+            ].map((s) => {
+              const Icon = s.icon;
+              return (
+                <Card key={s.n} className="border-2 border-slate-200 hover:border-sky-300 transition-all hover:shadow-md">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-sm font-semibold text-slate-400">{s.n}</div>
+                      <Icon className="h-5 w-5 text-sky-600" />
+                    </div>
+                    <div className="text-xl font-bold mb-2">{s.t}</div>
+                    <p className="text-slate-600 text-sm">{s.d}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="py-16 bg-slate-50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold tracking-tight">Why teams choose PBX</h2>
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[
+              { t: 'Fast transfers', d: 'Move value quickly with an instant, modern UX.', icon: Zap, color: 'text-yellow-600' },
+              { t: 'Transparent fees', d: 'No surprises—clear preview before you send.', icon: DollarSign, color: 'text-sky-600' },
+              { t: 'Global-grade security', d: 'Best-practice encryption, tokenization, and audit logs.', icon: Shield, color: 'text-red-600' },
+              { t: 'KYC-ready design', d: 'Built to integrate with identity providers when we go live.', icon: CheckCircle2, color: 'text-green-600' },
+              { t: 'Multi-destination', d: 'GCash, bank accounts, and more to come.', icon: Globe, color: 'text-sky-600' },
+              { t: 'Admin insights', d: 'View volumes, user activity, and risk flags at a glance.', icon: BarChart3, color: 'text-yellow-600' },
+            ].map((f) => {
+              const Icon = f.icon;
+              return (
+                <Card key={f.t} className="bg-white hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <Icon className={`h-6 w-6 ${f.color} mb-3`} />
+                    <div className="text-lg font-bold mb-2">{f.t}</div>
+                    <p className="text-slate-600 text-sm">{f.d}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section id="join" className="py-16">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 text-center">
+          <h3 className="text-3xl font-bold">Be first to try PBX</h3>
+          <p className="mt-2 text-slate-600">Join the early access list. We'll notify you when the live pilot opens.</p>
+          <form onSubmit={handleEmailSubmit} className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full sm:w-80"
+            />
+            <Button type="submit" className="bg-sky-600 hover:bg-sky-700 px-6">
+              Request access
+            </Button>
+          </form>
+          <p className="mt-3 text-xs text-slate-500">We'll only email about PBX launch and updates. Unsubscribe anytime.</p>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-16 border-t border-slate-100">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <h3 className="text-2xl font-bold mb-6">FAQs</h3>
+          <div className="space-y-4">
+            {[
+              { q: 'Is the MVP moving real money?', a: 'No. The demo runs in a sandbox with mock data. No real funds move until compliance is complete.' },
+              { q: 'Which partners are involved?', a: 'Bank connectivity via Plaid (sandbox in MVP) and settlement rails modeled on Circle USDC. Additional Philippine payout partners will be added in pilot.' },
+              { q: 'Can I try it today?', a: 'Yes—use the demo link to explore the flow with test data, or join the waitlist for early pilot access.' },
+              { q: 'What are the fees?', a: 'In production, we plan for transparent flat fees around $2.99 per transfer. No hidden charges, ever.' },
+            ].map((faq, i) => (
+              <details key={i} className="group rounded-xl border-2 border-slate-200 p-4 bg-white hover:border-sky-300 transition-colors">
+                <summary className="font-semibold cursor-pointer list-none flex items-center justify-between">
+                  {faq.q}
+                  <ArrowRight className="h-4 w-4 text-slate-400 group-open:rotate-90 transition-transform" />
+                </summary>
+                <p className="mt-3 text-sm text-slate-600 leading-relaxed">{faq.a}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-100 py-10 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-6 w-6 rounded-md bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" aria-hidden="true" />
+            <span className="font-semibold">PBX</span>
+            <span className="text-slate-400">•</span>
+            <span className="text-sm text-slate-500">Philippine Bayan Exchange</span>
+          </div>
+          <p className="text-xs text-slate-500">© {new Date().getFullYear()} PBX. For demo purposes only. Not a money transmitter.</p>
+        </div>
+      </footer>
+    </main>
+  );
+};
