@@ -317,9 +317,18 @@ export const Landing = () => {
   };
 
   return (
-    <main className="min-h-screen bg-white text-slate-800">
-      {showPlaidModal && <PlaidModal />}
-      {showPreview && <PreviewModal />}
+    <>
+      {/* Skip to content link for accessibility */}
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[100] rounded bg-sky-700 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-sky-500"
+      >
+        Skip to content
+      </a>
+
+      <main id="main-content" className="min-h-screen bg-white text-slate-800 selection:bg-yellow-200">
+        {showPlaidModal && <PlaidModal />}
+        {showPreview && <PreviewModal />}
       
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
