@@ -225,14 +225,14 @@ export const Admin = () => {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" aria-hidden="true" />
             <span className="text-xl font-bold tracking-tight">PBX Admin</span>
             <span className="text-slate-400 hidden sm:inline">•</span>
-            <span className="text-sm text-slate-500 hidden sm:inline">Philippine Bayani Exchange</span>
+            <span className="text-sm text-slate-500 hidden sm:inline">Lead Management</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="outline" onClick={handleLogout} size="sm">
               Logout
             </Button>
-            <Button variant="outline" onClick={() => window.location.href = '/'}>
-              Back to landing
+            <Button variant="outline" onClick={() => window.location.href = '/'} size="sm">
+              Back to Landing
             </Button>
           </div>
         </div>
@@ -240,14 +240,15 @@ export const Admin = () => {
 
       {/* Main content */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6 flex items-center justify-between">
+        {/* Header with search and export */}
+        <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Early Access Submissions</h1>
-            <p className="text-slate-600 mt-1">Manage and export email submissions</p>
+            <h1 className="text-3xl font-bold">Early Access Leads</h1>
+            <p className="text-slate-600 mt-1">Manage email submissions and export data</p>
           </div>
           <Button 
             onClick={exportToCSV}
-            disabled={submissions.length === 0}
+            disabled={filteredSubmissions.length === 0}
             className="bg-sky-600 hover:bg-sky-700"
           >
             <Download className="h-4 w-4 mr-2" />
@@ -259,7 +260,7 @@ export const Admin = () => {
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Submissions</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Total Leads</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{submissions.length}</div>
@@ -298,17 +299,60 @@ export const Admin = () => {
           </Card>
         </div>
 
-        {/* Submissions table */}
+        {/* Search box */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                type="text"
+                placeholder="Search by email or date..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {searchQuery && (
+              <p className="text-sm text-slate-500 mt-2">
+                Showing {filteredSubmissions.length} of {submissions.length} leads
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Leads table */}
         <Card>
           <CardHeader>
-            <CardTitle>All Submissions</CardTitle>
+            <CardTitle>All Leads</CardTitle>
           </CardHeader>
           <CardContent>
-            {submissions.length === 0 ? (
-              <div className="text-center py-12 text-slate-500">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <Loader2 className="h-12 w-12 mx-auto mb-4 text-slate-300 animate-spin" />
+                <p className="text-slate-500">Loading submissions...</p>
+              </div>
+            ) : filteredSubmissions.length === 0 ? (
+              <div className="text-center py-12">
                 <Mail className="h-12 w-12 mx-auto mb-4 text-slate-300" />
-                <p>No submissions yet</p>
-                <p className="text-sm mt-1">Email submissions will appear here</p>
+                {searchQuery ? (
+                  <>
+                    <p className="text-slate-700 font-medium">No matches found</p>
+                    <p className="text-sm text-slate-500 mt-1">Try a different search term</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSearchQuery('')}
+                      className="mt-4"
+                    >
+                      Clear search
+                    </Button>
+                  </>
+                ) : submissions.length === 0 ? (
+                  <>
+                    <p className="text-slate-700 font-medium">No leads yet</p>
+                    <p className="text-sm text-slate-500 mt-1">Email submissions will appear here</p>
+                  </>
+                ) : null}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -316,14 +360,19 @@ export const Admin = () => {
                   <thead>
                     <tr className="border-b border-slate-200">
                       <th className="text-left py-3 px-4 font-semibold text-sm text-slate-600">Email</th>
-                      <th className="text-left py-3 px-4 font-semibold text-sm text-slate-600">Timestamp</th>
+                      <th className="text-left py-3 px-4 font-semibold text-sm text-slate-600">Created At</th>
                       <th className="text-left py-3 px-4 font-semibold text-sm text-slate-600">Status</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {submissions.map((sub) => (
-                      <tr key={sub._id} className="border-b border-slate-100 hover:bg-slate-50">
-                        <td className="py-3 px-4 font-medium">{sub.email}</td>
+                    {filteredSubmissions.map((sub) => (
+                      <tr key={sub._id} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-slate-400" />
+                            <span className="font-medium">{sub.email}</span>
+                          </div>
+                        </td>
                         <td className="py-3 px-4 text-sm text-slate-600">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
@@ -344,10 +393,11 @@ export const Admin = () => {
           </CardContent>
         </Card>
 
-        {/* Note */}
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <p className="text-sm text-yellow-800">
-            <strong>Note:</strong> This admin panel requires Basic Authentication (username: admin, password from .env). Data is fetched from MongoDB in real-time.
+        {/* Info note */}
+        <div className="mt-6 p-4 bg-sky-50 border border-sky-200 rounded-lg">
+          <p className="text-sm text-sky-800">
+            <strong>ℹ️ Info:</strong> Data is fetched from MongoDB with Basic Authentication (username: admin). 
+            Showing last 500 leads, newest first. CSV exports are RFC4180 compliant.
           </p>
         </div>
       </main>
