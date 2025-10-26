@@ -131,6 +131,59 @@ async def get_all_leads(admin: str = Depends(verify_admin_auth)):
             detail="Failed to fetch leads"
         )
 
+# ============== State Management Routes ==============
+
+@api_router.get("/state", response_model=SessionStateResponse)
+async def get_state(request: Request, response: Response):
+    """
+    Get session state for current user.
+    Creates new session if it doesn't exist.
+    Sets pbx_uid cookie if user doesn't have one.
+    """
+    try:
+        # Get or create user ID (sets cookie if needed)
+        user_id = get_user_id(request, response)
+        
+        # Get or create session
+        session = await session_service.get_or_create_session(user_id)
+        
+        return session
+    except Exception as e:
+        logger.error(f"Error fetching state: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch state"
+        )
+
+@api_router.post("/state/clear")
+async def clear_state(request: Request, response: Response):
+    """
+    Clear demo state for current user.
+    Deletes the session and creates a fresh one.
+    """
+    try:
+        # Get user ID from request
+        user_id = get_user_id(request, response)
+        
+        # Delete existing session
+        await session_service.delete_session(user_id)
+        
+        # Create fresh session
+        session = await session_service.get_or_create_session(user_id)
+        
+        return {
+            "status": "ok",
+            "message": "Demo state cleared successfully",
+            "session": session
+        }
+    except Exception as e:
+        logger.error(f"Error clearing state: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to clear state"
+        )
+
+
 # ============== Session Management Routes ==============
 
 @api_router.post("/sessions", response_model=SessionStateResponse, status_code=status.HTTP_201_CREATED)
