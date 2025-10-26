@@ -386,6 +386,7 @@ export const Landing = () => {
                         onClick={handleResetDemo}
                         className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1"
                         title="Reset demo"
+                        data-cta="reset-demo"
                       >
                         <RefreshCw className="h-3 w-3" />
                         Reset
