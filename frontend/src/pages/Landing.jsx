@@ -383,67 +383,98 @@ export const Landing = () => {
                     <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
                     <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
                   </div>
-                  <span className="text-xs text-slate-500">PBX • Demo</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-slate-500">PBX • Demo</span>
+                    {isConnected && (
+                      <button 
+                        onClick={handleResetDemo}
+                        className="text-xs text-sky-600 hover:text-sky-700 flex items-center gap-1"
+                        title="Reset demo"
+                      >
+                        <RefreshCw className="h-3 w-3" />
+                        Reset
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="space-y-4">
                   <div className="rounded-lg bg-gradient-to-br from-sky-50 to-sky-100 p-4 border border-sky-200">
                     <div className="text-sm text-slate-600">Balance</div>
-                    <div className="text-3xl font-bold">${mockBalance.usd.toFixed(2)}</div>
+                    <div className="text-3xl font-bold">${balance.toFixed(2)}</div>
                     <Button 
                       variant="outline" 
                       size="sm" 
                       className="mt-2 text-xs"
-                      onClick={() => setShowPlaidModal(true)}
+                      onClick={handleConnectBank}
+                      disabled={isLoadingAccounts || isConnected}
                     >
-                      Connect bank (sandbox)
+                      {isLoadingAccounts ? 'Connecting...' : isConnected ? 'Connected' : 'Connect bank (sandbox)'}
                     </Button>
                   </div>
 
-                  <Card className="border-2 border-slate-200">
-                    <CardContent className="p-4">
-                      <div className="text-sm font-medium mb-3">Send USD → PHP</div>
-                      <form onSubmit={handleDemoSubmit} className="space-y-3">
-                        <Input
-                          type="number"
-                          placeholder="Amount in USD"
-                          value={demoAmount}
-                          onChange={(e) => setDemoAmount(e.target.value)}
-                          className="w-full"
-                        />
-                        <select 
-                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                          value={demoDestination}
-                          onChange={(e) => setDemoDestination(e.target.value)}
-                        >
-                          <option>GCash Wallet</option>
-                          <option>BPI Bank Account</option>
-                          <option>UnionBank Account</option>
-                          <option>BDO Account</option>
-                        </select>
-                        <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700">
-                          Preview transfer
-                        </Button>
-                      </form>
-                    </CardContent>
-                  </Card>
+                  {isConnected && (
+                    <>
+                      <Card className="border-2 border-slate-200">
+                        <CardContent className="p-4">
+                          <div className="text-sm font-medium mb-3">Send USD → PHP</div>
+                          <form onSubmit={handleDemoSubmit} className="space-y-3">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              placeholder="Amount in USD"
+                              value={demoAmount}
+                              onChange={(e) => setDemoAmount(e.target.value)}
+                              className="w-full"
+                            />
+                            <select 
+                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
+                              value={demoDestination}
+                              onChange={(e) => setDemoDestination(e.target.value)}
+                            >
+                              <option>GCash Wallet</option>
+                              <option>BPI Bank Account</option>
+                              <option>UnionBank Account</option>
+                              <option>BDO Account</option>
+                            </select>
+                            <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700">
+                              Preview transfer
+                            </Button>
+                          </form>
+                        </CardContent>
+                      </Card>
 
-                  <Card className="border-2 border-slate-200">
-                    <CardContent className="p-4">
-                      <div className="text-sm font-medium mb-2">Recent activity</div>
-                      <ul className="space-y-2 text-sm">
-                        {mockBalance.transactions.slice(0, 3).map(tx => (
-                          <li key={tx.id} className="flex items-center gap-2 text-slate-600">
-                            {tx.status === 'completed' ? 
-                              <CheckCircle2 className="h-4 w-4 text-green-500" /> : 
-                              <Clock className="h-4 w-4 text-yellow-500" />
-                            }
-                            ${tx.amount} → {tx.recipient} • {tx.status}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
+                      <Card className="border-2 border-slate-200">
+                        <CardContent className="p-4">
+                          <div className="text-sm font-medium mb-2">Recent activity</div>
+                          {activity.length === 0 && transactions.length === 0 ? (
+                            <p className="text-sm text-slate-500">No activity yet</p>
+                          ) : (
+                            <ul className="space-y-2 text-sm">
+                              {activity.slice(0, 2).map(tx => (
+                                <li key={tx.id} className="flex items-center gap-2 text-slate-600">
+                                  <Clock className="h-4 w-4 text-yellow-500" />
+                                  ${tx.amount} → {tx.recipient} • {tx.status}
+                                </li>
+                              ))}
+                              {transactions.slice(0, 3 - activity.length).map(tx => (
+                                <li key={tx.transaction_id} className="flex items-center gap-2 text-slate-600">
+                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                  {tx.name} • ${Math.abs(tx.amount)}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </>
+                  )}
+
+                  {!isConnected && (
+                    <div className="text-center py-8 text-slate-500 text-sm">
+                      Connect a bank to start demo
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
