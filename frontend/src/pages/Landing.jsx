@@ -465,10 +465,12 @@ export const Landing = () => {
       </section>
 
       {/* Trust strip */}
-      <section className="py-8 border-y border-slate-100 bg-white">
+      <section aria-label="Trust strip" className="py-8 border-y border-slate-100 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-xs uppercase tracking-widest text-slate-500 mb-4">Built on trusted infrastructure</p>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-slate-600">
+          <p className="text-center text-xs uppercase tracking-widest text-slate-500">
+            Built on trusted infrastructure (illustrative)
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-6 opacity-80">
             <span className="text-sm font-medium">Plaid (Bank connections)</span>
             <span className="text-slate-300">•</span>
             <span className="text-sm font-medium">Circle (USDC rails)</span>
@@ -483,12 +485,24 @@ export const Landing = () => {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-slate-800">Built for the Heroes Who Build Home</h2>
           <p className="mt-4 text-slate-600 text-lg max-w-3xl mx-auto">
-            Philippine Bayani Exchange (PBX) empowers overseas Filipinos to support their families with speed, security, and transparency.
-            Every transfer made through PBX carries love, dreams, and legacy — connecting hearts across borders.
+            Philippine Bayani Exchange (PBX) empowers overseas Filipinos to support their families with speed,
+            security, and transparency. Every transfer carries love, dreams, and legacy — connecting hearts across borders.
           </p>
           <div className="mt-6 flex justify-center gap-3">
-            <a href="#demo-section" className="rounded-xl bg-sky-600 px-5 py-3 text-white font-semibold shadow hover:bg-sky-700" data-cta="about-see-demo">See the Demo</a>
-            <a href="#join" className="rounded-xl border border-sky-600 px-5 py-3 text-sky-600 font-semibold hover:bg-sky-50" data-cta="about-join-early-access">Join Early Access</a>
+            <a
+              href="#demo"
+              data-cta="see-demo"
+              className="rounded-xl bg-sky-600 px-5 py-3 text-white font-semibold shadow hover:bg-sky-700"
+            >
+              See the Demo
+            </a>
+            <a
+              href="#join"
+              data-cta="join-early-access"
+              className="rounded-xl border border-sky-600 px-5 py-3 text-sky-600 font-semibold hover:bg-sky-50"
+            >
+              Join Early Access
+            </a>
           </div>
         </div>
       </section>
