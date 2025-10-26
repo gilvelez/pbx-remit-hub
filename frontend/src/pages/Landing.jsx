@@ -583,22 +583,29 @@ export const Landing = () => {
       {/* FAQ */}
       <section id="faq" className="py-16 border-t border-slate-100">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-          <h3 className="text-2xl font-bold mb-6">FAQs</h3>
-          <div className="space-y-4">
-            {[
-              { q: 'Is the MVP moving real money?', a: 'No. The demo runs in a sandbox with mock data. No real funds move until compliance is complete.' },
-              { q: 'Which partners are involved?', a: 'Bank connectivity via Plaid (sandbox in MVP) and settlement rails modeled on Circle USDC. Additional Philippine payout partners will be added in pilot.' },
-              { q: 'Can I try it today?', a: 'Yes—use the demo link to explore the flow with test data, or join the waitlist for early pilot access.' },
-              { q: 'What are the fees?', a: 'In production, we plan for transparent flat fees around $2.99 per transfer. No hidden charges, ever.' },
-            ].map((faq, i) => (
-              <details key={i} className="group rounded-xl border-2 border-slate-200 p-4 bg-white hover:border-sky-300 transition-colors">
-                <summary className="font-semibold cursor-pointer list-none flex items-center justify-between">
-                  {faq.q}
-                  <ArrowRight className="h-4 w-4 text-slate-400 group-open:rotate-90 transition-transform" />
-                </summary>
-                <p className="mt-3 text-sm text-slate-600 leading-relaxed">{faq.a}</p>
-              </details>
-            ))}
+          <h3 className="text-2xl font-bold">FAQs</h3>
+          <div className="mt-6 grid gap-6">
+            <details className="rounded-xl border border-slate-200 p-4 bg-white">
+              <summary className="font-semibold cursor-pointer">Is the MVP moving real money?</summary>
+              <p className="mt-2 text-sm text-slate-600">
+                No. The demo runs in a sandbox with mock data. No real funds move until compliance is complete.
+              </p>
+            </details>
+
+            <details className="rounded-xl border border-slate-200 p-4 bg-white">
+              <summary className="font-semibold cursor-pointer">Which partners are involved?</summary>
+              <p className="mt-2 text-sm text-slate-600">
+                Bank connectivity via Plaid (sandbox in MVP) and settlement rails modeled on Circle USDC.
+                Additional Philippine payout partners will be added in pilot.
+              </p>
+            </details>
+
+            <details className="rounded-xl border border-slate-200 p-4 bg-white">
+              <summary className="font-semibold cursor-pointer">Can I try it today?</summary>
+              <p className="mt-2 text-sm text-slate-600">
+                Yes—use the demo link to explore the flow with test data, or join the waitlist for early pilot access.
+              </p>
+            </details>
           </div>
         </div>
       </section>
@@ -610,12 +617,12 @@ export const Landing = () => {
             <div className="h-6 w-6 rounded-md bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" aria-hidden="true" />
             <span className="font-semibold">PBX</span>
             <span className="text-slate-400">•</span>
-            <span className="text-sm text-slate-500">Philippine Bayani Exchange</span>
+            <span className="text-sm text-slate-500">Philippine Bayan Exchange</span>
           </div>
           <p className="text-xs text-slate-500 text-center md:text-right max-w-2xl">
             © {new Date().getFullYear()} PBX. Demo experience using sandbox data; no real funds move.
             PBX is not currently providing money transmission or virtual asset services.
-            "Plaid" and "Circle" are trademarks of their respective owners.
+            "Plaid" and "Circle" are trademarks of their respective owners and are used here for illustrative purposes only.
           </p>
         </div>
       </footer>
