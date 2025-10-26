@@ -55,6 +55,8 @@ export const Admin = () => {
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" aria-hidden="true" />
             <span className="text-xl font-bold tracking-tight">PBX Admin</span>
+            <span className="text-slate-400 hidden sm:inline">•</span>
+            <span className="text-sm text-slate-500 hidden sm:inline">Philippine Bayani Exchange</span>
           </div>
           <Button variant="outline" onClick={() => window.location.href = '/'}>
             Back to landing
