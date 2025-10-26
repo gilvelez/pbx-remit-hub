@@ -58,6 +58,7 @@ class LeadService:
         
         lead = await collection.find_one({"email": email.lower().strip()})
         if lead:
+            lead["_id"] = str(lead["_id"])
             return LeadResponse(**lead)
         return None
 
