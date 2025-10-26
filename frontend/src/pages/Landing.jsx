@@ -345,57 +345,42 @@ export const Landing = () => {
         </div>
       </header>
 
-      {/* Hero */}
+      {/* Hero - Consolidated bilingual version */}
       <section className="relative overflow-hidden" id="demo-section">
-        {/* Filipino Hero Banner */}
-        <section
-          className="flex flex-col items-center justify-center text-center py-20 px-4"
-          style={{
-            background: "linear-gradient(135deg, #0033A0 0%, #C8102E 70%, #FCD116 100%)",
-          }}
-        >
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-center">
-            Para sa <span className="text-yellow-300">Bayaning Pilipino</span>,<br />
-            bawat padala ay <span className="text-sky-200">pagmamahal.</span>
-          </h1>
-          <p className="mt-4 text-lg text-white/90 text-center max-w-xl mx-auto">
-            For the Filipino Hero — every remittance is an act of love.
-          </p>
-          <div className="mt-6 flex justify-center gap-3">
-            <a href="#join" className="rounded-xl bg-white text-sky-700 px-5 py-3 font-semibold shadow hover:bg-slate-100" data-cta="hero-get-started">Get Started</a>
-            <a href="#how" className="rounded-xl border border-white/60 px-5 py-3 font-semibold text-white hover:bg-white/10" data-cta="hero-learn-more">Learn more</a>
-          </div>
-        </section>
-
-        {/* Main Hero Content */}
-        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-sky-50 via-white to-white" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-24 md:pb-24 grid md:grid-cols-2 gap-10 items-center">
-          <div>
-            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-              For the Heroes Who Build Home from Afar.
+        <div className="absolute inset-0 -z-10 bg-gradient-to-b from-fuchsia-600 via-rose-500 to-amber-400" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 md:pt-24 pb-20 md:pb-28 grid md:grid-cols-2 gap-10 items-center">
+          <div className="text-white">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-center md:text-left">
+              Para sa <span className="text-yellow-200">Bayaning Pilipino</span>,<br />
+              bawat padala ay <span className="text-sky-100">pagmamahal.</span>
             </h1>
-            <p className="mt-4 text-xl sm:text-2xl text-sky-600 font-semibold leading-tight">
-              Every transfer carries more than money—it carries love, dreams, and family.
+            <p className="mt-4 text-lg text-white/90 text-center md:text-left">
+              For the Filipino Hero — every remittance is an act of love.
             </p>
-            <p className="mt-5 text-lg text-slate-600">
-              Philippine Bayani Exchange (PBX) empowers every modern hero to care for family with speed, security, and heart. Seamless cross-border transfers built for Filipinos worldwide.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button className="bg-sky-600 hover:bg-sky-700" onClick={() => {
-                document.querySelector('#join')?.scrollIntoView({ behavior: 'smooth' });
-              }} data-cta="hero-get-early-access">
-                Get early access
-              </Button>
-              <Button variant="outline" data-cta="hero-watch-demo">Watch a 90‑sec demo</Button>
+            <div className="mt-6 flex flex-wrap gap-3 md:justify-start justify-center">
+              <a
+                href="#join"
+                data-cta="get-started"
+                className="rounded-xl bg-white text-sky-700 px-5 py-3 text-base font-semibold shadow hover:bg-slate-100"
+              >
+                Get Started
+              </a>
+              <a
+                href="#how"
+                data-cta="learn-more"
+                className="rounded-xl border border-white/60 px-5 py-3 text-base font-semibold text-white hover:bg-white/10"
+              >
+                Learn more
+              </a>
             </div>
-            <p className="mt-4 text-xs text-slate-500">MVP demo uses sandbox data—no real funds move.</p>
+            <p className="mt-4 text-xs text-white/80 text-center md:text-left">MVP demo uses sandbox data—no real funds move.</p>
           </div>
 
-          {/* Interactive Demo */}
+          {/* Demo card with RatePreview */}
           <div className="relative">
-            <Card className="shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-6">
+            <div className="rounded-2xl border border-white/20 shadow-xl p-4 bg-white/95 backdrop-blur">
+              <div className="rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
                     <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
@@ -417,7 +402,7 @@ export const Landing = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="grid gap-4">
                   <div className="rounded-lg bg-gradient-to-br from-sky-50 to-sky-100 p-4 border border-sky-200">
                     <div className="text-sm text-slate-600">Balance</div>
                     <div className="text-3xl font-bold">${balance.toFixed(2)}</div>
@@ -435,36 +420,32 @@ export const Landing = () => {
 
                   {isConnected && (
                     <>
-                      <Card className="border-2 border-slate-200">
-                        <CardContent className="p-4">
-                          <div className="text-sm font-medium mb-3">Send USD → PHP</div>
-                          <RatePreview onPreviewClick={handlePreviewClick} />
-                        </CardContent>
-                      </Card>
+                      <div className="rounded-lg border border-slate-200 p-4" id="demo">
+                        <div className="text-sm font-medium mb-3">Send USD → PHP</div>
+                        <RatePreview onPreviewClick={handlePreviewClick} />
+                      </div>
 
-                      <Card className="border-2 border-slate-200">
-                        <CardContent className="p-4">
-                          <div className="text-sm font-medium mb-2">Recent activity</div>
-                          {activity.length === 0 && transactions.length === 0 ? (
-                            <p className="text-sm text-slate-500">No activity yet</p>
-                          ) : (
-                            <ul className="space-y-2 text-sm">
-                              {activity.slice(0, 2).map(tx => (
-                                <li key={tx.id} className="flex items-center gap-2 text-slate-600">
-                                  <Clock className="h-4 w-4 text-yellow-500" />
-                                  ${tx.amount} → {tx.recipient} • {tx.status}
-                                </li>
-                              ))}
-                              {transactions.slice(0, 3 - activity.length).map(tx => (
-                                <li key={tx.transaction_id} className="flex items-center gap-2 text-slate-600">
-                                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                                  {tx.name} • ${Math.abs(tx.amount)}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </CardContent>
-                      </Card>
+                      <div className="rounded-lg border border-slate-200 p-4">
+                        <div className="text-sm font-medium mb-2">Recent activity</div>
+                        {activity.length === 0 && transactions.length === 0 ? (
+                          <p className="text-sm text-slate-500">No activity yet</p>
+                        ) : (
+                          <ul className="space-y-2 text-sm">
+                            {activity.slice(0, 2).map(tx => (
+                              <li key={tx.id} className="flex items-center gap-2 text-slate-600">
+                                <Clock className="h-4 w-4 text-yellow-500" />
+                                ${tx.amount} → {tx.recipient} • {tx.status}
+                              </li>
+                            ))}
+                            {transactions.slice(0, 1).map(tx => (
+                              <li key={tx.transaction_id} className="flex items-center gap-2 text-slate-600">
+                                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                {tx.name} • ${Math.abs(tx.amount)}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </>
                   )}
 
@@ -474,10 +455,13 @@ export const Landing = () => {
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
             <div className="pointer-events-none absolute -top-6 -right-6 h-28 w-28 rounded-full bg-yellow-300/40 blur-2xl" aria-hidden="true" />
           </div>
+        </div>
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/80 text-sm animate-bounce">
+          ↓ Learn how PBX works
         </div>
       </section>
 
