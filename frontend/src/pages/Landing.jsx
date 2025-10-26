@@ -404,6 +404,7 @@ export const Landing = () => {
                       className="mt-2 text-xs"
                       onClick={handleConnectBank}
                       disabled={isLoadingAccounts || isConnected}
+                      data-cta="connect-bank"
                     >
                       {isLoadingAccounts ? 'Connecting...' : isConnected ? 'Connected' : 'Connect bank (sandbox)'}
                     </Button>
