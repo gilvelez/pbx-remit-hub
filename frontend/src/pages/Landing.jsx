@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { ArrowRight, Shield, Zap, DollarSign, Globe, BarChart3, CheckCircle2, Clock, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Shield, Zap, DollarSign, Globe, BarChart3, CheckCircle2, Clock, X, RefreshCw } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
-import { mockBalance, addMockSubmission } from '../data/mock';
 import { useToast } from '../hooks/use-toast';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export const Landing = () => {
   const { toast } = useToast();
