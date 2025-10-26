@@ -17,6 +17,20 @@ code {
         source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
+/* PBX Custom UI Tweaks */
+/* Ensure focus outlines for accessibility */
+button:focus-visible, a:focus-visible { 
+    outline: 2px solid rgba(0,0,0,0.35); 
+    outline-offset: 2px; 
+}
+
+/* Sticky header enhancement */
+.header.is-sticky { 
+    backdrop-filter: saturate(1.2) blur(6px); 
+    background: rgba(255,255,255,0.85); 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06); 
+}
+
 @layer base {
     :root {
         --background: 0 0% 100%;
