@@ -3,6 +3,7 @@ import { ArrowRight, Shield, Zap, DollarSign, Globe, BarChart3, CheckCircle2, Cl
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card, CardContent } from '../components/ui/card';
+import { RatePreview } from '../components/RatePreview';
 import { useToast } from '../hooks/use-toast';
 import axios from 'axios';
 
