@@ -13,10 +13,9 @@ export const Landing = () => {
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [showPlaidModal, setShowPlaidModal] = useState(false);
-  const [demoAmount, setDemoAmount] = useState('');
-  const [demoDestination, setDemoDestination] = useState('GCash Wallet');
   const [showPreview, setShowPreview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewData, setPreviewData] = useState(null);
   
   // State management
   const [accounts, setAccounts] = useState([]);
