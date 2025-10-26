@@ -414,33 +414,7 @@ export const Landing = () => {
                       <Card className="border-2 border-slate-200">
                         <CardContent className="p-4">
                           <div className="text-sm font-medium mb-3">Send USD → PHP</div>
-                          <form onSubmit={handleDemoSubmit} className="space-y-3">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="Amount in USD"
-                              value={demoAmount}
-                              onChange={(e) => setDemoAmount(e.target.value)}
-                              className="w-full"
-                            />
-                            <select 
-                              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
-                              value={demoDestination}
-                              onChange={(e) => setDemoDestination(e.target.value)}
-                            >
-                              <option>GCash Wallet</option>
-                              <option>BPI Bank Account</option>
-                              <option>UnionBank Account</option>
-                              <option>BDO Account</option>
-                            </select>
-                            
-                            {/* Live rate preview */}
-                            <RatePreview amount={demoAmount} quotedRate={56.10} fee={1.00} />
-                            
-                            <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700">
-                              Preview transfer
-                            </Button>
-                          </form>
+                          <RatePreview onPreviewClick={handlePreviewClick} />
                         </CardContent>
                       </Card>
 
