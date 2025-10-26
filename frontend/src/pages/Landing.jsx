@@ -361,10 +361,10 @@ export const Landing = () => {
             <div className="mt-6 flex flex-wrap gap-3">
               <Button className="bg-sky-600 hover:bg-sky-700" onClick={() => {
                 document.querySelector('#join')?.scrollIntoView({ behavior: 'smooth' });
-              }}>
+              }} data-cta="hero-get-early-access">
                 Get early access
               </Button>
-              <Button variant="outline">Watch a 90‑sec demo</Button>
+              <Button variant="outline" data-cta="hero-watch-demo">Watch a 90‑sec demo</Button>
             </div>
             <p className="mt-4 text-xs text-slate-500">MVP demo uses sandbox data—no real funds move.</p>
           </div>
