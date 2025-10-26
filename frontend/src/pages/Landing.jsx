@@ -250,22 +250,28 @@ export const Landing = () => {
             <details className="rounded-xl border border-slate-200 p-4 bg-white">
               <summary className="font-semibold cursor-pointer">Is the MVP moving real money?</summary>
               <p className="mt-2 text-sm text-slate-600">
-                No. The demo runs in a sandbox with mock data. No real funds move until compliance is complete.
+                No. This demo uses sandbox data only — no real funds move in the MVP.
               </p>
             </details>
 
             <details className="rounded-xl border border-slate-200 p-4 bg-white">
               <summary className="font-semibold cursor-pointer">Which partners are involved?</summary>
               <p className="mt-2 text-sm text-slate-600">
-                Bank connectivity via Plaid (sandbox in MVP) and settlement rails modeled on Circle USDC.
-                Additional Philippine payout partners will be added in pilot.
+                PBX integrates with trusted infrastructure providers. For example, we illustrate bank connectivity using Plaid and stablecoin rails using Circle (USDC). These references are illustrative in the demo; production partners and configurations may vary by jurisdiction.
               </p>
             </details>
 
             <details className="rounded-xl border border-slate-200 p-4 bg-white">
               <summary className="font-semibold cursor-pointer">Can I try it today?</summary>
               <p className="mt-2 text-sm text-slate-600">
-                Yes—use the demo link to explore the flow with test data, or join the waitlist for early pilot access.
+                Yes—the interactive demo is available now with sample data. Join the early access list to be notified when the live pilot opens.
+              </p>
+            </details>
+
+            <details className="rounded-xl border border-slate-200 p-4 bg-white">
+              <summary className="font-semibold cursor-pointer">Is PBX a bank or money transmitter?</summary>
+              <p className="mt-2 text-sm text-slate-600">
+                PBX is not a bank. We're building a technology platform that will work with licensed partners where required. Availability, limits, and timing may vary by destination and payout provider.
               </p>
             </details>
           </div>
