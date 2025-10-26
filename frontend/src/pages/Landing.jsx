@@ -336,10 +336,10 @@ export const Landing = () => {
           <div className="flex items-center gap-3">
             <Button variant="outline" className="hidden sm:inline-flex" onClick={() => {
               document.querySelector('#demo-section')?.scrollIntoView({ behavior: 'smooth' });
-            }}>See demo</Button>
+            }} data-cta="see-demo">See demo</Button>
             <Button className="bg-sky-600 hover:bg-sky-700" onClick={() => {
               document.querySelector('#join')?.scrollIntoView({ behavior: 'smooth' });
-            }}>Get early access</Button>
+            }} data-cta="get-early-access">Get early access</Button>
           </div>
         </div>
       </header>
