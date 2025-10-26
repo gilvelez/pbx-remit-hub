@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr, validator
+from pydantic import BaseModel, Field, validator
 from typing import Optional, Annotated
 from datetime import datetime
 from bson import ObjectId
@@ -25,7 +25,7 @@ class PyObjectId(str):
 
 class Lead(BaseModel):
     id: Optional[PyObjectId] = Field(default_factory=PyObjectId, alias="_id")
-    email: EmailStr
+    email: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     @validator('email')
@@ -44,7 +44,7 @@ class Lead(BaseModel):
         }
 
 class LeadCreate(BaseModel):
-    email: EmailStr
+    email: str
 
     @validator('email')
     def email_to_lowercase(cls, v):
