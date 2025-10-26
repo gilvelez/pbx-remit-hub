@@ -494,6 +494,21 @@ export const Landing = () => {
         </div>
       </section>
 
+      {/* About Section */}
+      <section id="about" className="py-16 bg-white">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-slate-800">Built for the Heroes Who Build Home</h2>
+          <p className="mt-4 text-slate-600 text-lg max-w-3xl mx-auto">
+            Philippine Bayani Exchange (PBX) empowers overseas Filipinos to support their families with speed, security, and transparency.
+            Every transfer made through PBX carries love, dreams, and legacy — connecting hearts across borders.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <a href="#demo" className="rounded-xl bg-sky-600 px-5 py-3 text-white font-semibold shadow hover:bg-sky-700" data-cta="about-see-demo">See the Demo</a>
+            <a href="#join" className="rounded-xl border border-sky-600 px-5 py-3 text-sky-600 font-semibold hover:bg-sky-50" data-cta="about-join-early-access">Join Early Access</a>
+          </div>
+        </div>
+      </section>
+
       {/* How it works */}
       <section id="how" className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
