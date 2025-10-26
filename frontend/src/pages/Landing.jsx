@@ -21,7 +21,7 @@ export const Landing = () => {
   const [accounts, setAccounts] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [activity, setActivity] = useState([]);
-  const [balance, setBalance] = useState(0);
+  const [balance, setBalance] = useState(1250.00);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
 
