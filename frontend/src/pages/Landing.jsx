@@ -514,24 +514,16 @@ export const Landing = () => {
           <p className="mt-2 text-slate-600">Three simple steps. Our MVP uses sandbox data while we onboard partners.</p>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
             {[
-              { n: '01', t: 'Connect your bank', d: 'Link a U.S. bank account via Plaid in seconds (sandbox in MVP).', icon: Shield },
-              { n: '02', t: 'Convert to stablecoin', d: 'We illustrate USDC conversion on Circle rails for speed and transparency.', icon: Zap },
-              { n: '03', t: 'Deliver to PH', d: 'Send to GCash or PH bank accounts. Track status in real time.', icon: Globe },
-            ].map((s) => {
-              const Icon = s.icon;
-              return (
-                <Card key={s.n} className="border-2 border-slate-200 hover:border-sky-300 transition-all hover:shadow-md">
-                  <CardContent className="p-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="text-sm font-semibold text-slate-400">{s.n}</div>
-                      <Icon className="h-5 w-5 text-sky-600" />
-                    </div>
-                    <div className="text-xl font-bold mb-2">{s.t}</div>
-                    <p className="text-slate-600 text-sm">{s.d}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+              { n: '01', t: 'Connect your bank', d: 'Link a U.S. bank account via Plaid in seconds (sandbox in MVP).' },
+              { n: '02', t: 'Convert to stablecoin', d: 'We illustrate USDC conversion on Circle rails for speed and transparency.' },
+              { n: '03', t: 'Deliver to PH', d: 'Send to GCash or PH bank accounts. Track status in real time.' },
+            ].map((s) => (
+              <div key={s.n} className="rounded-2xl border border-slate-200 p-6 hover:border-sky-300 transition-all hover:shadow-md">
+                <div className="text-sm font-semibold text-slate-400">{s.n}</div>
+                <div className="mt-1 text-xl font-bold">{s.t}</div>
+                <p className="mt-2 text-slate-600 text-sm">{s.d}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
