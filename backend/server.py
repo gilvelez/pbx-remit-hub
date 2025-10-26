@@ -493,10 +493,17 @@ async def delete_session(user_id: str):
 app.include_router(api_router)
 
 # CORS middleware
+cors_origins = os.environ.get('CORS_ORIGINS', '*')
+if cors_origins == '*':
+    # For development with credentials, we need to be more specific
+    cors_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+else:
+    cors_origins = cors_origins.split(',')
+
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=cors_origins,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
     allow_headers=["*"],
 )
