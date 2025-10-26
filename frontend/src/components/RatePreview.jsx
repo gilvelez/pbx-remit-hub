@@ -81,6 +81,7 @@ export const RatePreview = ({ onPreviewClick }) => {
         type="submit" 
         className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={parsed <= 0}
+        data-cta="preview-transfer"
       >
         Preview transfer
       </button>
