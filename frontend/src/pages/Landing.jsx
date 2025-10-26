@@ -209,7 +209,6 @@ export const Landing = () => {
       setActivity([]);
       setBalance(0);
       setIsConnected(false);
-      setDemoAmount('');
       
       toast({
         title: 'Demo reset',
