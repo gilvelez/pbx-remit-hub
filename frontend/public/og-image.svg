@@ -1,0 +1,55 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Gradient Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0ea5e9;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ef4444;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#eab308;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Overlay gradient for depth -->
+    <linearGradient id="overlayGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#000000;stop-opacity:0.4" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  <rect width="1200" height="630" fill="url(#overlayGradient)"/>
+  
+  <!-- Logo (Simple PBX square with gradient) -->
+  <g transform="translate(100, 150)">
+    <rect width="80" height="80" rx="12" fill="url(#bgGradient)" opacity="0.3"/>
+    <rect x="4" y="4" width="72" height="72" rx="10" fill="white"/>
+    <text x="40" y="58" font-family="system-ui, -apple-system, sans-serif" font-size="32" font-weight="800" text-anchor="middle" fill="url(#bgGradient)">
+      PBX
+    </text>
+  </g>
+  
+  <!-- Main Text -->
+  <g transform="translate(100, 280)">
+    <!-- Title -->
+    <text x="0" y="0" font-family="system-ui, -apple-system, sans-serif" font-size="54" font-weight="800" fill="white" letter-spacing="-1">
+      Philippine Bayani Exchange
+    </text>
+    
+    <!-- Tagline -->
+    <text x="0" y="70" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="600" fill="white" opacity="0.95">
+      For the Heroes Who Build Home from Afar
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="130" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400" fill="white" opacity="0.85">
+      Every transfer carries more than money—
+    </text>
+    <text x="0" y="165" font-family="system-ui, -apple-system, sans-serif" font-size="24" font-weight="400" fill="white" opacity="0.85">
+      it carries love, dreams, and family.
+    </text>
+  </g>
+  
+  <!-- Decorative Elements -->
+  <circle cx="1050" cy="150" r="100" fill="white" opacity="0.1"/>
+  <circle cx="1000" cy="500" r="60" fill="white" opacity="0.08"/>
+  <circle cx="150" cy="550" r="40" fill="white" opacity="0.1"/>
+</svg>
