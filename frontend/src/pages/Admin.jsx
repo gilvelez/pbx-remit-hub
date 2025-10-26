@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download, Mail, Clock, AlertCircle } from 'lucide-react';
+import { Download, Mail, Clock, AlertCircle, Search, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -11,9 +11,11 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export const Admin = () => {
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState([]);
+  const [filteredSubmissions, setFilteredSubmissions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [username, setUsername] = useState('');
+  const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
 
@@ -27,6 +29,20 @@ export const Admin = () => {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    // Filter submissions based on search query
+    if (searchQuery.trim() === '') {
+      setFilteredSubmissions(submissions);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = submissions.filter(sub => 
+        sub.email.toLowerCase().includes(query) ||
+        new Date(sub.created_at).toLocaleString().toLowerCase().includes(query)
+      );
+      setFilteredSubmissions(filtered);
+    }
+  }, [searchQuery, submissions]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -45,6 +61,7 @@ export const Admin = () => {
       });
       
       setSubmissions(data);
+      setFilteredSubmissions(data);
       setIsAuthenticated(true);
       
       // Store credentials in sessionStorage
@@ -58,15 +75,11 @@ export const Admin = () => {
       console.error('Error loading submissions:', error);
       
       if (error.response?.status === 401) {
-        setAuthError('Invalid credentials. Please try again.');
+        setAuthError('Invalid credentials. Please check your password and try again.');
         setIsAuthenticated(false);
         sessionStorage.removeItem('pbx_admin_auth');
       } else {
-        toast({
-          title: 'Error',
-          description: 'Failed to load submissions',
-          variant: 'destructive'
-        });
+        setAuthError('Failed to load submissions. Please try again.');
       }
     } finally {
       setIsLoading(false);
@@ -76,34 +89,54 @@ export const Admin = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('pbx_admin_auth');
-    setUsername('');
+    setUsername('admin');
     setPassword('');
     setSubmissions([]);
+    setFilteredSubmissions([]);
+    setSearchQuery('');
   };
 
   const exportToCSV = () => {
-    const headers = ['Email', 'Timestamp'];
-    const rows = submissions.map(s => [
-      s.email,
-      new Date(s.created_at).toLocaleString()
-    ]);
+    // RFC4180 compliant CSV export
+    const escapeCSVField = (field) => {
+      // Convert to string
+      const str = String(field);
+      
+      // If field contains comma, newline, or double quote, wrap in quotes and escape quotes
+      if (str.includes(',') || str.includes('\n') || str.includes('"') || str.includes('\r')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
     
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(r => r.join(','))
-    ].join('\n');
+    // CSV header
+    const headers = ['Email', 'Created At'];
+    const headerRow = headers.map(escapeCSVField).join(',');
     
-    const blob = new Blob([csvContent], { type: 'text/csv' });
+    // CSV rows
+    const rows = filteredSubmissions.map(s => {
+      const row = [
+        s.email,
+        new Date(s.created_at).toISOString()
+      ];
+      return row.map(escapeCSVField).join(',');
+    });
+    
+    // Combine with CRLF line endings (RFC4180)
+    const csvContent = [headerRow, ...rows].join('\r\n');
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pbx-submissions-${Date.now()}.csv`;
+    a.download = `pbx-leads-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     window.URL.revokeObjectURL(url);
     
     toast({
       title: 'Export successful',
-      description: `Exported ${submissions.length} email submissions`,
+      description: `Exported ${filteredSubmissions.length} leads to CSV`,
     });
   };
 
@@ -113,7 +146,11 @@ export const Admin = () => {
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-2xl text-center">PBX Admin Login</CardTitle>
+            <div className="flex items-center justify-center mb-4">
+              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-sky-500 via-red-500 to-yellow-400" />
+            </div>
+            <CardTitle className="text-2xl text-center">PBX Admin</CardTitle>
+            <p className="text-sm text-slate-600 text-center mt-2">Enter password to access lead management</p>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -124,7 +161,8 @@ export const Admin = () => {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="admin"
-                  required
+                  disabled
+                  className="bg-slate-50"
                 />
               </div>
               <div>
@@ -133,25 +171,42 @@ export const Admin = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
+                  placeholder="Enter admin password"
                   required
+                  autoFocus
                 />
               </div>
               
               {authError && (
-                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg">
-                  <AlertCircle className="h-4 w-4" />
-                  {authError}
+                <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 p-3 rounded-lg border border-red-200">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span>{authError}</span>
                 </div>
               )}
               
-              <Button type="submit" className="w-full bg-sky-600 hover:bg-sky-700" disabled={isLoading}>
-                {isLoading ? 'Authenticating...' : 'Login'}
+              <Button 
+                type="submit" 
+                className="w-full bg-sky-600 hover:bg-sky-700" 
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Authenticating...
+                  </>
+                ) : (
+                  'Access Admin Panel'
+                )}
               </Button>
               
               <div className="text-center">
-                <Button variant="outline" onClick={() => window.location.href = '/'} className="w-full">
-                  Back to landing
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  onClick={() => window.location.href = '/'} 
+                  className="w-full"
+                >
+                  Back to Landing Page
                 </Button>
               </div>
             </form>
