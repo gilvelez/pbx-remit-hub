@@ -38,6 +38,7 @@ class SessionService:
         
         session = await collection.find_one({"user_id": user_id})
         if session:
+            session["_id"] = str(session["_id"])
             return SessionStateResponse(**session)
         return None
 
