@@ -174,7 +174,7 @@ export const Landing = () => {
       <section id="how" className="py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold tracking-tight">How PBX works</h2>
-          <p className="mt-2 text-slate-600">Three simple steps. Our MVP uses sandbox data while we onboard partners.</p>
+          <p className="mt-2 text-slate-600">Three simple steps. Our demo shows how PBX will connect banks, stablecoins, and Philippine wallets once live.</p>
           <div className="mt-8 grid gap-6 md:grid-cols-3">
             {[
               { n: "01", t: "Connect your bank", d: "Link a U.S. bank account via Plaid in seconds (sandbox in MVP)." },
