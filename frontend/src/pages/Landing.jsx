@@ -15,8 +15,52 @@ export const Landing = () => {
   const [demoAmount, setDemoAmount] = useState('');
   const [demoDestination, setDemoDestination] = useState('GCash Wallet');
   const [showPreview, setShowPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // State management
+  const [accounts, setAccounts] = useState([]);
+  const [transactions, setTransactions] = useState([]);
+  const [activity, setActivity] = useState([]);
+  const [balance, setBalance] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoadingAccounts, setIsLoadingAccounts] = useState(false);
 
-  const handleEmailSubmit = (e) => {
+  // Configure axios to send cookies
+  axios.defaults.withCredentials = true;
+
+  // Load state on mount
+  useEffect(() => {
+    loadState();
+  }, []);
+
+  const loadState = async () => {
+    try {
+      const { data } = await axios.get(`${API}/state`);
+      
+      // Load accounts and transactions if they exist
+      if (data.accounts && data.accounts.length > 0) {
+        setAccounts(data.accounts);
+        setIsConnected(true);
+        // Calculate balance from first checking account
+        const checking = data.accounts.find(acc => acc.subtype === 'checking');
+        if (checking) {
+          setBalance(checking.balances.current);
+        }
+      }
+      
+      if (data.transactions && data.transactions.length > 0) {
+        setTransactions(data.transactions.slice(0, 3));
+      }
+      
+      if (data.activity && data.activity.length > 0) {
+        setActivity(data.activity);
+      }
+    } catch (error) {
+      console.error('Error loading state:', error);
+    }
+  };
+
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
     if (!email || !email.includes('@')) {
       toast({
@@ -26,12 +70,87 @@ export const Landing = () => {
       });
       return;
     }
-    addMockSubmission(email);
-    toast({
-      title: 'Success!',
-      description: "You're on the early access list. We'll notify you soon.",
-    });
-    setEmail('');
+
+    setIsSubmitting(true);
+    try {
+      const { data } = await axios.post(`${API}/leads`, { email });
+      
+      if (data.status === 'ok') {
+        toast({
+          title: 'Success!',
+          description: "You're on the early access list. We'll notify you soon.",
+        });
+        setEmail('');
+      } else if (data.status === 'already_subscribed') {
+        toast({
+          title: 'Already subscribed',
+          description: 'This email is already on our list.',
+        });
+      } else if (data.status === 'invalid_email') {
+        toast({
+          title: 'Invalid email',
+          description: 'Please enter a valid email address',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit email. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleConnectBank = async () => {
+    setShowPlaidModal(true);
+  };
+
+  const handleBankSelect = async (bankName) => {
+    setIsLoadingAccounts(true);
+    setShowPlaidModal(false);
+    
+    try {
+      // 1. Create link token
+      await axios.post(`${API}/plaid/mock/create-link-token`);
+      
+      // 2. Exchange token (simulated)
+      await axios.post(`${API}/plaid/mock/exchange`, {
+        public_token: 'public-sandbox-mock'
+      });
+      
+      // 3. Get accounts
+      const { data: accountsData } = await axios.get(`${API}/plaid/mock/accounts`);
+      setAccounts(accountsData.accounts);
+      setIsConnected(true);
+      
+      // Calculate balance
+      const checking = accountsData.accounts.find(acc => acc.subtype === 'checking');
+      if (checking) {
+        setBalance(checking.balances.current);
+      }
+      
+      // 4. Get transactions
+      const { data: txData } = await axios.get(`${API}/plaid/mock/transactions?limit=3`);
+      setTransactions(txData.transactions);
+      
+      toast({
+        title: 'Bank connected (sandbox)',
+        description: `Connected to ${bankName} - demo mode`
+      });
+    } catch (error) {
+      console.error('Error connecting bank:', error);
+      toast({
+        title: 'Connection failed',
+        description: 'Failed to connect bank. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingAccounts(false);
+    }
   };
 
   const handleDemoSubmit = (e) => {
@@ -45,6 +164,75 @@ export const Landing = () => {
       return;
     }
     setShowPreview(true);
+  };
+
+  const handleConfirmTransfer = async () => {
+    try {
+      const amount = parseFloat(demoAmount);
+      const destType = demoDestination.includes('GCash') ? 'GCash' : 'PH_BANK';
+      const destTag = destType === 'GCash' ? '+63-917-XXX-XXXX' : 'BPI-XXXXXXXX';
+      
+      const { data } = await axios.post(`${API}/circle/sendFunds`, {
+        amountUSD: amount,
+        destinationType: destType,
+        destinationTag: destTag
+      });
+      
+      // Add to activity at the top
+      const newActivity = {
+        id: data.transactionId,
+        amount: amount,
+        recipient: demoDestination,
+        status: 'pending',
+        date: new Date().toISOString().split('T')[0],
+        estPhp: data.estPhp
+      };
+      setActivity([newActivity, ...activity]);
+      
+      toast({
+        title: 'Transfer initiated (sandbox)',
+        description: `Transaction ${data.transactionId} - demo mode`
+      });
+      
+      setShowPreview(false);
+      setDemoAmount('');
+    } catch (error) {
+      console.error('Error sending funds:', error);
+      toast({
+        title: 'Transfer failed',
+        description: 'Failed to initiate transfer. Please try again.',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleResetDemo = async () => {
+    try {
+      await axios.post(`${API}/state/clear`);
+      
+      // Reset all state
+      setAccounts([]);
+      setTransactions([]);
+      setActivity([]);
+      setBalance(0);
+      setIsConnected(false);
+      setDemoAmount('');
+      
+      toast({
+        title: 'Demo reset',
+        description: 'All demo data has been cleared'
+      });
+      
+      // Reload state
+      loadState();
+    } catch (error) {
+      console.error('Error resetting demo:', error);
+      toast({
+        title: 'Reset failed',
+        description: 'Failed to reset demo. Please refresh the page.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const PlaidModal = () => (
