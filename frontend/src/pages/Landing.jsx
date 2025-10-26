@@ -157,11 +157,13 @@ export const Landing = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-24 md:pb-24 grid md:grid-cols-2 gap-10 items-center">
           <div>
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight">
-              Send USD to the Philippines
-              <span className="block text-sky-600 mt-2">in minutes—simple, secure, transparent.</span>
+              For the Heroes Who Build Home from Afar.
             </h1>
+            <p className="mt-4 text-xl sm:text-2xl text-sky-600 font-semibold leading-tight">
+              Every transfer carries more than money—it carries love, dreams, and family.
+            </p>
             <p className="mt-5 text-lg text-slate-600">
-              PBX (Philippine Bayan Exchange) lets you connect a U.S. bank, convert to stablecoins, and deliver to PH wallets and bank accounts—fast. Built on trusted infrastructure.
+              Philippine Bayani Exchange (PBX) empowers every modern hero to care for family with speed, security, and heart. Seamless cross-border transfers built for Filipinos worldwide.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <Button className="bg-sky-600 hover:bg-sky-700" onClick={() => {
