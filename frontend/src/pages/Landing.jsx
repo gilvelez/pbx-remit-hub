@@ -353,25 +353,17 @@ export const Landing = () => {
             background: "linear-gradient(135deg, #0033A0 0%, #C8102E 70%, #FCD116 100%)",
           }}
         >
-          <h1 className="text-4xl md:text-6xl font-extrabold text-white drop-shadow-lg mb-4">
-            Para sa Bayaning Pilipino, bawat padala ay pagmamahal.
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-center">
+            Para sa <span className="text-yellow-300">Bayaning Pilipino</span>,<br />
+            bawat padala ay <span className="text-sky-200">pagmamahal.</span>
           </h1>
-          <p className="text-lg md:text-2xl text-white/90 max-w-2xl mb-8">
+          <p className="mt-4 text-lg text-white/90 text-center max-w-xl mx-auto">
             For the Filipino Hero — every remittance is an act of love.
           </p>
-
-          {/* CTA */}
-          <a
-            href="#join"
-            className="inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-base md:text-lg font-semibold bg-white/95 text-slate-900 shadow-lg hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white"
-            aria-label="Get started with PBX"
-            data-cta="hero-banner-get-started"
-          >
-            Get Started
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </a>
+          <div className="mt-6 flex justify-center gap-3">
+            <a href="#join" className="rounded-xl bg-white text-sky-700 px-5 py-3 font-semibold shadow hover:bg-slate-100" data-cta="hero-get-started">Get Started</a>
+            <a href="#how" className="rounded-xl border border-white/60 px-5 py-3 font-semibold text-white hover:bg-white/10" data-cta="hero-learn-more">Learn more</a>
+          </div>
         </section>
 
         {/* Main Hero Content */}
