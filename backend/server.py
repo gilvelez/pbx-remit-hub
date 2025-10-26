@@ -128,40 +128,6 @@ async def get_all_leads(admin: str = Depends(verify_admin_auth)):
             detail="Failed to fetch leads"
         )
 
-@api_router.get("/leads/count")
-async def get_lead_count():
-    """Get total number of leads."""
-    try:
-        count = await lead_service.get_lead_count()
-        return {"count": count}
-    except Exception as e:
-        logger.error(f"Error getting lead count: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get lead count"
-        )
-
-@api_router.delete("/leads/{lead_id}")
-async def delete_lead(lead_id: str):
-    """Delete a lead by ID."""
-    try:
-        deleted = await lead_service.delete_lead(lead_id)
-        if not deleted:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Lead not found"
-            )
-        return {"message": "Lead deleted successfully"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error deleting lead: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete lead"
-        )
-
-
 # ============== Session Management Routes ==============
 
 @api_router.post("/sessions", response_model=SessionStateResponse, status_code=status.HTTP_201_CREATED)
