@@ -534,24 +534,18 @@ export const Landing = () => {
           <h2 className="text-3xl font-bold tracking-tight">Why teams choose PBX</h2>
           <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {[
-              { t: 'Fast transfers', d: 'Move value quickly with an instant, modern UX.', icon: Zap, color: 'text-yellow-600' },
-              { t: 'Transparent fees', d: 'No surprises—clear preview before you send.', icon: DollarSign, color: 'text-sky-600' },
-              { t: 'Global-grade security', d: 'Best-practice encryption, tokenization, and audit logs.', icon: Shield, color: 'text-red-600' },
-              { t: 'KYC-ready design', d: 'Built to integrate with identity providers when we go live.', icon: CheckCircle2, color: 'text-green-600' },
-              { t: 'Multi-destination', d: 'GCash, bank accounts, and more to come.', icon: Globe, color: 'text-sky-600' },
-              { t: 'Admin insights', d: 'View volumes, user activity, and risk flags at a glance.', icon: BarChart3, color: 'text-yellow-600' },
-            ].map((f) => {
-              const Icon = f.icon;
-              return (
-                <Card key={f.t} className="bg-white hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <Icon className={`h-6 w-6 ${f.color} mb-3`} />
-                    <div className="text-lg font-bold mb-2">{f.t}</div>
-                    <p className="text-slate-600 text-sm">{f.d}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
+              { t: 'Fast transfers', d: 'Move value quickly with an instant, modern UX.' },
+              { t: 'Transparent fees', d: 'No surprises—clear preview before you send.' },
+              { t: 'Global-grade security', d: 'Best-practice encryption, tokenization, and audit logs.' },
+              { t: 'KYC-ready design', d: 'Built to integrate with identity providers when we go live.' },
+              { t: 'Multi-destination', d: 'GCash, bank accounts, and more to come.' },
+              { t: 'Admin insights', d: 'View volumes, user activity, and risk flags at a glance.' },
+            ].map((f) => (
+              <div key={f.t} className="rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-md transition-shadow">
+                <div className="text-lg font-bold">{f.t}</div>
+                <p className="mt-2 text-slate-600 text-sm">{f.d}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -562,15 +556,23 @@ export const Landing = () => {
           <h3 className="text-3xl font-bold">Be first to try PBX</h3>
           <p className="mt-2 text-slate-600">Join the early access list. We'll notify you when the live pilot opens.</p>
           <form onSubmit={handleEmailSubmit} className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+            <label htmlFor="email" className="sr-only">Email address</label>
             <Input
+              id="email"
               type="email"
               placeholder="you@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full sm:w-80"
+              className="w-full sm:w-80 rounded-xl border border-slate-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-500"
               disabled={isSubmitting}
+              aria-label="Email address"
             />
-            <Button type="submit" className="bg-sky-600 hover:bg-sky-700 px-6" disabled={isSubmitting} data-cta="submit-email">
+            <Button 
+              type="submit" 
+              data-cta="request-access"
+              className="rounded-xl bg-sky-600 px-6 py-3 text-sm font-semibold text-white hover:bg-sky-700" 
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Submitting...' : 'Request access'}
             </Button>
           </form>
