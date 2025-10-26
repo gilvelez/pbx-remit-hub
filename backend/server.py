@@ -65,13 +65,42 @@ async def health_check():
 
 # ============== Lead Management Routes ==============
 
-@api_router.post("/leads", response_model=LeadResponse, status_code=status.HTTP_201_CREATED)
+def validate_email(email: str) -> bool:
+    """Validate email with basic regex."""
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    return re.match(pattern, email) is not None
+
+@api_router.post("/leads")
 async def create_lead(lead_data: LeadCreate):
-    """Create a new lead (email submission)."""
+    """
+    Create a new lead (email submission).
+    Returns 200 with status even if email already exists.
+    """
+    # Validate email format
+    if not validate_email(lead_data.email):
+        return {
+            "status": "invalid_email",
+            "message": "Please provide a valid email address"
+        }
+    
     try:
+        # Try to create the lead
         lead = await lead_service.create_lead(lead_data)
-        return lead
+        return {
+            "status": "ok",
+            "lead": {
+                "id": lead.id,
+                "email": lead.email,
+                "created_at": lead.created_at.isoformat()
+            }
+        }
     except ValueError as e:
+        # Email already exists
+        if "already registered" in str(e):
+            return {
+                "status": "already_subscribed",
+                "message": "This email is already subscribed"
+            }
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
@@ -83,11 +112,14 @@ async def create_lead(lead_data: LeadCreate):
             detail="Failed to create lead"
         )
 
-@api_router.get("/leads", response_model=List[LeadResponse])
-async def get_all_leads(skip: int = 0, limit: int = 1000):
-    """Get all leads with pagination."""
+@api_router.get("/leads")
+async def get_all_leads(admin: str = Depends(verify_admin_auth)):
+    """
+    Get last 500 leads, newest first.
+    Requires Basic Auth: admin:<ADMIN_PASSWORD>
+    """
     try:
-        leads = await lead_service.get_all_leads(skip=skip, limit=limit)
+        leads = await lead_service.get_all_leads(skip=0, limit=500)
         return leads
     except Exception as e:
         logger.error(f"Error fetching leads: {e}")
