@@ -218,7 +218,7 @@ export const Admin = () => {
             <CardContent>
               <div className="text-3xl font-bold">
                 {submissions.filter(s => {
-                  const date = new Date(s.timestamp);
+                  const date = new Date(s.created_at);
                   const today = new Date();
                   return date.toDateString() === today.toDateString();
                 }).length}
@@ -233,7 +233,7 @@ export const Admin = () => {
             <CardContent>
               <div className="text-3xl font-bold">
                 {submissions.filter(s => {
-                  const date = new Date(s.timestamp);
+                  const date = new Date(s.created_at);
                   const weekAgo = new Date();
                   weekAgo.setDate(weekAgo.getDate() - 7);
                   return date >= weekAgo;
