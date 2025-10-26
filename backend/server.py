@@ -191,6 +191,128 @@ async def clear_state(request: Request, response: Response):
         )
 
 
+# ============== Plaid Mock API Routes ==============
+
+@api_router.post("/plaid/mock/create-link-token")
+async def create_link_token(request: Request, response: Response):
+    """
+    Create a mock Plaid Link token.
+    Returns a link token that expires in 1 hour.
+    """
+    try:
+        token_data = generate_link_token()
+        logger.info("Generated mock Plaid link token")
+        return token_data
+    except Exception as e:
+        logger.error(f"Error generating link token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate link token"
+        )
+
+@api_router.post("/plaid/mock/exchange")
+async def exchange_public_token(request: Request, response: Response):
+    """
+    Exchange a public token for an access token (mock).
+    Saves the access token to the user's SessionState.
+    """
+    try:
+        # Get user ID
+        user_id = get_user_id(request, response)
+        
+        # Generate mock tokens
+        access_token = generate_access_token()
+        item_id = generate_item_id()
+        
+        # Update session with access token
+        session = await session_service.get_or_create_session(user_id)
+        update_data = SessionStateUpdate(access_token=access_token)
+        await session_service.update_session(user_id, update_data)
+        
+        logger.info(f"Exchanged public token for user: {user_id}")
+        
+        return {
+            "access_token": access_token,
+            "item_id": item_id
+        }
+    except Exception as e:
+        logger.error(f"Error exchanging token: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to exchange token"
+        )
+
+@api_router.get("/plaid/mock/accounts")
+async def get_accounts(request: Request, response: Response):
+    """
+    Get mock bank accounts.
+    Seeds sample accounts if none exist, saves to SessionState.
+    """
+    try:
+        # Get user ID
+        user_id = get_user_id(request, response)
+        
+        # Get or create session
+        session = await session_service.get_or_create_session(user_id)
+        
+        # Check if accounts already exist
+        if not session.accounts or len(session.accounts) == 0:
+            # Seed mock accounts
+            mock_accounts = generate_mock_accounts()
+            update_data = SessionStateUpdate(accounts=mock_accounts)
+            session = await session_service.update_session(user_id, update_data)
+            logger.info(f"Seeded {len(mock_accounts)} mock accounts for user: {user_id}")
+        
+        return {
+            "accounts": session.accounts
+        }
+    except Exception as e:
+        logger.error(f"Error fetching accounts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch accounts"
+        )
+
+@api_router.get("/plaid/mock/transactions")
+async def get_transactions(request: Request, response: Response, limit: int = 10):
+    """
+    Get mock transactions.
+    Seeds sample transactions if none exist, saves to SessionState.
+    """
+    try:
+        # Get user ID
+        user_id = get_user_id(request, response)
+        
+        # Get or create session
+        session = await session_service.get_or_create_session(user_id)
+        
+        # Check if transactions already exist
+        if not session.transactions or len(session.transactions) == 0:
+            # Get account IDs for transactions
+            account_ids = []
+            if session.accounts:
+                account_ids = [acc.get("account_id") for acc in session.accounts if acc.get("account_id")]
+            
+            # Seed mock transactions
+            mock_transactions = generate_mock_transactions(account_ids, limit)
+            update_data = SessionStateUpdate(transactions=mock_transactions)
+            session = await session_service.update_session(user_id, update_data)
+            logger.info(f"Seeded {len(mock_transactions)} mock transactions for user: {user_id}")
+        
+        # Return limited transactions
+        transactions = session.transactions[:limit] if session.transactions else []
+        
+        return {
+            "transactions": transactions
+        }
+    except Exception as e:
+        logger.error(f"Error fetching transactions: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to fetch transactions"
+        )
+
+
 # ============== Session Management Routes ==============
 
 @api_router.post("/sessions", response_model=SessionStateResponse, status_code=status.HTTP_201_CREATED)
