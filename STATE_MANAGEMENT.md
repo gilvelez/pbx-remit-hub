@@ -113,7 +113,7 @@ curl -b cookies.txt -X POST http://localhost:8001/api/state/clear
 curl -c cookies.txt http://localhost:8001/api/state
 
 # Response includes new user_id, cookie is set
-# Cookie: pbx_uid=9e24008a-2a52-4977-ac7c-28dc3bf9a288
+# Cookie: pbx_uid=remit-heroes
 ```
 
 ### Example 2: Returning user
