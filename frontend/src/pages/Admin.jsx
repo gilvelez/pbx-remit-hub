@@ -267,12 +267,12 @@ export const Admin = () => {
                   </thead>
                   <tbody>
                     {submissions.map((sub) => (
-                      <tr key={sub.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <tr key={sub._id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="py-3 px-4 font-medium">{sub.email}</td>
                         <td className="py-3 px-4 text-sm text-slate-600">
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4" />
-                            {new Date(sub.timestamp).toLocaleString()}
+                            {new Date(sub.created_at).toLocaleString()}
                           </div>
                         </td>
                         <td className="py-3 px-4">
