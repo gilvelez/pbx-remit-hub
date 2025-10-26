@@ -287,10 +287,11 @@ export const Landing = () => {
             <span className="text-slate-400">•</span>
             <span className="text-sm text-slate-500">Philippine Bayani Exchange</span>
           </div>
-          <p className="text-xs text-slate-500">
-            © {new Date().getFullYear()} PBX. Demo experience using sandbox data; no real funds move.
-            PBX is not currently providing money transmission or virtual asset services.
-            "Plaid" and "Circle" are trademarks of their respective owners and are used here for illustrative purposes only.
+          <p className="text-xs text-slate-500 text-center md:text-right max-w-2xl">
+            © {new Date().getFullYear()} PBX. Demo experience using sandbox data; no real funds move. 
+            PBX is not a bank or licensed money transmitter at this stage. Services may be provided by licensed partners where required. 
+            Availability, limits, and timing vary by destination and payout partner. 
+            "Plaid" and "Circle" are trademarks of their respective owners and are used here illustratively.
           </p>
         </div>
       </footer>
