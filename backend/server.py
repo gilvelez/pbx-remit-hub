@@ -32,6 +32,9 @@ from services.plaid_service import get_plaid_service
 # Import auth
 from auth.basic_auth import verify_admin_auth
 
+# Import routes
+from routes.plaid import router as plaid_router
+
 # Import utilities
 from utils.user_helper import get_user_id, get_user_id_from_request
 from utils.plaid_mock import (
