@@ -17,9 +17,9 @@ export async function api(path, options = {}) {
 }
 
 // Example helper to get a Plaid link token
-export async function getPlaidLinkToken(userId = "user-123") {
-  return api("/.netlify/functions/plaid-create-link-token", {
-    body: { userId }
+export async function getPlaidLinkToken(userId = "pbx-demo-user") {
+  return api("/.netlify/functions/plaid-link-token", {
+    body: { client_user_id: userId }
   });
 }
 
