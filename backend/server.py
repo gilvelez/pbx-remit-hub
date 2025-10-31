@@ -560,8 +560,9 @@ async def delete_session(user_id: str):
         )
 
 
-# Include the router in the main app
+# Include routers
 app.include_router(api_router)
+app.include_router(plaid_router)
 
 # CORS middleware - only allow specific origins when using credentials
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
