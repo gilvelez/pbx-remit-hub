@@ -12,7 +12,8 @@
 
 [build.environment]
   # Secrets scanner: omit serverless source (reads process.env at runtime)
-  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**"
+  # Also omit documentation files that contain example/placeholder credentials
+  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**,*.md,**/*.md,NETLIFY_*.md"
   
   # IMPORTANT: Don't expose these in build (remove from build.environment)
   # These should ONLY be set in Netlify UI for functions to access at runtime
