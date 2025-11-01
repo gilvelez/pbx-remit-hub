@@ -1,0 +1,16 @@
+{
+  "name": "pbx-netlify-functions",
+  "version": "1.0.0",
+  "description": "Serverless functions for PBX landing page",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["netlify", "serverless", "pbx"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^6.0.0",
+    "plaid": "^20.0.0"
+  }
+}
