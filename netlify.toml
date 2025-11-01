@@ -1,5 +1,23 @@
+# Netlify build + functions config for PBX
+
 [build]
+  # Your React app lives under /frontend
   base = "frontend"
   command = "npm run build"
   publish = "build"
-  functions = "frontend/netlify/functions"
+
+  # IMPORTANT: With base=frontend, this path is relative to /frontend
+  # so Netlify packages functions from /frontend/netlify/functions
+  functions = "netlify/functions"
+
+[build.environment]
+  # Secrets scanner: omit serverless source (reads process.env at runtime, no literals)
+  # and the legacy backup file if it's still in the repo.
+  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**"
+
+  # (Optional) If you want a non-sensitive frontend flag, set in Netlify UI:
+  # REACT_APP_PBX_MODE = "sandbox"
+
+[functions]
+  # Use esbuild for fast, Node 18+ compatible bundling
+  node_bundler = "esbuild"
