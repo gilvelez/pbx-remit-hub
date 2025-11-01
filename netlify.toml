@@ -1,26 +1,21 @@
-# Netlify build + functions config for PBX
+# Netlify configuration for PBX
+# Functions at repo root, frontend in /frontend subfolder
 
 [build]
-  # Your React app lives under /frontend
   base = "frontend"
-  command = "npm run build"
-  publish = "build"
-
-  # IMPORTANT: With base=frontend, this path is relative to /frontend
-  # so Netlify packages functions from /frontend/netlify/functions
-  functions = "netlify/functions"
+  publish = "frontend/build"
+  command = "npm install && npm run build"
 
 [build.environment]
-  # Secrets scanner configuration
-  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**,*.md,**/*.md,NETLIFY_*.md,**/*SETUP.md,**/*GUIDE.md"
-  
-  # Omit known safe/placeholder values from scanning
+  # Omit known safe/non-sensitive values from secrets scanning
   SECRETS_SCAN_OMIT_KEYS = "PLAID_ENV"
-  
-  # IMPORTANT: Don't expose PLAID credentials in build
-  # PLAID_CLIENT_ID, PLAID_SECRET should ONLY be set in Netlify UI 
-  # with Functions/Runtime scope (NOT Builds scope)
+  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**,*.md,**/*.md"
 
 [functions]
-  # Use esbuild for fast, Node 18+ compatible bundling
+  directory = "netlify/functions"
   node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
