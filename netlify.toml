@@ -11,13 +11,15 @@
   functions = "netlify/functions"
 
 [build.environment]
-  # Secrets scanner: omit serverless source (reads process.env at runtime)
-  # Also omit documentation files that contain example/placeholder credentials
-  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**,*.md,**/*.md,NETLIFY_*.md"
+  # Secrets scanner configuration
+  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**,*.md,**/*.md,NETLIFY_*.md,**/*SETUP.md,**/*GUIDE.md"
   
-  # IMPORTANT: Don't expose these in build (remove from build.environment)
-  # These should ONLY be set in Netlify UI for functions to access at runtime
-  # DO NOT list PLAID_* variables here as they will be bundled into client code
+  # Omit known safe/placeholder values from scanning
+  SECRETS_SCAN_OMIT_KEYS = "PLAID_ENV"
+  
+  # IMPORTANT: Don't expose PLAID credentials in build
+  # PLAID_CLIENT_ID, PLAID_SECRET should ONLY be set in Netlify UI 
+  # with Functions/Runtime scope (NOT Builds scope)
 
 [functions]
   # Use esbuild for fast, Node 18+ compatible bundling
