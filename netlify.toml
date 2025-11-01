@@ -11,12 +11,12 @@
   functions = "netlify/functions"
 
 [build.environment]
-  # Secrets scanner: omit serverless source (reads process.env at runtime, no literals)
-  # and the legacy backup file if it's still in the repo.
+  # Secrets scanner: omit serverless source (reads process.env at runtime)
   SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**"
-
-  # (Optional) If you want a non-sensitive frontend flag, set in Netlify UI:
-  # REACT_APP_PBX_MODE = "sandbox"
+  
+  # IMPORTANT: Don't expose these in build (remove from build.environment)
+  # These should ONLY be set in Netlify UI for functions to access at runtime
+  # DO NOT list PLAID_* variables here as they will be bundled into client code
 
 [functions]
   # Use esbuild for fast, Node 18+ compatible bundling
