@@ -1,69 +1,69 @@
-// Netlify Function: Create Lead
-// Path: netlify/functions/create-lead.js
+// PBX Function: Create Lead
+// Saves email leads to MongoDB with connection pooling
 
 const { MongoClient } = require('mongodb');
 
-let cachedDb = null;
-
-async function connectToDatabase(uri) {
-  if (cachedDb) return cachedDb;
-  const client = await MongoClient.connect(uri);
-  cachedDb = client.db('pbx');
-  return cachedDb;
-}
+let client; // Reuse connection across invocations
 
 exports.handler = async (event) => {
-  // Handle CORS
-  if (event.httpMethod === 'OPTIONS') {
-    return {
-      statusCode: 200,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      },
-      body: '',
-    };
-  }
-
   try {
-    const { email } = JSON.parse(event.body);
+    // Get MongoDB configuration from environment
+    const uri = process.env.MONGODB_URI;
+    const dbName = process.env.MONGODB_DB || 'pbx';
     
-    if (!email) {
+    if (!uri) {
+      throw new Error('MONGODB_URI environment variable is not set');
+    }
+
+    // Initialize client if not exists
+    if (!client) {
+      client = new MongoClient(uri);
+    }
+
+    // Connect if not connected
+    if (!client.topology?.isConnected()) {
+      await client.connect();
+    }
+
+    // Get database and collection
+    const db = client.db(dbName);
+    const leads = db.collection('leads');
+
+    // Parse request body
+    const body = JSON.parse(event.body || '{}');
+    
+    // Validate email
+    if (!body.email) {
       return {
         statusCode: 400,
         body: JSON.stringify({ error: 'Email is required' }),
+        headers: { 'Content-Type': 'application/json' }
       };
     }
 
-    const db = await connectToDatabase(process.env.MONGODB_URI);
-    
-    const result = await db.collection('leads').insertOne({
-      email,
-      created_at: new Date(),
-      source: 'netlify-function',
+    // Insert lead with timestamp
+    const result = await leads.insertOne({
+      email: body.email,
+      source: body.source || 'netlify-function',
+      createdAt: new Date(),
+      metadata: body.metadata || {}
     });
-    
+
     return {
-      statusCode: 201,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
+      statusCode: 200,
       body: JSON.stringify({ 
-        message: 'Lead created successfully',
-        id: result.insertedId 
+        insertedId: result.insertedId,
+        message: 'Lead created successfully'
       }),
+      headers: { 'Content-Type': 'application/json' }
     };
+
   } catch (error) {
     console.error('Error creating lead:', error);
     return {
       statusCode: 500,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json',
-      },
       body: JSON.stringify({ error: error.message }),
+      headers: { 'Content-Type': 'application/json' }
     };
   }
 };
