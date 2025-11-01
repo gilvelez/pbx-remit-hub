@@ -3,20 +3,36 @@
 
 exports.handler = async (event) => {
   try {
+    // Extract environment variables (Netlify injects these)
+    const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
+    const PLAID_SECRET = process.env.PLAID_SECRET;
+    const PLAID_ENV = process.env.PLAID_ENV || 'sandbox';
+    const APP_BASE_URL = process.env.APP_BASE_URL;
+    
+    // Validate required environment variables
+    if (!PLAID_CLIENT_ID || !PLAID_SECRET) {
+      throw new Error('Missing required Plaid credentials in environment variables');
+    }
+
     const { client_user_id = "pbx-demo-user" } = JSON.parse(event.body || "{}");
 
-    const response = await fetch("https://sandbox.plaid.com/link/token/create", {
+    // Construct Plaid API URL based on environment
+    const plaidApiUrl = PLAID_ENV === 'production' 
+      ? 'https://production.plaid.com/link/token/create'
+      : 'https://sandbox.plaid.com/link/token/create';
+
+    const response = await fetch(plaidApiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        client_id: process.env.PLAID_CLIENT_ID,
-        secret: process.env.PLAID_SECRET,
+        client_id: PLAID_CLIENT_ID,
+        secret: PLAID_SECRET,
         user: { client_user_id },
         client_name: "Philippine Bayani Exchange",
         products: ["auth"],
         language: "en",
         country_codes: ["US"],
-        redirect_uri: `${process.env.APP_BASE_URL}/plaid/callback`
+        redirect_uri: `${APP_BASE_URL}/plaid/callback`
       })
     });
 
