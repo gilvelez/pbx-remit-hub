@@ -16,6 +16,10 @@ node_modules/
 !.yarn/releases
 !.yarn/versions
 
+# Lock files - Standardize on Yarn
+/frontend/package-lock.json
+package-lock.json
+
 # Testing
 /coverage
 
