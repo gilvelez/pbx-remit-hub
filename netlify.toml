@@ -1,19 +1,6 @@
+# netlify.toml (repo root)
+
 [build]
-  base = "frontend"
-  publish = "build"
-  command = "cd .. && npm install && cd frontend && npm run build"
-
-[functions]
-  directory = "../netlify/functions"
-
-# Secrets scanning configuration
-[build.environment]
-  NODE_VERSION = "20"
-  # Disable secrets scanning for this build since PLAID secrets are only used in serverless functions
-  SECRETS_SCAN_ENABLED = "false"
-
-# SPA fallback so deep links still work
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+  command   = "cd frontend && npm ci && npm run build"
+  publish   = "frontend/build"
+  functions = "netlify/functions"
