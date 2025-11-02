@@ -1,6 +1,6 @@
 # netlify.toml (repo root)
 
 [build]
-  command   = "cd frontend && npm ci && npm run build"
+  command   = "cd frontend && yarn install --frozen-lockfile && yarn build"
   publish   = "frontend/build"
   functions = "netlify/functions"
