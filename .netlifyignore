@@ -1,0 +1,39 @@
+# Netlify Ignore - Exclude files from deployment and secrets scanning
+
+# Documentation files with example secrets
+*.md
+**/*.md
+
+# Backend directory (not needed for frontend deployment)
+backend/
+backend/**
+
+# Development and testing files
+test_result.md
+*.log
+*.test.js
+*.spec.js
+
+# Environment files (should use Netlify env vars instead)
+.env
+.env.*
+!.env.example
+
+# Version control
+.git/
+.gitignore
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build artifacts
+__pycache__/
+*.pyc
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
