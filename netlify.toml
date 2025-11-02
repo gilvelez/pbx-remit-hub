@@ -1,20 +1,12 @@
-# Netlify configuration for PBX
-# Functions at repo root, frontend in /frontend subfolder
-
 [build]
   base = "frontend"
-  publish = "frontend/build"
-  command = "npm install && npm run build"
-
-[build.environment]
-  # Omit known safe/non-sensitive values from secrets scanning
-  SECRETS_SCAN_OMIT_KEYS = "PLAID_ENV"
-  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**,*.md,**/*.md"
+  publish = "build"
+  command = "npm run build"
 
 [functions]
   directory = "netlify/functions"
-  node_bundler = "esbuild"
 
+# SPA fallback so deep links still work
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -1,0 +1,8 @@
+{
+  "name": "pbx-netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify serverless functions for PBX",
+  "dependencies": {
+    "plaid": "^24.0.0"
+  }
+}
