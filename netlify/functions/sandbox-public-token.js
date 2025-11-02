@@ -1,3 +1,4 @@
+// netlify/functions/sandbox-public-token.js
 const { Configuration, PlaidApi, PlaidEnvironments } = require('plaid');
 
 exports.handler = async () => {
@@ -14,7 +15,7 @@ exports.handler = async () => {
 
     const client = new PlaidApi(config);
 
-    const response = await client.sandboxPublicTokenCreate({
+    const resp = await client.sandboxPublicTokenCreate({
       institution_id: 'ins_109508', // Plaid Test Institution
       initial_products: ['transactions', 'auth'],
     });
@@ -22,17 +23,15 @@ exports.handler = async () => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        public_token: response.data.public_token,
-        request_id: response.data.request_id,
+        public_token: resp.data.public_token,
+        request_id: resp.data.request_id,
       }),
     };
-  } catch (error) {
-    console.error('Sandbox public_token error:', error.response?.data || error);
+  } catch (e) {
+    console.error('Sandbox public_token error:', e.response?.data || e);
     return {
       statusCode: 500,
-      body: JSON.stringify({
-        error: error.response?.data || String(error),
-      }),
+      body: JSON.stringify({ error: e.response?.data || String(e) }),
     };
   }
 };
