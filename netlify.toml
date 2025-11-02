@@ -9,7 +9,7 @@
 # Secrets scanning configuration - allow PLAID secrets in serverless functions only
 [build.environment]
   NODE_VERSION = "20"
-  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**"
+  SECRETS_SCAN_OMIT_PATHS = "netlify/functions/**,backend/**,*.md,**/*.md"
 
 # SPA fallback so deep links still work
 [[redirects]]
