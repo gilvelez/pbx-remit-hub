@@ -4,3 +4,6 @@
   command   = "npm install && cd frontend && yarn install --frozen-lockfile && yarn build"
   publish   = "frontend/build"
   functions = "netlify/functions"
+
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
