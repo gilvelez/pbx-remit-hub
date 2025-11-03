@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PBX • Plaid Demo</title>
+  <script src="https://cdn.plaid.com/link/v2/stable/link-initialize.js"></script>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#0b1220;color:#e2e8f0;margin:0;padding:24px}
+    h1{margin:0 0 16px 0}
+    .row{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin:16px 0}
+    button{padding:12px 14px;border-radius:12px;border:1px solid #334155;background:#111827;color:#fff;cursor:pointer}
+    pre{background:#0a0f1c;color:#a7f3d0;padding:16px;border-radius:12px;overflow:auto;min-height:160px}
+    small{color:#94a3b8}
+  </style>
+</head>
+<body>
+  <h1>PBX • Plaid Demo (Static)</h1>
+  <div class="row">
+    <button id="btn-link">1) Create Link Token</button>
+    <button id="btn-open" disabled>2) Open Link (UI)</button>
+    <button id="btn-sandbox">Alt: Sandbox Public Token</button>
+    <button id="btn-exchange" disabled>3) Exchange → Access</button>
+    <button id="btn-balances" disabled>4) Balances</button>
+    <button id="btn-auth" disabled>Auth (ACH)</button>
+    <button id="btn-identity" disabled>Identity</button>
+  </div>
+
+  <small id="state">link_token: — · public_token: — · access_token: —</small>
+  <pre id="out">// results will appear here</pre>
+
+  <script>
+    const out = v => document.getElementById("out").textContent = typeof v === "string" ? v : JSON.stringify(v,null,2);
+    const setState = s => document.getElementById("state").textContent =
+      `link_token: ${s.lt||"—"} · public_token: ${s.pt||"—"} · access_token: ${s.at?"(stored)":"—"}`;
+    let state={lt:"",pt:"",at:""}; const set=p=>{state={...state,...p};setState(state);};
+
+    const call = async (fn, body={}) => {
+      const r = await fetch(`/.netlify/functions/${fn}`,{
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(body)
+      });
+      const t = await r.text(); try { return {ok:r.ok,data:JSON.parse(t)} } catch { return {ok:r.ok,data:t} }
+    };
+
+    document.getElementById("btn-link").onclick = async () => {
+      out("calling create-link-token…");
+      const r = await call("create-link-token");
+      out(r.data);
+      if (r.ok && r.data.link_token){ set({lt:r.data.link_token}); document.getElementById("btn-open").disabled=false; }
+    };
+
+    document.getElementById("btn-open").onclick = () => {
+      if (!window.Plaid) return out({error:"Plaid script not loaded"});
+      if (!state.lt) return out({error:"No link_token yet"});
+      const handler = window.Plaid.create({
+        token: state.lt,
+        onSuccess: (public_token) => { set({pt:public_token}); out({public_token}); document.getElementById("btn-exchange").disabled=false; },
+        onExit: (err) => { if (err) out({exit:err}); }
+      });
+      handler.open();
+    };
+
+    document.getElementById("btn-sandbox").onclick = async () => {
+      out("calling sandbox-public-token…");
+      const r = await call("sandbox-public-token");
+      out(r.data);
+      if (r.ok && r.data.public_token){ set({pt:r.data.public_token}); document.getElementById("btn-exchange").disabled=false; }
+    };
+
+    document.getElementById("btn-exchange").onclick = async () => {
+      out("exchanging public → access…");
+      const r = await call("exchange-public-token",{public_token:state.pt});
+      out(r.data);
+      if (r.ok && r.data.access_token){
+        set({at:r.data.access_token});
+        ["btn-balances","btn-auth","btn-identity"].forEach(id=>document.getElementById(id).disabled=false);
+      }
+    };
+
+    document.getElementById("btn-balances").onclick = async () => {
+      out("fetching balances…"); out((await call("accounts-balance",{access_token:state.at})).data);
+    };
+    document.getElementById("btn-auth").onclick = async () => {
+      out("fetching auth (ACH)…"); out((await call("accounts-auth",{access_token:state.at})).data);
+    };
+    document.getElementById("btn-identity").onclick = async () => {
+      out("fetching identity…"); out((await call("identity",{access_token:state.at})).data);
+    };
+  </script>
+</body>
+</html>
