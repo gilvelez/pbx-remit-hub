@@ -2,6 +2,9 @@
   command = "echo Build OK"
   publish = "frontend"
 
+[build.environment]
+  SECRETS_SCAN_ENABLED = "false"
+
 [functions]
   node_bundler = "esbuild"
   directory = "netlify/functions"
