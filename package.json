@@ -1,15 +1,8 @@
 {
-  "name": "pbx-mvp",
-  "version": "1.0.0",
-  "description": "PBX Plan B - Plaid + Circle Mocks",
+  "name": "pbx-root",
   "private": true,
-  "type": "module",
   "license": "UNLICENSED",
   "dependencies": {
-    "plaid": "^24.0.0",
-    "node-fetch": "^3.3.2"
-  },
-  "devDependencies": {
-    "netlify-cli": "^17.0.0"
+    "plaid": "^24.0.0"
   }
 }
