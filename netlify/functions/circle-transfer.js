@@ -1,57 +1,62 @@
 // netlify/functions/circle-transfer.js
 
-exports.handler = async (event) => {
-  // Allow both GET and POST for easy testing
-  if (event.httpMethod !== 'GET' && event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ error: 'Method not allowed' }),
-    };
-  }
+// Simple UUID v4 generator (so we don't need extra libraries)
+function makeIdempotencyKey() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
-  const CIRCLE_BASE_URL = process.env.CIRCLE_BASE_URL;
-  const CIRCLE_API_KEY = process.env.CIRCLE_API_KEY;
-  const MERCHANT_WALLET_ID = process.env.CIRCLE_MERCHANT_WALLET_ID;
-  const USER_WALLET_ID = process.env.CIRCLE_USER_WALLET_ID;
+exports.handler = async () => {
+  const apiKey = process.env.CIRCLE_API_KEY;
+  const baseUrl = process.env.CIRCLE_BASE_URL || 'https://api-sandbox.circle.com/v1';
+  const merchantWalletId = process.env.CIRCLE_MERCHANT_WALLET_ID; // 1017355423
+  const userWalletId = process.env.CIRCLE_USER_WALLET_ID;        // 1017355425
 
-  if (!CIRCLE_BASE_URL || !CIRCLE_API_KEY || !MERCHANT_WALLET_ID || !USER_WALLET_ID) {
+  // Safety check so we can see if env vars are missing
+  if (!apiKey || !merchantWalletId || !userWalletId) {
     return {
       statusCode: 500,
       body: JSON.stringify({
-        error: 'Missing one or more Circle env vars',
-      }),
+        error: 'Missing required environment variables',
+        has: {
+          CIRCLE_API_KEY: !!apiKey,
+          CIRCLE_MERCHANT_WALLET_ID: !!merchantWalletId,
+          CIRCLE_USER_WALLET_ID: !!userWalletId
+        }
+      })
     };
   }
 
-  // Generate a unique idempotency key (like the long 8e12... one that worked)
-  const idempotencyKey =
-    'pbx-transfer-' + Date.now().toString(16) + '-' + Math.random().toString(16).slice(2);
+  const idempotencyKey = makeIdempotencyKey(); // <-- NO "pbx-transfer" prefix
 
   const payload = {
     idempotencyKey,
     source: {
       type: 'wallet',
-      id: MERCHANT_WALLET_ID,      // 1017355423 (merchant)
+      id: merchantWalletId
     },
     destination: {
       type: 'wallet',
-      id: USER_WALLET_ID,          // 1017355425 (user)
+      id: userWalletId
     },
     amount: {
-      amount: '1.00',              // move $1.00 USDC for this test
-      currency: 'USD',
-    },
+      amount: '1.00',
+      currency: 'USD'
+    }
   };
 
   try {
-    const response = await fetch(`${CIRCLE_BASE_URL}/transfers`, {
+    const response = await fetch(`${baseUrl}/transfers`, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${CIRCLE_API_KEY}`,
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        Authorization: `Bearer ${apiKey}`
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
@@ -62,16 +67,17 @@ exports.handler = async (event) => {
         {
           circleStatus: response.status,
           idempotencyKey,
-          circleResponse: data,
+          requestBodyWeSent: payload,   // so we can see exactly what went up
+          circleResponse: data
         },
         null,
         2
-      ),
+      )
     };
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Circle call failed', detail: err.message }),
+      body: JSON.stringify({ error: err.message })
     };
   }
 };
