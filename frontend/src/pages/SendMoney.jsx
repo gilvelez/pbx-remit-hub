@@ -226,7 +226,7 @@ function PlaidConnectBanner() {
         const mock_public_token = "public-sandbox-mock-token";
         
         // Exchange the mock token
-        const exRes = await fetch(`${backendUrl}/api/plaid/exchange-public-token`, {
+        const exRes = await fetch(`${backendUrl}/api/plaid/mock/exchange`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ public_token: mock_public_token }),
@@ -244,8 +244,8 @@ function PlaidConnectBanner() {
           token: link_token,
           onSuccess: async (public_token, metadata) => {
             try {
-              // Exchange public_token for access_token
-              const exRes = await fetch(`${backendUrl}/api/plaid/exchange-public-token`, {
+              // Exchange public_token for access_token  
+              const exRes = await fetch(`${backendUrl}/api/plaid/mock/exchange`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ public_token }),
