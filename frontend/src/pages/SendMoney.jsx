@@ -203,9 +203,12 @@ function PlaidConnectBanner() {
       setStatus("loading");
       setLastError("");
 
-      // 1) get link_token from Netlify
-      const ltRes = await fetch("/.netlify/functions/create-link-token", {
+      // 1) get link_token from backend API
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
+      const ltRes = await fetch(`${backendUrl}/api/plaid/link-token`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_user_id: "pbx-demo-user" }),
       });
       const ltData = await ltRes.json();
       const link_token = ltData.link_token;
@@ -217,7 +220,7 @@ function PlaidConnectBanner() {
         onSuccess: async (public_token, metadata) => {
           try {
             // 3) exchange public_token for access_token
-            const exRes = await fetch("/.netlify/functions/exchange-public-token", {
+            const exRes = await fetch(`${backendUrl}/api/plaid/exchange-public-token`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ public_token }),
