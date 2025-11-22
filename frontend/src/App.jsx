@@ -1,0 +1,159 @@
+import React, { useMemo, useState } from "react";
+import SendMoney from "./pages/SendMoney.jsx";
+import Wallet from "./pages/Wallet.jsx";
+import {
+  initialRecipients,
+  initialBalances,
+  initialTransfers,
+} from "./lib/mockData.js";
+
+export default function App() {
+  const [page, setPage] = useState("send"); // "send" | "wallet"
+  const [recipients] = useState(initialRecipients);
+
+  const [balances, setBalances] = useState(initialBalances);
+  const [transfers, setTransfers] = useState(initialTransfers);
+
+  // helper to create a new transfer and mutate balances
+  const createTransfer = async ({ recipientId, amountUsd, note }) => {
+    const now = new Date().toISOString();
+    const newTransfer = {
+      id: crypto.randomUUID(),
+      recipientId,
+      amountUsd,
+      note: note || "",
+      status: "processing",
+      createdAt: now,
+    };
+
+    // optimistic UI: mark pending + reduce USD immediately
+    setTransfers((prev) => [newTransfer, ...prev]);
+    setBalances((b) => ({
+      ...b,
+      usd: round2(b.usd - amountUsd),
+      pendingUsd: round2(b.pendingUsd + amountUsd),
+    }));
+
+    // Mock async "backend"
+    await sleep(1200);
+
+    // 92% success rate mock
+    const success = Math.random() < 0.92;
+    if (success) {
+      // completed: move pending -> USDC (1:1 mock)
+      setTransfers((prev) =>
+        prev.map((t) =>
+          t.id === newTransfer.id ? { ...t, status: "completed" } : t
+        )
+      );
+      setBalances((b) => ({
+        ...b,
+        pendingUsd: round2(b.pendingUsd - amountUsd),
+        usdc: round2(b.usdc + amountUsd),
+      }));
+      return { ok: true, transfer: { ...newTransfer, status: "completed" } };
+    } else {
+      // failed: refund USD
+      setTransfers((prev) =>
+        prev.map((t) =>
+          t.id === newTransfer.id
+            ? { ...t, status: "failed", error: "Mock failure" }
+            : t
+        )
+      );
+      setBalances((b) => ({
+        ...b,
+        pendingUsd: round2(b.pendingUsd - amountUsd),
+        usd: round2(b.usd + amountUsd),
+      }));
+      return { ok: false, error: "Mock failure" };
+    }
+  };
+
+  const value = useMemo(
+    () => ({
+      page,
+      setPage,
+      recipients,
+      balances,
+      transfers,
+      createTransfer,
+      refreshBalances: async () => {
+        // mock refresh
+        await sleep(400);
+        setBalances((b) => ({ ...b }));
+      },
+    }),
+    [page, recipients, balances, transfers]
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <TopNav page={page} setPage={setPage} />
+      <main className="mx-auto w-full max-w-5xl px-4 py-6">
+        {page === "send" ? (
+          <SendMoney {...value} />
+        ) : (
+          <Wallet {...value} />
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function TopNav({ page, setPage }) {
+  return (
+    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-2">
+          <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500 font-black text-slate-950">
+            PBX
+          </div>
+          <div>
+            <div className="text-sm font-semibold tracking-wide">
+              Philippine Bayani Exchange
+            </div>
+            <div className="text-xs text-slate-400">Sandbox MVP</div>
+          </div>
+        </div>
+
+        <nav className="flex gap-2">
+          <NavButton active={page === "send"} onClick={() => setPage("send")}>
+            Send Money
+          </NavButton>
+          <NavButton active={page === "wallet"} onClick={() => setPage("wallet")}>
+            Wallet
+          </NavButton>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+function NavButton({ active, children, ...props }) {
+  return (
+    <button
+      {...props}
+      className={[
+        "rounded-xl px-3 py-2 text-sm font-semibold transition",
+        active
+          ? "bg-slate-100 text-slate-950"
+          : "bg-slate-900 text-slate-200 hover:bg-slate-800",
+      ].join(" ")}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-500">
+      PBX Sandbox MVP • UI mock for Plaid + Circle workflows
+    </footer>
+  );
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const round2 = (n) => Math.round(n * 100) / 100;
