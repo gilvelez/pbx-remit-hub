@@ -214,40 +214,66 @@ function PlaidConnectBanner() {
       const link_token = ltData.link_token;
       if (!link_token) throw new Error("Missing link_token");
 
-      // 2) open Plaid Link
-      const handler = window.Plaid.create({
-        token: link_token,
-        onSuccess: async (public_token, metadata) => {
-          try {
-            // 3) exchange public_token for access_token
-            const exRes = await fetch(`${backendUrl}/api/plaid/exchange-public-token`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ public_token }),
-            });
-            const exData = await exRes.json();
+      // Check if this is a mock token (sandbox prefix indicates mock mode)
+      const isMockMode = link_token.startsWith("link-sandbox-");
 
-            if (!exData.access_token) {
-              throw new Error(exData.error || "Missing access_token");
+      if (isMockMode) {
+        // MOCK MODE: Simulate Plaid flow without opening real Plaid Link
+        // Wait a bit to simulate user interaction
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Simulate successful connection
+        const mock_public_token = "public-sandbox-mock-token";
+        
+        // Exchange the mock token
+        const exRes = await fetch(`${backendUrl}/api/plaid/exchange-public-token`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ public_token: mock_public_token }),
+        });
+        const exData = await exRes.json();
+
+        if (!exData.access_token) {
+          throw new Error(exData.error || "Missing access_token");
+        }
+
+        setStatus("connected");
+      } else {
+        // REAL PLAID MODE: Use Plaid Link SDK (for Netlify deployment)
+        const handler = window.Plaid.create({
+          token: link_token,
+          onSuccess: async (public_token, metadata) => {
+            try {
+              // Exchange public_token for access_token
+              const exRes = await fetch(`${backendUrl}/api/plaid/exchange-public-token`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ public_token }),
+              });
+              const exData = await exRes.json();
+
+              if (!exData.access_token) {
+                throw new Error(exData.error || "Missing access_token");
+              }
+
+              setStatus("connected");
+            } catch (err) {
+              setStatus("error");
+              setLastError(err.message || "Exchange failed");
             }
+          },
+          onExit: (err, metadata) => {
+            if (err) {
+              setStatus("error");
+              setLastError(err.display_message || err.error_message || "Plaid exited");
+            } else {
+              setStatus("idle");
+            }
+          },
+        });
 
-            setStatus("connected");
-          } catch (err) {
-            setStatus("error");
-            setLastError(err.message || "Exchange failed");
-          }
-        },
-        onExit: (err, metadata) => {
-          if (err) {
-            setStatus("error");
-            setLastError(err.display_message || err.error_message || "Plaid exited");
-          } else {
-            setStatus("idle");
-          }
-        },
-      });
-
-      handler.open();
+        handler.open();
+      }
     } catch (err) {
       setStatus("error");
       setLastError(err.message || "Link token failed");
