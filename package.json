@@ -4,5 +4,8 @@
   "license": "UNLICENSED",
   "dependencies": {
     "plaid": "^24.0.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^23.11.1"
   }
 }
