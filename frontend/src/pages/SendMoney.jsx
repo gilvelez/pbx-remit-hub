@@ -195,25 +195,115 @@ export default function SendMoney({
 /* ---------------- UI helpers ---------------- */
 
 function PlaidConnectBanner() {
-  // Placeholder only — wire to Netlify /create-link-token later.
+  const [status, setStatus] = React.useState("idle"); 
+  const [lastError, setLastError] = React.useState("");
+
+  const onConnect = async () => {
+    try {
+      setStatus("loading");
+      setLastError("");
+
+      // 1) get link_token from backend API
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
+      const ltRes = await fetch(`${backendUrl}/api/plaid/link-token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client_user_id: "pbx-demo-user" }),
+      });
+      const ltData = await ltRes.json();
+      const link_token = ltData.link_token;
+      if (!link_token) throw new Error("Missing link_token");
+
+      // Check if this is a mock token (sandbox prefix indicates mock mode)
+      const isMockMode = link_token.startsWith("link-sandbox-");
+
+      if (isMockMode) {
+        // MOCK MODE: Simulate Plaid flow without opening real Plaid Link
+        // Wait a bit to simulate user interaction
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Simulate successful connection
+        const mock_public_token = "public-sandbox-mock-token";
+        
+        // Exchange the mock token
+        const exRes = await fetch(`${backendUrl}/api/plaid/mock/exchange`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ public_token: mock_public_token }),
+        });
+        const exData = await exRes.json();
+
+        if (!exData.access_token) {
+          throw new Error(exData.error || "Missing access_token");
+        }
+
+        setStatus("connected");
+      } else {
+        // REAL PLAID MODE: Use Plaid Link SDK (for Netlify deployment)
+        const handler = window.Plaid.create({
+          token: link_token,
+          onSuccess: async (public_token, metadata) => {
+            try {
+              // Exchange public_token for access_token  
+              const exRes = await fetch(`${backendUrl}/api/plaid/mock/exchange`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ public_token }),
+              });
+              const exData = await exRes.json();
+
+              if (!exData.access_token) {
+                throw new Error(exData.error || "Missing access_token");
+              }
+
+              setStatus("connected");
+            } catch (err) {
+              setStatus("error");
+              setLastError(err.message || "Exchange failed");
+            }
+          },
+          onExit: (err, metadata) => {
+            if (err) {
+              setStatus("error");
+              setLastError(err.display_message || err.error_message || "Plaid exited");
+            } else {
+              setStatus("idle");
+            }
+          },
+        });
+
+        handler.open();
+      }
+    } catch (err) {
+      setStatus("error");
+      setLastError(err.message || "Link token failed");
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold">Connect your bank</div>
-          <div className="text-xs text-slate-400">
-            Plaid Sandbox (button is UI only for now)
+          <div className="text-sm font-semibold">
+            {status === "connected" ? "Bank Connected ✅" : "Connect your bank"}
           </div>
+          <div className="text-xs text-slate-400">
+            Plaid Sandbox
+            {status === "connected" ? " • Ready for ACH debit" : " • Connect to continue"}
+          </div>
+          {status === "error" && (
+            <div className="mt-1 text-xs text-rose-300">
+              {lastError}
+            </div>
+          )}
         </div>
+
         <button
-          onClick={() =>
-            alert(
-              "Plaid Link will be wired here next.\n\nLater this will call /create-link-token then open Plaid Link."
-            )
-          }
-          className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-white"
+          onClick={onConnect}
+          disabled={status === "loading"}
+          className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-white disabled:opacity-60"
         >
-          Connect Bank
+          {status === "loading" ? "Opening..." : status === "connected" ? "Reconnect" : "Connect Bank"}
         </button>
       </div>
     </div>
