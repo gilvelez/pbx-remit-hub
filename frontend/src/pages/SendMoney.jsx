@@ -210,7 +210,11 @@ function PlaidConnectBanner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ client_user_id: "pbx-demo-user" }),
       });
-      const ltData = await ltRes.json();
+      
+      // Read body ONCE as text, then parse ONCE
+      const ltText = await ltRes.text();
+      const ltData = JSON.parse(ltText);
+      
       const link_token = ltData.link_token;
       if (!link_token) throw new Error("Missing link_token");
 
@@ -231,7 +235,10 @@ function PlaidConnectBanner() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ public_token: mock_public_token }),
         });
-        const exData = await exRes.json();
+        
+        // Read body ONCE as text, then parse ONCE
+        const exText = await exRes.text();
+        const exData = JSON.parse(exText);
 
         if (!exData.access_token) {
           throw new Error(exData.error || "Missing access_token");
@@ -250,7 +257,10 @@ function PlaidConnectBanner() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ public_token }),
               });
-              const exData = await exRes.json();
+              
+              // Read body ONCE as text, then parse ONCE
+              const exText = await exRes.text();
+              const exData = JSON.parse(exText);
 
               if (!exData.access_token) {
                 throw new Error(exData.error || "Missing access_token");
