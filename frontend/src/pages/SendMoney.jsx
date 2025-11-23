@@ -257,7 +257,10 @@ function PlaidConnectBanner() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ public_token }),
               });
-              const exData = await exRes.json();
+              
+              // Read body ONCE as text, then parse ONCE
+              const exText = await exRes.text();
+              const exData = JSON.parse(exText);
 
               if (!exData.access_token) {
                 throw new Error(exData.error || "Missing access_token");
