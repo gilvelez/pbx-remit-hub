@@ -210,7 +210,11 @@ function PlaidConnectBanner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ client_user_id: "pbx-demo-user" }),
       });
-      const ltData = await ltRes.json();
+      
+      // Read body ONCE as text, then parse ONCE
+      const ltText = await ltRes.text();
+      const ltData = JSON.parse(ltText);
+      
       const link_token = ltData.link_token;
       if (!link_token) throw new Error("Missing link_token");
 
