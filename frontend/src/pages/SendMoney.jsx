@@ -203,87 +203,55 @@ function PlaidConnectBanner() {
       setStatus("loading");
       setLastError("");
 
-      // 1) get link_token from backend API
-      const backendUrl = process.env.REACT_APP_BACKEND_URL || "";
-      const ltRes = await fetch(`${backendUrl}/api/plaid/link-token`, {
+      // 1) get link_token from Netlify (READ ONCE)
+      const ltRes = await fetch("/.netlify/functions/create-link-token", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ client_user_id: "pbx-demo-user" }),
       });
-      
-      // Read body ONCE as text, then parse ONCE
-      const ltText = await ltRes.text();
-      const ltData = JSON.parse(ltText);
-      
+
+      const ltText = await ltRes.text();   // ✅ read once
+      const ltData = JSON.parse(ltText);   // ✅ parse once
       const link_token = ltData.link_token;
+
       if (!link_token) throw new Error("Missing link_token");
 
-      // Check if this is a mock token (sandbox prefix indicates mock mode)
-      const isMockMode = link_token.startsWith("link-sandbox-");
+      // 2) open Plaid Link
+      const handler = window.Plaid.create({
+        token: link_token,
 
-      if (isMockMode) {
-        // MOCK MODE: Simulate Plaid flow without opening real Plaid Link
-        // Wait a bit to simulate user interaction
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Simulate successful connection
-        const mock_public_token = "public-sandbox-mock-token";
-        
-        // Exchange the mock token
-        const exRes = await fetch(`${backendUrl}/api/plaid/mock/exchange`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ public_token: mock_public_token }),
-        });
-        
-        // Read body ONCE as text, then parse ONCE
-        const exText = await exRes.text();
-        const exData = JSON.parse(exText);
+        onSuccess: async (public_token, metadata) => {
+          try {
+            // 3) exchange public_token (READ ONCE)
+            const exRes = await fetch("/.netlify/functions/exchange-public-token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ public_token }),
+            });
 
-        if (!exData.access_token) {
-          throw new Error(exData.error || "Missing access_token");
-        }
+            const exText = await exRes.text();   // ✅ read once
+            const exData = JSON.parse(exText);   // ✅ parse once
 
-        setStatus("connected");
-      } else {
-        // REAL PLAID MODE: Use Plaid Link SDK (for Netlify deployment)
-        const handler = window.Plaid.create({
-          token: link_token,
-          onSuccess: async (public_token, metadata) => {
-            try {
-              // Exchange public_token for access_token  
-              const exRes = await fetch(`${backendUrl}/api/plaid/mock/exchange`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ public_token }),
-              });
-              
-              // Read body ONCE as text, then parse ONCE
-              const exText = await exRes.text();
-              const exData = JSON.parse(exText);
-
-              if (!exData.access_token) {
-                throw new Error(exData.error || "Missing access_token");
-              }
-
-              setStatus("connected");
-            } catch (err) {
-              setStatus("error");
-              setLastError(err.message || "Exchange failed");
+            if (!exRes.ok || !exData.access_token) {
+              throw new Error(exData.error || "Missing access_token");
             }
-          },
-          onExit: (err, metadata) => {
-            if (err) {
-              setStatus("error");
-              setLastError(err.display_message || err.error_message || "Plaid exited");
-            } else {
-              setStatus("idle");
-            }
-          },
-        });
 
-        handler.open();
-      }
+            setStatus("connected");
+          } catch (err) {
+            setStatus("error");
+            setLastError(err.message || "Exchange failed");
+          }
+        },
+
+        onExit: (err, metadata) => {
+          if (err) {
+            setStatus("error");
+            setLastError(err.display_message || err.error_message || "Plaid exited");
+          } else {
+            setStatus("idle");
+          }
+        },
+      });
+
+      handler.open();
     } catch (err) {
       setStatus("error");
       setLastError(err.message || "Link token failed");
