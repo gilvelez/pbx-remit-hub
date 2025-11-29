@@ -74,13 +74,19 @@ export default function App() {
 
       // Create remittance record if quote and recipient provided
       if (quote && selectedRecipient) {
+        console.log("[App] Creating remittance with quote:", quote);
+        console.log("[App] Recipient:", selectedRecipient);
         const rem = makeRemittance({
           recipientHandle: selectedRecipient.handle,
           recipientName: selectedRecipient.name,
           payoutMethod: "gcash",
           quote,
         });
+        console.log("[App] Remittance created:", rem);
         addRemittance(rem);
+        console.log("[App] Remittance added to state");
+      } else {
+        console.log("[App] No remittance created - quote:", !!quote, "recipient:", !!selectedRecipient);
       }
 
       return { ok: true, transfer: { ...newTransfer, status: "completed" } };
