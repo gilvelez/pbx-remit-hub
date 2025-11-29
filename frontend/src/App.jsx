@@ -15,8 +15,27 @@ export default function App() {
   const [transfers, setTransfers] = useState(initialTransfers);
   const [remittances, setRemittances] = useState([]);
 
+  // Helper to create a remittance record from quote
+  const makeRemittance = ({ recipientHandle, recipientName, payoutMethod, quote }) => ({
+    id: `rem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: new Date().toISOString(),
+    recipientHandle,
+    recipientName,
+    payoutMethod,
+    amountUsd: quote.amountUsd,
+    amountPhp: quote.amountPhp,
+    fxRate: quote.fxRate,
+    feeUsd: quote.feeUsd,
+    totalChargeUsd: quote.totalChargeUsd,
+    status: "completed",
+  });
+
+  const addRemittance = (remittance) => {
+    setRemittances((prev) => [remittance, ...prev]);
+  };
+
   // helper to create a new transfer and mutate balances
-  const createTransfer = async ({ recipientId, amountUsd, note }) => {
+  const createTransfer = async ({ recipientId, amountUsd, note, quote, selectedRecipient }) => {
     const now = new Date().toISOString();
     const newTransfer = {
       id: crypto.randomUUID(),
