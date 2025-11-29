@@ -80,21 +80,38 @@ export default function SendMoney({
 
         console.log("[Quote] Fetching quote for USD:", usd);
 
-        const res = await fetch("/.netlify/functions/quote-remittance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        // Use XMLHttpRequest to avoid fetch interception by recording scripts
+        const data = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "/.netlify/functions/quote-remittance");
+          xhr.setRequestHeader("Content-Type", "application/json");
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                resolve({ ok: true, status: xhr.status, data: JSON.parse(xhr.responseText) });
+              } catch (e) {
+                reject(new Error("Invalid JSON response"));
+              }
+            } else {
+              try {
+                resolve({ ok: false, status: xhr.status, data: JSON.parse(xhr.responseText) });
+              } catch (e) {
+                reject(new Error(`Server error (${xhr.status})`));
+              }
+            }
+          };
+          xhr.onerror = () => reject(new Error("Network error"));
+          xhr.send(JSON.stringify({
             amountUsd: usd,
             payoutMethod: "gcash",
-          }),
+          }));
         });
 
-        console.log("[Quote] Response status:", res.status);
+        console.log("[Quote] Response:", data);
 
-        // Clone response before reading to avoid conflict with recording scripts
-        const clonedRes = res.clone();
-        const data = await clonedRes.json();
-        console.log("[Quote] Parsed data:", data);
+        const res = { ok: data.ok, status: data.status };
+        const responseData = data.data;
+        console.log("[Quote] Parsed data:", responseData);
 
         if (cancelled) return;
 
