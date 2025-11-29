@@ -87,7 +87,9 @@ export default function SendMoney({
           }),
         });
 
-        const data = await res.json();
+        // Read body ONCE as text, then parse ONCE
+        const resText = await res.text();
+        const data = JSON.parse(resText);
 
         if (cancelled) return;
 
