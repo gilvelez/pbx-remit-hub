@@ -68,9 +68,9 @@ export default function SendMoney({
     const raw = draft.amountUsd;
     const usd = Number(raw || 0);
 
-    if (!usd || usd <= 0) {
-      setQuote(null);
-      setQuoteError("");
+    if (!hasAmountInput || !usd || usd <= 0) {
+      // If there is no active input yet, don't fetch a new quote,
+      // but DO NOT clear the existing quote here.
       return;
     }
 
