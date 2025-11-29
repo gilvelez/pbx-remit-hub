@@ -13,9 +13,29 @@ export default function App() {
 
   const [balances, setBalances] = useState(initialBalances);
   const [transfers, setTransfers] = useState(initialTransfers);
+  const [remittances, setRemittances] = useState([]);
+
+  // Helper to create a remittance record from quote
+  const makeRemittance = ({ recipientHandle, recipientName, payoutMethod, quote }) => ({
+    id: `rem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    createdAt: new Date().toISOString(),
+    recipientHandle,
+    recipientName,
+    payoutMethod,
+    amountUsd: quote.amountUsd,
+    amountPhp: quote.amountPhp,
+    fxRate: quote.fxRate,
+    feeUsd: quote.feeUsd,
+    totalChargeUsd: quote.totalChargeUsd,
+    status: "completed",
+  });
+
+  const addRemittance = (remittance) => {
+    setRemittances((prev) => [remittance, ...prev]);
+  };
 
   // helper to create a new transfer and mutate balances
-  const createTransfer = async ({ recipientId, amountUsd, note }) => {
+  const createTransfer = async ({ recipientId, amountUsd, note, quote, selectedRecipient }) => {
     const now = new Date().toISOString();
     const newTransfer = {
       id: crypto.randomUUID(),
@@ -51,6 +71,24 @@ export default function App() {
         pendingUsd: round2(b.pendingUsd - amountUsd),
         usdc: round2(b.usdc + amountUsd),
       }));
+
+      // Create remittance record if quote and recipient provided
+      if (quote && selectedRecipient) {
+        console.log("[App] Creating remittance with quote:", quote);
+        console.log("[App] Recipient:", selectedRecipient);
+        const rem = makeRemittance({
+          recipientHandle: selectedRecipient.handle,
+          recipientName: selectedRecipient.name,
+          payoutMethod: "gcash",
+          quote,
+        });
+        console.log("[App] Remittance created:", rem);
+        addRemittance(rem);
+        console.log("[App] Remittance added to state");
+      } else {
+        console.log("[App] No remittance created - quote:", !!quote, "recipient:", !!selectedRecipient);
+      }
+
       return { ok: true, transfer: { ...newTransfer, status: "completed" } };
     } else {
       // failed: refund USD
@@ -77,6 +115,7 @@ export default function App() {
       recipients,
       balances,
       transfers,
+      remittances,
       createTransfer,
       refreshBalances: async () => {
         // mock refresh
@@ -84,7 +123,7 @@ export default function App() {
         setBalances((b) => ({ ...b }));
       },
     }),
-    [page, recipients, balances, transfers]
+    [page, recipients, balances, transfers, remittances]
   );
 
   return (
