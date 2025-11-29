@@ -113,7 +113,7 @@ export default function SendMoney({
             expiresAt: null,
           });
 
-          setQuoteError(data.error || "Backend quote failed, using fallback.");
+          setQuoteError("Sandbox quote loaded with fallback.");
           return;
         }
 
