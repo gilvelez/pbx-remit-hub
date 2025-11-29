@@ -78,6 +78,8 @@ export default function SendMoney({
         setIsQuoting(true);
         setQuoteError("");
 
+        console.log("[Quote] Fetching quote for USD:", usd);
+
         const res = await fetch("/.netlify/functions/quote-remittance", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -87,20 +89,29 @@ export default function SendMoney({
           }),
         });
 
+        console.log("[Quote] Response status:", res.status);
+
         // Read body ONCE as text, then parse ONCE
         const resText = await res.text();
+        console.log("[Quote] Response text:", resText);
+        
         const data = JSON.parse(resText);
+        console.log("[Quote] Parsed data:", data);
 
         if (cancelled) return;
 
         if (!res.ok || !data.ok) {
+          const errorMsg = data.error || `Server error (${res.status})`;
+          console.error("[Quote] Error:", errorMsg);
           setQuote(null);
-          setQuoteError(data.error || "Unable to get quote");
+          setQuoteError(errorMsg);
           return;
         }
 
+        console.log("[Quote] Quote received:", data.quote);
         setQuote(data.quote);
       } catch (err) {
+        console.error("[Quote] Exception:", err);
         if (!cancelled) {
           setQuote(null);
           setQuoteError(err.message || "Unable to get quote");
