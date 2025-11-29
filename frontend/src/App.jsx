@@ -13,6 +13,7 @@ export default function App() {
 
   const [balances, setBalances] = useState(initialBalances);
   const [transfers, setTransfers] = useState(initialTransfers);
+  const [remittances, setRemittances] = useState([]);
 
   // helper to create a new transfer and mutate balances
   const createTransfer = async ({ recipientId, amountUsd, note }) => {
