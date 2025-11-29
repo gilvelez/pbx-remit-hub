@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 
-export default function Wallet({ balances, transfers, recipients, refreshBalances, setPage }) {
+export default function Wallet({ balances, transfers, recipients, remittances, refreshBalances, setPage }) {
   const transfersWithNames = useMemo(() => {
     return transfers.map((t) => {
       const r = recipients.find((x) => x.id === t.recipientId);
