@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import RecipientSelect from "../components/send/RecipientSelect.jsx";
 import AmountInput from "../components/send/AmountInput.jsx";
 import ConfirmModal from "../components/send/ConfirmModal.jsx";
@@ -17,6 +17,11 @@ export default function SendMoney({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null); // {ok, message}
+  
+  // Quote state
+  const [quote, setQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState("");
+  const [isQuoting, setIsQuoting] = useState(false);
 
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === draft.recipientId),
