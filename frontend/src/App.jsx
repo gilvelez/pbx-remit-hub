@@ -109,6 +109,7 @@ export default function App() {
       recipients,
       balances,
       transfers,
+      remittances,
       createTransfer,
       refreshBalances: async () => {
         // mock refresh
@@ -116,7 +117,7 @@ export default function App() {
         setBalances((b) => ({ ...b }));
       },
     }),
-    [page, recipients, balances, transfers]
+    [page, recipients, balances, transfers, remittances]
   );
 
   return (
