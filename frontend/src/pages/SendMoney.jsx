@@ -64,7 +64,9 @@ export default function SendMoney({
 
   // Fetch quote when amount changes
   useEffect(() => {
-    const usd = Number(draft.amountUsd || 0);
+    const raw = draft.amountUsd;
+    const usd = Number(raw || 0);
+
     if (!usd || usd <= 0) {
       setQuote(null);
       setQuoteError("");
@@ -78,58 +80,66 @@ export default function SendMoney({
         setIsQuoting(true);
         setQuoteError("");
 
-        console.log("[Quote] Fetching quote for USD:", usd);
-
-        // Use XMLHttpRequest to avoid fetch interception by recording scripts
-        const data = await new Promise((resolve, reject) => {
-          const xhr = new XMLHttpRequest();
-          xhr.open("POST", "/.netlify/functions/quote-remittance");
-          xhr.setRequestHeader("Content-Type", "application/json");
-          xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-              try {
-                resolve({ ok: true, status: xhr.status, data: JSON.parse(xhr.responseText) });
-              } catch (e) {
-                reject(new Error("Invalid JSON response"));
-              }
-            } else {
-              try {
-                resolve({ ok: false, status: xhr.status, data: JSON.parse(xhr.responseText) });
-              } catch (e) {
-                reject(new Error(`Server error (${xhr.status})`));
-              }
-            }
-          };
-          xhr.onerror = () => reject(new Error("Network error"));
-          xhr.send(JSON.stringify({
+        const res = await fetch("/.netlify/functions/quote-remittance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             amountUsd: usd,
             payoutMethod: "gcash",
-          }));
+          }),
         });
 
-        console.log("[Quote] Response:", data);
-
-        const res = { ok: data.ok, status: data.status };
-        const responseData = data.data;
-        console.log("[Quote] Parsed data:", responseData);
+        const data = await res.json();
 
         if (cancelled) return;
 
-        if (!res.ok || !responseData.ok) {
-          const errorMsg = responseData.error || `Server error (${res.status})`;
-          console.error("[Quote] Error:", errorMsg);
-          setQuote(null);
-          setQuoteError(errorMsg);
+        if (!res.ok || !data.ok) {
+          // Backend failed – use a front-end fallback so the user still sees something
+          const FX = 55;
+          const feeUsd = 2;
+          const totalChargeUsd = usd + feeUsd;
+          const amountPhp = usd * FX;
+
+          setQuote({
+            id: "fallback",
+            payoutMethod: "gcash",
+            amountUsd: usd,
+            feeUsd,
+            totalChargeUsd,
+            fxRate: FX,
+            amountPhp,
+            currencyFrom: "USD",
+            currencyTo: "PHP",
+            expiresAt: null,
+          });
+
+          setQuoteError(data.error || "Backend quote failed, using fallback.");
           return;
         }
 
-        console.log("[Quote] Quote received:", responseData.quote);
-        setQuote(responseData.quote);
+        setQuote(data.quote);
       } catch (err) {
-        console.error("[Quote] Exception:", err);
         if (!cancelled) {
-          setQuote(null);
-          setQuoteError(err.message || "Unable to get quote");
+          // Network or other error – again, use fallback
+          const FX = 55;
+          const feeUsd = 2;
+          const totalChargeUsd = usd + feeUsd;
+          const amountPhp = usd * FX;
+
+          setQuote({
+            id: "fallback_error",
+            payoutMethod: "gcash",
+            amountUsd: usd,
+            feeUsd,
+            totalChargeUsd,
+            fxRate: FX,
+            amountPhp,
+            currencyFrom: "USD",
+            currencyTo: "PHP",
+            expiresAt: null,
+          });
+
+          setQuoteError(err.message || "Unable to get quote, using fallback.");
         }
       } finally {
         if (!cancelled) {
