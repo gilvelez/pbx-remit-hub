@@ -14,22 +14,17 @@ export async function handler(event) {
     if (!amountUsd || amountUsd <= 0) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: "amountUsd must be > 0" }),
+        body: JSON.stringify({ ok: false, error: "amountUsd must be > 0" }),
       };
     }
 
-    // Sandbox FX + fee (mock)
-    const FX = 55;          // 1 USD = 55 PHP
-    const feeUsd = 2;       // flat $2 fee for demo
+    const FX = 55;     // sandbox rate
+    const feeUsd = 2;  // sandbox flat fee
     const totalChargeUsd = amountUsd + feeUsd;
     const amountPhp = amountUsd * FX;
 
-    const quoteId = `qt_${Date.now()}_${Math.random()
-      .toString(36)
-      .slice(2, 8)}`;
-
     const quote = {
-      id: quoteId,
+      id: `qt_${Date.now()}`,
       payoutMethod,
       amountUsd,
       feeUsd,
@@ -38,7 +33,7 @@ export async function handler(event) {
       amountPhp,
       currencyFrom: "USD",
       currencyTo: "PHP",
-      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 min
+      expiresAt: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     };
 
     return {
@@ -48,7 +43,10 @@ export async function handler(event) {
   } catch (err) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: err.message || "quote failed" }),
+      body: JSON.stringify({
+        ok: false,
+        error: err.message || "quote failed",
+      }),
     };
   }
 }
