@@ -57,6 +57,53 @@ export default function Wallet({ balances, transfers, recipients, remittances, r
             ))}
           </div>
         </Card>
+
+        {/* PH Payouts Section */}
+        <div className="mt-6">
+          <Card>
+            <CardHeader title="PH Payouts" subtitle="GCash remittances (sandbox)" />
+
+            <div className="grid gap-2">
+              {!remittances || remittances.length === 0 ? (
+                <div className="rounded-xl bg-slate-900 p-3 text-xs text-slate-400">
+                  No PH payouts yet. Send money to a PH recipient to see them here.
+                </div>
+              ) : (
+                remittances.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex justify-between items-center rounded-2xl border border-slate-800 bg-slate-950 px-4 py-3"
+                  >
+                    <div>
+                      <div className="text-sm font-semibold text-slate-100">
+                        {r.recipientName}{" "}
+                        {r.recipientHandle && (
+                          <span className="text-xs text-slate-400">{r.recipientHandle}</span>
+                        )}
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        ₱{r.amountPhp.toLocaleString("en-PH", { maximumFractionDigits: 2 })}{" "}
+                        • {r.payoutMethod.toUpperCase()}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        {formatDate(r.createdAt)} • FX {r.fxRate} • Fee $
+                        {r.feeUsd.toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-slate-200">
+                        -${r.totalChargeUsd.toFixed(2)}
+                      </div>
+                      <div className="text-[11px] text-emerald-400">
+                        {r.status === "completed" ? "completed" : r.status}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
+        </div>
       </div>
     </div>
   );
