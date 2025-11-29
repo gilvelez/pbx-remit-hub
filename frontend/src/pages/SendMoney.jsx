@@ -52,6 +52,8 @@ export default function SendMoney({
       recipientId: draft.recipientId,
       amountUsd: amountNumber,
       note: draft.note,
+      quote, // Pass the quote for remittance record
+      selectedRecipient, // Pass recipient info for remittance record
     });
 
     setSending(false);
