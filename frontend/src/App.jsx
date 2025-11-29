@@ -71,6 +71,18 @@ export default function App() {
         pendingUsd: round2(b.pendingUsd - amountUsd),
         usdc: round2(b.usdc + amountUsd),
       }));
+
+      // Create remittance record if quote and recipient provided
+      if (quote && selectedRecipient) {
+        const rem = makeRemittance({
+          recipientHandle: selectedRecipient.handle,
+          recipientName: selectedRecipient.name,
+          payoutMethod: "gcash",
+          quote,
+        });
+        addRemittance(rem);
+      }
+
       return { ok: true, transfer: { ...newTransfer, status: "completed" } };
     } else {
       // failed: refund USD
