@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import RecipientSelect from "../components/send/RecipientSelect.jsx";
 import AmountInput from "../components/send/AmountInput.jsx";
 import ConfirmModal from "../components/send/ConfirmModal.jsx";
@@ -17,6 +17,11 @@ export default function SendMoney({
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null); // {ok, message}
+  
+  // Quote state
+  const [quote, setQuote] = useState(null);
+  const [quoteError, setQuoteError] = useState("");
+  const [isQuoting, setIsQuoting] = useState(false);
 
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === draft.recipientId),
@@ -56,6 +61,63 @@ export default function SendMoney({
       setResult({ ok: false, message: "Transfer failed ❌ (mock)" });
     }
   };
+
+  // Fetch quote when amount changes
+  useEffect(() => {
+    const usd = Number(draft.amountUsd || 0);
+    if (!usd || usd <= 0) {
+      setQuote(null);
+      setQuoteError("");
+      return;
+    }
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        setIsQuoting(true);
+        setQuoteError("");
+
+        const res = await fetch("/.netlify/functions/quote-remittance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amountUsd: usd,
+            payoutMethod: "gcash",
+          }),
+        });
+
+        // Read body ONCE as text, then parse ONCE
+        const resText = await res.text();
+        const data = JSON.parse(resText);
+
+        if (cancelled) return;
+
+        if (!res.ok || !data.ok) {
+          setQuote(null);
+          setQuoteError(data.error || "Unable to get quote");
+          return;
+        }
+
+        setQuote(data.quote);
+      } catch (err) {
+        if (!cancelled) {
+          setQuote(null);
+          setQuoteError(err.message || "Unable to get quote");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsQuoting(false);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [draft.amountUsd]);
 
   return (
     <div className="grid gap-5 md:grid-cols-5">
@@ -161,21 +223,44 @@ export default function SendMoney({
               </div>
             </Row>
 
-            <Row label="Estimated USDC received">
-              <div className="font-semibold">
-                {draft.amountUsd ? `${draft.amountUsd} USDC` : "—"}
-              </div>
-            </Row>
-
-            <Row label="Fees (Sandbox)">
-              <div className="font-semibold">$0.00</div>
-            </Row>
-
-            <div className="mt-2 rounded-xl bg-slate-900 p-3 text-xs text-slate-300">
-              In sandbox we assume 1 USD = 1 USDC for internal transfers.
-              Later, this preview will include FX, off-ramp fees, and GCash payout
-              estimates.
+            <div className="flex justify-between text-sm mt-1">
+              <span className="text-slate-300">Est. PHP for recipient</span>
+              <span className="font-semibold">
+                {quote
+                  ? quote.amountPhp.toLocaleString("en-PH", {
+                      maximumFractionDigits: 2,
+                    }) + " ₱"
+                  : "—"}
+              </span>
             </div>
+
+            <div className="flex justify-between text-xs mt-1 text-slate-400">
+              <span>FX</span>
+              <span>{quote ? `1 USD = ${quote.fxRate} PHP` : "—"}</span>
+            </div>
+
+            <div className="flex justify-between text-xs mt-1 text-slate-400">
+              <span>Fee</span>
+              <span>{quote ? `$${quote.feeUsd.toFixed(2)}` : "—"}</span>
+            </div>
+
+            <div className="flex justify-between text-xs mt-1 text-slate-400">
+              <span>Total charge</span>
+              <span>
+                {quote ? `$${quote.totalChargeUsd.toFixed(2)}` : "—"}
+              </span>
+            </div>
+
+            {quoteError && (
+              <p className="text-xs text-amber-300 mt-1">{quoteError}</p>
+            )}
+            {isQuoting && (
+              <p className="text-xs text-slate-400 mt-1">Updating quote…</p>
+            )}
+
+            <p className="text-[11px] text-slate-500 mt-2">
+              Sandbox quote only. In production this will use live FX + real payout partner APIs.
+            </p>
           </div>
         </Card>
       </div>
