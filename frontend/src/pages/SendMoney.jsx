@@ -154,7 +154,7 @@ export default function SendMoney({
     return () => {
       cancelled = true;
     };
-  }, [draft.amountUsd]);
+  }, [draft.amountUsd, hasAmountInput]);
 
   return (
     <div className="grid gap-5 md:grid-cols-5">
