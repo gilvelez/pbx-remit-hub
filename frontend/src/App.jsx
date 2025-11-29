@@ -57,8 +57,8 @@ export default function App() {
     // Mock async "backend"
     await sleep(1200);
 
-    // 92% success rate mock
-    const success = Math.random() < 0.92;
+    // 100% success rate for testing (normally 92%)
+    const success = true; // Math.random() < 0.92;
     if (success) {
       // completed: move pending -> USDC (1:1 mock)
       setTransfers((prev) =>
