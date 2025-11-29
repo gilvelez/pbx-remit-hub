@@ -292,7 +292,9 @@ export default function SendMoney({
               <p className="text-xs text-slate-400 mt-1">Updating quote…</p>
             )}
             {quoteError && (
-              <p className="text-[11px] text-amber-300 mt-1">{quoteError}</p>
+              <p className="text-[11px] text-amber-300 mt-1">
+                Using sandbox quote. (FX and fees are for demo only.)
+              </p>
             )}
 
             <p className="text-[11px] text-slate-500 mt-2">
