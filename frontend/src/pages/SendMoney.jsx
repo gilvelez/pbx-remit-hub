@@ -22,6 +22,7 @@ export default function SendMoney({
   const [quote, setQuote] = useState(null);
   const [quoteError, setQuoteError] = useState("");
   const [isQuoting, setIsQuoting] = useState(false);
+  const [hasAmountInput, setHasAmountInput] = useState(false);
 
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === draft.recipientId),
