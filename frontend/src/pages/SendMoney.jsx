@@ -62,6 +62,61 @@ export default function SendMoney({
     }
   };
 
+  // Fetch quote when amount changes
+  useEffect(() => {
+    const usd = Number(draft.amountUsd || 0);
+    if (!usd || usd <= 0) {
+      setQuote(null);
+      setQuoteError("");
+      return;
+    }
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        setIsQuoting(true);
+        setQuoteError("");
+
+        const res = await fetch("/.netlify/functions/quote-remittance", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amountUsd: usd,
+            payoutMethod: "gcash",
+          }),
+        });
+
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        if (!res.ok || !data.ok) {
+          setQuote(null);
+          setQuoteError(data.error || "Unable to get quote");
+          return;
+        }
+
+        setQuote(data.quote);
+      } catch (err) {
+        if (!cancelled) {
+          setQuote(null);
+          setQuoteError(err.message || "Unable to get quote");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsQuoting(false);
+        }
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [draft.amountUsd]);
+
   return (
     <div className="grid gap-5 md:grid-cols-5">
       {/* Left: Form */}
