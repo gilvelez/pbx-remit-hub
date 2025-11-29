@@ -58,6 +58,8 @@ export default function SendMoney({
     if (res.ok) {
       setResult({ ok: true, message: "Transfer complete ✅" });
       setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
+      setHasAmountInput(false); // Reset flag but keep the quote visible
+      // IMPORTANT: do NOT call setQuote(null) here - keep last quote visible
     } else {
       setResult({ ok: false, message: "Transfer failed ❌ (mock)" });
     }
