@@ -221,21 +221,44 @@ export default function SendMoney({
               </div>
             </Row>
 
-            <Row label="Estimated USDC received">
-              <div className="font-semibold">
-                {draft.amountUsd ? `${draft.amountUsd} USDC` : "—"}
-              </div>
-            </Row>
-
-            <Row label="Fees (Sandbox)">
-              <div className="font-semibold">$0.00</div>
-            </Row>
-
-            <div className="mt-2 rounded-xl bg-slate-900 p-3 text-xs text-slate-300">
-              In sandbox we assume 1 USD = 1 USDC for internal transfers.
-              Later, this preview will include FX, off-ramp fees, and GCash payout
-              estimates.
+            <div className="flex justify-between text-sm mt-1">
+              <span className="text-slate-300">Est. PHP for recipient</span>
+              <span className="font-semibold">
+                {quote
+                  ? quote.amountPhp.toLocaleString("en-PH", {
+                      maximumFractionDigits: 2,
+                    }) + " ₱"
+                  : "—"}
+              </span>
             </div>
+
+            <div className="flex justify-between text-xs mt-1 text-slate-400">
+              <span>FX</span>
+              <span>{quote ? `1 USD = ${quote.fxRate} PHP` : "—"}</span>
+            </div>
+
+            <div className="flex justify-between text-xs mt-1 text-slate-400">
+              <span>Fee</span>
+              <span>{quote ? `$${quote.feeUsd.toFixed(2)}` : "—"}</span>
+            </div>
+
+            <div className="flex justify-between text-xs mt-1 text-slate-400">
+              <span>Total charge</span>
+              <span>
+                {quote ? `$${quote.totalChargeUsd.toFixed(2)}` : "—"}
+              </span>
+            </div>
+
+            {quoteError && (
+              <p className="text-xs text-amber-300 mt-1">{quoteError}</p>
+            )}
+            {isQuoting && (
+              <p className="text-xs text-slate-400 mt-1">Updating quote…</p>
+            )}
+
+            <p className="text-[11px] text-slate-500 mt-2">
+              Sandbox quote only. In production this will use live FX + real payout partner APIs.
+            </p>
           </div>
         </Card>
       </div>
