@@ -181,9 +181,18 @@ export default function SendMoney({
 
             <AmountInput
               value={draft.amountUsd}
-              onChange={(amountUsd) =>
-                setDraft((d) => ({ ...d, amountUsd }))
-              }
+              onChange={(amountUsd) => {
+                setDraft((d) => ({ ...d, amountUsd }));
+                if (!amountUsd) {
+                  // User manually cleared the field - clear quote and reset flag
+                  setQuote(null);
+                  setQuoteError("");
+                  setHasAmountInput(false);
+                } else {
+                  // User is typing a new amount
+                  setHasAmountInput(true);
+                }
+              }}
               max={balances.usd}
             />
 
