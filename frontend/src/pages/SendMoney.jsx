@@ -91,11 +91,9 @@ export default function SendMoney({
 
         console.log("[Quote] Response status:", res.status);
 
-        // Read body ONCE as text, then parse ONCE
-        const resText = await res.text();
-        console.log("[Quote] Response text:", resText);
-        
-        const data = JSON.parse(resText);
+        // Clone response before reading to avoid conflict with recording scripts
+        const clonedRes = res.clone();
+        const data = await clonedRes.json();
         console.log("[Quote] Parsed data:", data);
 
         if (cancelled) return;
