@@ -22,6 +22,7 @@ export default function SendMoney({
   const [quote, setQuote] = useState(null);
   const [quoteError, setQuoteError] = useState("");
   const [isQuoting, setIsQuoting] = useState(false);
+  const [hasAmountInput, setHasAmountInput] = useState(false);
 
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === draft.recipientId),
@@ -57,6 +58,8 @@ export default function SendMoney({
     if (res.ok) {
       setResult({ ok: true, message: "Transfer complete ✅" });
       setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
+      setHasAmountInput(false); // Reset flag but keep the quote visible
+      // IMPORTANT: do NOT call setQuote(null) here - keep last quote visible
     } else {
       setResult({ ok: false, message: "Transfer failed ❌ (mock)" });
     }
@@ -64,10 +67,12 @@ export default function SendMoney({
 
   // Fetch quote when amount changes
   useEffect(() => {
-    const usd = Number(draft.amountUsd || 0);
-    if (!usd || usd <= 0) {
-      setQuote(null);
-      setQuoteError("");
+    const raw = draft.amountUsd;
+    const usd = Number(raw || 0);
+
+    if (!hasAmountInput || !usd || usd <= 0) {
+      // If there is no active input yet, don't fetch a new quote,
+      // but DO NOT clear the existing quote here.
       return;
     }
 
@@ -87,23 +92,57 @@ export default function SendMoney({
           }),
         });
 
-        // Read body ONCE as text, then parse ONCE
-        const resText = await res.text();
-        const data = JSON.parse(resText);
+        const data = await res.json();
 
         if (cancelled) return;
 
         if (!res.ok || !data.ok) {
-          setQuote(null);
-          setQuoteError(data.error || "Unable to get quote");
+          // Backend failed – use a front-end fallback so the user still sees something
+          const FX = 55;
+          const feeUsd = 2;
+          const totalChargeUsd = usd + feeUsd;
+          const amountPhp = usd * FX;
+
+          setQuote({
+            id: "fallback",
+            payoutMethod: "gcash",
+            amountUsd: usd,
+            feeUsd,
+            totalChargeUsd,
+            fxRate: FX,
+            amountPhp,
+            currencyFrom: "USD",
+            currencyTo: "PHP",
+            expiresAt: null,
+          });
+
+          setQuoteError("Sandbox quote loaded with fallback.");
           return;
         }
 
         setQuote(data.quote);
       } catch (err) {
         if (!cancelled) {
-          setQuote(null);
-          setQuoteError(err.message || "Unable to get quote");
+          // Network or other error – again, use fallback
+          const FX = 55;
+          const feeUsd = 2;
+          const totalChargeUsd = usd + feeUsd;
+          const amountPhp = usd * FX;
+
+          setQuote({
+            id: "fallback_error",
+            payoutMethod: "gcash",
+            amountUsd: usd,
+            feeUsd,
+            totalChargeUsd,
+            fxRate: FX,
+            amountPhp,
+            currencyFrom: "USD",
+            currencyTo: "PHP",
+            expiresAt: null,
+          });
+
+          setQuoteError("Sandbox quote loaded with fallback.");
         }
       } finally {
         if (!cancelled) {
@@ -117,7 +156,7 @@ export default function SendMoney({
     return () => {
       cancelled = true;
     };
-  }, [draft.amountUsd]);
+  }, [draft.amountUsd, hasAmountInput]);
 
   return (
     <div className="grid gap-5 md:grid-cols-5">
@@ -142,9 +181,18 @@ export default function SendMoney({
 
             <AmountInput
               value={draft.amountUsd}
-              onChange={(amountUsd) =>
-                setDraft((d) => ({ ...d, amountUsd }))
-              }
+              onChange={(amountUsd) => {
+                setDraft((d) => ({ ...d, amountUsd }));
+                if (!amountUsd) {
+                  // User manually cleared the field - clear quote and reset flag
+                  setQuote(null);
+                  setQuoteError("");
+                  setHasAmountInput(false);
+                } else {
+                  // User is typing a new amount
+                  setHasAmountInput(true);
+                }
+              }}
               max={balances.usd}
             />
 
@@ -217,11 +265,12 @@ export default function SendMoney({
               )}
             </Row>
 
-            <Row label="Amount (USD)">
-              <div className="font-semibold">
-                {draft.amountUsd ? `$${draft.amountUsd}` : "—"}
-              </div>
-            </Row>
+            <div className="flex justify-between text-sm mt-1">
+              <span className="text-slate-300">Amount (USD)</span>
+              <span className="font-semibold">
+                {quote ? `$${quote.amountUsd.toFixed(2)}` : "—"}
+              </span>
+            </div>
 
             <div className="flex justify-between text-sm mt-1">
               <span className="text-slate-300">Est. PHP for recipient</span>
@@ -251,11 +300,13 @@ export default function SendMoney({
               </span>
             </div>
 
-            {quoteError && (
-              <p className="text-xs text-amber-300 mt-1">{quoteError}</p>
-            )}
             {isQuoting && (
               <p className="text-xs text-slate-400 mt-1">Updating quote…</p>
+            )}
+            {quoteError && (
+              <p className="text-[11px] text-amber-300 mt-1">
+                Using sandbox quote. (FX and fees are for demo only.)
+              </p>
             )}
 
             <p className="text-[11px] text-slate-500 mt-2">
