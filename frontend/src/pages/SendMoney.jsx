@@ -115,16 +115,16 @@ export default function SendMoney({
 
         if (cancelled) return;
 
-        if (!res.ok || !data.ok) {
-          const errorMsg = data.error || `Server error (${res.status})`;
+        if (!res.ok || !responseData.ok) {
+          const errorMsg = responseData.error || `Server error (${res.status})`;
           console.error("[Quote] Error:", errorMsg);
           setQuote(null);
           setQuoteError(errorMsg);
           return;
         }
 
-        console.log("[Quote] Quote received:", data.quote);
-        setQuote(data.quote);
+        console.log("[Quote] Quote received:", responseData.quote);
+        setQuote(responseData.quote);
       } catch (err) {
         console.error("[Quote] Exception:", err);
         if (!cancelled) {
