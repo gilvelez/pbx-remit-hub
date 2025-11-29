@@ -139,7 +139,7 @@ export default function SendMoney({
             expiresAt: null,
           });
 
-          setQuoteError(err.message || "Unable to get quote, using fallback.");
+          setQuoteError("Sandbox quote loaded with fallback.");
         }
       } finally {
         if (!cancelled) {
