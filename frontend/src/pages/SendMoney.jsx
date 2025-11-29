@@ -253,11 +253,12 @@ export default function SendMoney({
               )}
             </Row>
 
-            <Row label="Amount (USD)">
-              <div className="font-semibold">
-                {draft.amountUsd ? `$${draft.amountUsd}` : "—"}
-              </div>
-            </Row>
+            <div className="flex justify-between text-sm mt-1">
+              <span className="text-slate-300">Amount (USD)</span>
+              <span className="font-semibold">
+                {quote ? `$${quote.amountUsd.toFixed(2)}` : "—"}
+              </span>
+            </div>
 
             <div className="flex justify-between text-sm mt-1">
               <span className="text-slate-300">Est. PHP for recipient</span>
