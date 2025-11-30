@@ -18,42 +18,59 @@ const fetchMidMarket = async () => {
     throw new FXError("OXR_API_KEY is not set");
   }
 
+  // Build URL with only app_id and symbols (no base parameter)
   const url = new URL(OXR_URL);
   url.searchParams.set("app_id", key);
-  // Do NOT set 'base' here; free plan only supports default USD base
-  // url.searchParams.set("base", "USD"); // REMOVE this line
   url.searchParams.set("symbols", "PHP");
+
+  console.log("[OXR] Fetching rates from:", url.toString().replace(key, "***"));
 
   const res = await fetch(url.toString());
   const text = await res.text();
 
   if (!res.ok) {
-    // Try to parse JSON error if possible for easier debugging
-    let errMsg = `FX API error: ${res.status}`;
+    // Parse OXR error response as per their documentation
+    let errMsg = `OXR API HTTP ${res.status}`;
+    let errorCode = "unknown";
+    
     try {
       const errJson = JSON.parse(text);
-      if (errJson && errJson.message) {
-        errMsg += ` - ${errJson.message}`;
+      console.error("[OXR] Error response:", JSON.stringify(errJson, null, 2));
+      
+      // OXR error structure: { error: true, status: 401, message: "invalid_app_id", description: "..." }
+      if (errJson) {
+        errorCode = errJson.message || "unknown";
+        errMsg = `OXR API ${res.status}: ${errorCode}`;
+        
+        if (errJson.description) {
+          console.error("[OXR] Error description:", errJson.description);
+        }
       }
-    } catch (e) { /* ignore JSON parse error */ }
-    console.error("OpenExchangeRates error response:", text);
+    } catch (e) {
+      // If JSON parsing fails, log raw text
+      console.error("[OXR] Raw error response (non-JSON):", text);
+    }
+    
     throw new FXError(errMsg);
   }
 
+  // Parse successful response
   let data;
   try {
     data = JSON.parse(text);
   } catch (e) {
-    console.error("Failed to parse FX JSON:", text);
-    throw new FXError("Failed to parse FX JSON");
+    console.error("[OXR] Failed to parse success JSON:", text);
+    throw new FXError("Failed to parse OXR JSON response");
   }
 
+  // Validate PHP rate exists
   const rate = data?.rates?.PHP;
   if (!rate) {
-    console.error("FX response missing PHP rate:", data);
-    throw new FXError("PHP rate not found in FX response");
+    console.error("[OXR] PHP rate missing in response. Full data:", JSON.stringify(data, null, 2));
+    throw new FXError("PHP rate not found in OXR response");
   }
 
+  console.log("[OXR] Successfully fetched PHP rate:", rate);
   return Number(rate);
 };
 
