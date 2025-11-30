@@ -56,7 +56,53 @@ export default function SendMoney({
 
     console.log("[SendMoney] Creating transfer with quote:", quote);
     console.log("[SendMoney] Selected recipient:", selectedRecipient);
+    console.log("[SendMoney] FX quote:", fxQuote);
 
+    // If we have a live FX quote and recipient has GCash info, use real payout function
+    if (fxQuote && selectedRecipient?.gcashNumber) {
+      try {
+        const payoutRes = await fetch("/.netlify/functions/create-gcash-payout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount_usd: amountNumber,
+            gcash_number: selectedRecipient.gcashNumber,
+            recipient_name: selectedRecipient.name,
+          }),
+        });
+
+        const payoutData = await payoutRes.json();
+
+        setSending(false);
+
+        if (payoutRes.ok) {
+          setResult({
+            ok: true,
+            message: `Payout complete ✅ (${payoutData.txId})`,
+            payoutData,
+          });
+          setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
+          setHasAmountInput(false);
+          console.log("[SendMoney] Payout successful:", payoutData);
+        } else {
+          setResult({
+            ok: false,
+            message: "Payout failed. Please try again in a few minutes.",
+          });
+          console.error("[SendMoney] Payout error:", payoutData);
+        }
+      } catch (error) {
+        setSending(false);
+        setResult({
+          ok: false,
+          message: "We couldn't complete your payout right now. Please try again in a few minutes.",
+        });
+        console.error("[SendMoney] Payout exception:", error);
+      }
+      return;
+    }
+
+    // Fallback to mock transfer for internal transfers
     const res = await createTransfer({
       recipientId: draft.recipientId,
       amountUsd: amountNumber,
