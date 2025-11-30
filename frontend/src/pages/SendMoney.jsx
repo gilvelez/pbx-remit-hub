@@ -88,6 +88,12 @@ export default function SendMoney({
           });
           setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
           setHasAmountInput(false);
+          
+          // Add to Recent Activity and PH Payouts
+          if (onPayoutComplete) {
+            onPayoutComplete(payoutData);
+          }
+          
           console.log("[SendMoney] Payout successful:", payoutData);
         } else {
           setResult({
