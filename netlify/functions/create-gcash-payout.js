@@ -9,6 +9,8 @@ exports.handler = async (event) => {
     const amountUsd = Number(body.amount_usd || 0);
     const recipient = body.recipient_name || "Unknown";
     const gcash = body.gcash_number || "N/A";
+    const fx = body.fx || null;
+    const feeUsd = Number(body.fee_usd || 0);
 
     if (!amountUsd || amountUsd <= 0) {
       return {
@@ -33,9 +35,12 @@ exports.handler = async (event) => {
       status: "COMPLETED",
       provider: "SIMULATED_GCASH",
       amount_usd: amountUsd,
+      fee_usd: feeUsd,
       recipient_name: recipient,
       gcash_number: gcash,
+      fx,
       created_at: new Date().toISOString(),
+      channel: "GCASH",
     };
 
     return {
