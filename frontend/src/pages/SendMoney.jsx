@@ -41,7 +41,8 @@ export default function SendMoney({
     !Number.isNaN(amountNumber) &&
     amountNumber > 0 &&
     amountNumber <= balances.usd &&
-    !sending;
+    !sending &&
+    !fxError; // Disable if FX rate unavailable
 
   const openConfirm = () => {
     setResult(null);
