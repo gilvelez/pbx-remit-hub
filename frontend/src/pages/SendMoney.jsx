@@ -75,6 +75,55 @@ export default function SendMoney({
     }
   };
 
+  // Fetch live FX quote when amount changes (debounced)
+  useEffect(() => {
+    const raw = draft.amountUsd;
+    const usd = Number(raw || 0);
+
+    if (!usd || usd <= 0) {
+      setFxQuote(null);
+      setFxError("");
+      return;
+    }
+
+    let cancelled = false;
+    const timeoutId = setTimeout(async () => {
+      try {
+        setIsFetchingFx(true);
+        setFxError("");
+
+        const res = await fetch(
+          `/.netlify/functions/get-fx-quote?amount_usd=${usd}`
+        );
+
+        if (!res.ok) {
+          throw new Error(`FX API error: ${res.status}`);
+        }
+
+        const data = await res.json();
+
+        if (!cancelled) {
+          setFxQuote(data);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setFxQuote(null);
+          setFxError("Live rate unavailable, please try again");
+          console.error("[FX] Error fetching live rate:", err);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsFetchingFx(false);
+        }
+      }
+    }, 300); // 300ms debounce
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [draft.amountUsd]);
+
   // Fetch quote when amount changes
   useEffect(() => {
     const raw = draft.amountUsd;
