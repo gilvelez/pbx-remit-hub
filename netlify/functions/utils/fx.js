@@ -1,9 +1,6 @@
 // netlify/functions/utils/fx.js
-// Shared FX utility for PBX - OpenExchangeRates integration with caching
-
 const OXR_URL = "https://openexchangerates.org/api/latest.json";
-
-const FX_TTL_MS = 60_000; // 60 seconds
+const FX_TTL_MS = 60_000; // 60 seconds cache
 
 let cache = {
   mid: null,
@@ -18,59 +15,42 @@ const fetchMidMarket = async () => {
     throw new FXError("OXR_API_KEY is not set");
   }
 
-  // Build URL with only app_id and symbols (no base parameter)
   const url = new URL(OXR_URL);
   url.searchParams.set("app_id", key);
+  // no base= on free plan, just limit to PHP
   url.searchParams.set("symbols", "PHP");
 
-  console.log("[OXR] Fetching rates from:", url.toString().replace(key, "***"));
-
   const res = await fetch(url.toString());
-  const text = await res.text();
+  const raw = await res.text();
 
   if (!res.ok) {
-    // Parse OXR error response as per their documentation
-    let errMsg = `OXR API HTTP ${res.status}`;
-    let errorCode = "unknown";
-    
+    let msg = `FX API error: ${res.status}`;
     try {
-      const errJson = JSON.parse(text);
-      console.error("[OXR] Error response:", JSON.stringify(errJson, null, 2));
-      
-      // OXR error structure: { error: true, status: 401, message: "invalid_app_id", description: "..." }
-      if (errJson) {
-        errorCode = errJson.message || "unknown";
-        errMsg = `OXR API ${res.status}: ${errorCode}`;
-        
-        if (errJson.description) {
-          console.error("[OXR] Error description:", errJson.description);
-        }
+      const errJson = JSON.parse(raw);
+      console.error("OXR error:", errJson);
+      if (errJson && errJson.message) {
+        msg += ` - ${errJson.message}`;
       }
-    } catch (e) {
-      // If JSON parsing fails, log raw text
-      console.error("[OXR] Raw error response (non-JSON):", text);
+    } catch {
+      console.error("OXR non-JSON error:", raw);
     }
-    
-    throw new FXError(errMsg);
+    throw new FXError(msg);
   }
 
-  // Parse successful response
   let data;
   try {
-    data = JSON.parse(text);
-  } catch (e) {
-    console.error("[OXR] Failed to parse success JSON:", text);
-    throw new FXError("Failed to parse OXR JSON response");
+    data = JSON.parse(raw);
+  } catch {
+    console.error("Failed to parse FX JSON:", raw);
+    throw new FXError("Failed to parse FX JSON");
   }
 
-  // Validate PHP rate exists
   const rate = data?.rates?.PHP;
   if (!rate) {
-    console.error("[OXR] PHP rate missing in response. Full data:", JSON.stringify(data, null, 2));
-    throw new FXError("PHP rate not found in OXR response");
+    console.error("PHP rate missing in FX response:", data);
+    throw new FXError("PHP rate not found in FX response");
   }
 
-  console.log("[OXR] Successfully fetched PHP rate:", rate);
   return Number(rate);
 };
 
@@ -89,12 +69,12 @@ const computeSpread = (mid, amountUsd) => {
   const amt = Number(amountUsd) || 0;
 
   if (amt < 100) {
-    basePercent += 0.002; // +0.20% small tx
+    basePercent += 0.002; // +0.20% for small tx
   } else if (amt > 1000) {
-    basePercent -= 0.002; // -0.20% big tx (better rate)
+    basePercent -= 0.002; // -0.20% for large tx
   }
 
-  // safety bounds: 0.40% - 1.50%
+  // clamp between 0.40% and 1.50%
   if (basePercent < 0.004) basePercent = 0.004;
   if (basePercent > 0.015) basePercent = 0.015;
 
@@ -107,13 +87,13 @@ const computeSpread = (mid, amountUsd) => {
 
 const getFxQuote = async (amountUsd) => {
   const { mid, ts } = await getMidMarket();
-  const spread = computeSpread(mid, amountUsd);
-  const pbxRate = mid - spread.spreadPhp;
+  const { spreadPhp, spreadPercent } = computeSpread(mid, amountUsd);
+  const pbxRate = mid - spreadPhp;
   return {
     midMarket: mid,
     pbxRate,
-    spreadPhpPerUsd: spread.spreadPhp,
-    spreadPercent: spread.spreadPercent,
+    spreadPhpPerUsd: spreadPhp,
+    spreadPercent,
     timestamp: ts,
   };
 };
