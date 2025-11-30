@@ -20,18 +20,40 @@ const fetchMidMarket = async () => {
 
   const url = new URL(OXR_URL);
   url.searchParams.set("app_id", key);
-  url.searchParams.set("base", "USD");
+  // Do NOT set 'base' here; free plan only supports default USD base
+  // url.searchParams.set("base", "USD"); // REMOVE this line
   url.searchParams.set("symbols", "PHP");
 
   const res = await fetch(url.toString());
+  const text = await res.text();
+
   if (!res.ok) {
-    throw new FXError(`FX API error: ${res.status}`);
+    // Try to parse JSON error if possible for easier debugging
+    let errMsg = `FX API error: ${res.status}`;
+    try {
+      const errJson = JSON.parse(text);
+      if (errJson && errJson.message) {
+        errMsg += ` - ${errJson.message}`;
+      }
+    } catch (e) { /* ignore JSON parse error */ }
+    console.error("OpenExchangeRates error response:", text);
+    throw new FXError(errMsg);
   }
-  const data = await res.json();
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    console.error("Failed to parse FX JSON:", text);
+    throw new FXError("Failed to parse FX JSON");
+  }
+
   const rate = data?.rates?.PHP;
   if (!rate) {
-    throw new FXError("PHP rate missing in FX response");
+    console.error("FX response missing PHP rate:", data);
+    throw new FXError("PHP rate not found in FX response");
   }
+
   return Number(rate);
 };
 
