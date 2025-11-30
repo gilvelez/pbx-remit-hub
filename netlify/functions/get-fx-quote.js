@@ -1,117 +1,119 @@
 // netlify/functions/get-fx-quote.js
 
-const OXR_URL = "https://openexchangerates.org/api/latest.json";
-const FX_TTL_MS = 60_000; // 60 seconds cache
+const OXR_URL =
+  "https://openexchangerates.org/api/latest.json";
 
-let cache = {
-  mid: null,
-  ts: 0,
-};
-
-class FXError extends Error {}
-
-const fetchMidMarket = async () => {
-  const key = process.env.OXR_API_KEY;
-  if (!key) {
-    throw new FXError("OXR_API_KEY is not set");
-  }
-
-  const url = new URL(OXR_URL);
-  url.searchParams.set("app_id", key);
-  // Free plan: don't set base=, just limit to PHP
-  url.searchParams.set("symbols", "PHP");
-
-  const res = await fetch(url.toString());
-  const raw = await res.text();
-
-  if (!res.ok) {
-    let msg = `FX API error: ${res.status}`;
-    try {
-      const errJson = JSON.parse(raw);
-      console.error("OXR error:", errJson);
-      if (errJson && errJson.message) {
-        msg += ` - ${errJson.message}`;
-      }
-    } catch {
-      console.error("OXR non-JSON error:", raw);
-    }
-    throw new FXError(msg);
-  }
-
-  let data;
-  try {
-    data = JSON.parse(raw);
-  } catch {
-    console.error("Failed to parse FX JSON:", raw);
-    throw new FXError("Failed to parse FX JSON");
-  }
-
-  const rate = data?.rates?.PHP;
-  if (!rate) {
-    console.error("PHP rate missing in FX response:", data);
-    throw new FXError("PHP rate not found in FX response");
-  }
-
-  return Number(rate);
-};
-
-const getMidMarket = async () => {
-  const now = Date.now();
-  if (!cache.mid || now - cache.ts > FX_TTL_MS) {
-    const mid = await fetchMidMarket();
-    cache.mid = mid;
-    cache.ts = now;
-  }
-  return { mid: cache.mid, ts: cache.ts };
-};
-
-const computeSpread = (mid, amountUsd) => {
-  let basePercent = 0.0075; // 0.75%
+// Simple dynamic spread: 0.75% base, 0.95% small, 0.55% large
+const computeSpreadPercent = (amountUsd) => {
+  let pct = 0.0075; // 0.75%
   const amt = Number(amountUsd) || 0;
 
   if (amt < 100) {
-    basePercent += 0.002; // +0.20% small tx
+    pct += 0.002; // +0.20%
   } else if (amt > 1000) {
-    basePercent -= 0.002; // -0.20% large tx
+    pct -= 0.002; // -0.20%
   }
 
-  // clamp between 0.40% and 1.50%
-  if (basePercent < 0.004) basePercent = 0.004;
-  if (basePercent > 0.015) basePercent = 0.015;
-
-  const spreadPhp = mid * basePercent;
-  return {
-    spreadPhp,
-    spreadPercent: basePercent * 100,
-  };
-};
-
-const buildQuote = async (amountUsd) => {
-  const { mid, ts } = await getMidMarket();
-  const { spreadPhp, spreadPercent } = computeSpread(mid, amountUsd);
-  const pbxRate = mid - spreadPhp;
-  return {
-    mid_market: mid,
-    pbx_rate: pbxRate,
-    spread_php_per_usd: spreadPhp,
-    spread_percent: spreadPercent,
-    timestamp: ts,
-  };
+  if (pct < 0.004) pct = 0.004;   // min 0.40%
+  if (pct > 0.015) pct = 0.015;   // max 1.50%
+  return pct;
 };
 
 exports.handler = async (event) => {
   try {
-    const params = event.queryStringParameters || {};
-    const amountUsd = Number(params.amount_usd || "100");
-
-    if (!amountUsd || amountUsd <= 0) {
+    const key = process.env.OXR_API_KEY;
+    if (!key) {
       return {
-        statusCode: 400,
-        body: JSON.stringify({ error: "INVALID_AMOUNT" }),
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error: "NO_API_KEY",
+          message: "OXR_API_KEY is not set in env vars",
+        }),
       };
     }
 
-    const quote = await buildQuote(amountUsd);
+    const params = event.queryStringParameters || {};
+    const amountUsd = Number(params.amount_usd || "0");
+    if (!amountUsd || amountUsd <= 0) {
+      return {
+        statusCode: 400,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error: "INVALID_AMOUNT",
+          message: "amount_usd must be > 0",
+        }),
+      };
+    }
+
+    const url =
+      `${OXR_URL}?app_id=${encodeURIComponent(
+        key
+      )}&symbols=PHP`;
+
+    const res = await fetch(url);
+    const raw = await res.text();
+
+    if (!res.ok) {
+      let msg = `FX API error: ${res.status}`;
+      try {
+        const errJson = JSON.parse(raw);
+        if (errJson && errJson.message) {
+          msg += ` - ${errJson.message}`;
+        }
+        console.error("OXR error:", errJson);
+      } catch {
+        console.error("OXR non-JSON error:", raw);
+      }
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error: "FX_UNAVAILABLE",
+          message: msg,
+        }),
+      };
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      console.error("Failed to parse FX JSON:", raw);
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error: "FX_PARSE_ERROR",
+          message: "Failed to parse FX JSON",
+        }),
+      };
+    }
+
+    const mid = Number(data?.rates?.PHP);
+    if (!mid) {
+      console.error("PHP rate missing:", data);
+      return {
+        statusCode: 500,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          error: "NO_PHP_RATE",
+          message: "PHP rate not found in FX response",
+        }),
+      };
+    }
+
+    const spreadPct = computeSpreadPercent(amountUsd);
+    const spreadPhpPerUsd = mid * spreadPct;
+    const pbxRate = mid - spreadPhpPerUsd;
+
+    const quote = {
+      mid_market: mid,
+      pbx_rate: pbxRate,
+      spread_php_per_usd: spreadPhpPerUsd,
+      spread_percent: spreadPct * 100,
+      timestamp: data.timestamp || Math.floor(Date.now() / 1000),
+    };
 
     return {
       statusCode: 200,
@@ -119,13 +121,14 @@ exports.handler = async (event) => {
       body: JSON.stringify(quote),
     };
   } catch (err) {
-    console.error("get-fx-quote error:", err);
-    const message =
-      err instanceof FXError ? err.message : "Unexpected FX error";
+    console.error("get-fx-quote unexpected error:", err);
     return {
       statusCode: 500,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ error: "FX_UNAVAILABLE", message }),
+      body: JSON.stringify({
+        error: "FX_UNAVAILABLE",
+        message: "Unexpected FX error",
+      }),
     };
   }
 };
