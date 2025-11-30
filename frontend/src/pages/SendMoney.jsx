@@ -52,8 +52,8 @@ export default function SendMoney({
     console.log("[SendMoney] Creating transfer with FX quote:", fxQuote);
     console.log("[SendMoney] Selected recipient:", selectedRecipient);
 
-    // If we have a live FX quote and recipient has GCash info, use real payout function
-    if (fxQuote && selectedRecipient?.gcashNumber) {
+    // If recipient has GCash info, use sandbox payout function (always succeeds)
+    if (selectedRecipient?.gcashNumber) {
       try {
         const payoutRes = await fetch("/.netlify/functions/create-gcash-payout", {
           method: "POST",
