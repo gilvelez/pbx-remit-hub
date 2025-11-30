@@ -8,6 +8,7 @@ export default function SendMoney({
   balances,
   createTransfer,
   setPage,
+  onPayoutComplete,
 }) {
   const [draft, setDraft] = useState({
     recipientId: recipients[0]?.id || "",
