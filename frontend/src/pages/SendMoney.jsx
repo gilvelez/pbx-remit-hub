@@ -49,9 +49,8 @@ export default function SendMoney({
     setResult(null);
     setIsConfirmOpen(false);
 
-    console.log("[SendMoney] Creating transfer with quote:", quote);
+    console.log("[SendMoney] Creating transfer with FX quote:", fxQuote);
     console.log("[SendMoney] Selected recipient:", selectedRecipient);
-    console.log("[SendMoney] FX quote:", fxQuote);
 
     // If we have a live FX quote and recipient has GCash info, use real payout function
     if (fxQuote && selectedRecipient?.gcashNumber) {
