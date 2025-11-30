@@ -18,16 +18,11 @@ export default function SendMoney({
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null); // {ok, message}
   
-  // Quote state
-  const [quote, setQuote] = useState(null);
-  const [quoteError, setQuoteError] = useState("");
-  const [isQuoting, setIsQuoting] = useState(false);
-  const [hasAmountInput, setHasAmountInput] = useState(false);
-  
   // FX quote state (live rates from backend)
   const [fxQuote, setFxQuote] = useState(null);
   const [fxError, setFxError] = useState("");
   const [isFetchingFx, setIsFetchingFx] = useState(false);
+  const [hasAmountInput, setHasAmountInput] = useState(false);
 
   const selectedRecipient = useMemo(
     () => recipients.find((r) => r.id === draft.recipientId),
