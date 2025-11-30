@@ -149,6 +149,7 @@ export default function App() {
       transfers,
       remittances,
       createTransfer,
+      onPayoutComplete,
       refreshBalances: async () => {
         // mock refresh
         await sleep(400);
