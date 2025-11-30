@@ -55,13 +55,23 @@ export default function SendMoney({
     // If recipient has GCash info, use sandbox payout function (always succeeds)
     if (selectedRecipient?.gcashNumber) {
       try {
+        // Prepare FX data for payout
+        const fxData = fxQuote ? {
+          mid_market: fxQuote.mid_market,
+          pbx_rate: fxQuote.pbx_rate,
+          spread_percent: fxQuote.spread_percent,
+          estimated_php: amountNumber * fxQuote.pbx_rate,
+        } : null;
+
         const payoutRes = await fetch("/.netlify/functions/create-gcash-payout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             amount_usd: amountNumber,
-            gcash_number: selectedRecipient.gcashNumber,
             recipient_name: selectedRecipient.name,
+            gcash_number: selectedRecipient.gcashNumber,
+            fx: fxData,
+            fee_usd: 0, // No fee for sandbox
           }),
         });
 
@@ -72,7 +82,7 @@ export default function SendMoney({
         if (payoutRes.ok) {
           setResult({
             ok: true,
-            message: `Payout complete ✅ (${payoutData.txId})`,
+            message: "Payout complete ✅",
             payoutData,
           });
           setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
