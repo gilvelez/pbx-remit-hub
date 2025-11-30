@@ -281,7 +281,7 @@ export default function SendMoney({
             </div>
 
             {/* Live FX Rate Section */}
-            {fxQuote && (
+            {fxQuote && draft.amountUsd && (
               <>
                 <div className="flex justify-between text-xs mt-2 pt-2 border-t border-slate-800">
                   <span className="text-slate-400">PBX rate (live)</span>
@@ -290,7 +290,7 @@ export default function SendMoney({
                   </span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-slate-300">Est. receive amount</span>
+                  <span className="text-slate-300">Estimated PHP</span>
                   <span className="font-semibold text-slate-100">
                     ₱{(Number(draft.amountUsd) * fxQuote.pbx_rate).toLocaleString("en-PH", {
                       maximumFractionDigits: 2,
@@ -304,53 +304,16 @@ export default function SendMoney({
               </>
             )}
 
-            {isFetchingFx && (
-              <div className="text-xs text-slate-400 mt-1">
+            {isFetchingFx && draft.amountUsd && (
+              <div className="text-xs text-slate-400 mt-2">
                 Fetching live rate...
               </div>
             )}
 
-            {fxError && (
-              <div className="text-xs text-amber-300 mt-1">
-                {fxError}
+            {fxError && draft.amountUsd && (
+              <div className="text-xs text-amber-300 mt-2">
+                Live rate unavailable
               </div>
-            )}
-
-            <div className="flex justify-between text-sm mt-1">
-              <span className="text-slate-300">Est. PHP for recipient</span>
-              <span className="font-semibold">
-                {quote
-                  ? quote.amountPhp.toLocaleString("en-PH", {
-                      maximumFractionDigits: 2,
-                    }) + " ₱"
-                  : "—"}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-xs mt-1 text-slate-400">
-              <span>FX</span>
-              <span>{quote ? `1 USD = ${quote.fxRate} PHP` : "—"}</span>
-            </div>
-
-            <div className="flex justify-between text-xs mt-1 text-slate-400">
-              <span>Fee</span>
-              <span>{quote ? `$${quote.feeUsd.toFixed(2)}` : "—"}</span>
-            </div>
-
-            <div className="flex justify-between text-xs mt-1 text-slate-400">
-              <span>Total charge</span>
-              <span>
-                {quote ? `$${quote.totalChargeUsd.toFixed(2)}` : "—"}
-              </span>
-            </div>
-
-            {isQuoting && (
-              <p className="text-xs text-slate-400 mt-1">Updating quote…</p>
-            )}
-            {quoteError && (
-              <p className="text-[11px] text-amber-300 mt-1">
-                Using sandbox quote. (FX and fees are for demo only.)
-              </p>
             )}
 
             <p className="text-[11px] text-slate-500 mt-2">
