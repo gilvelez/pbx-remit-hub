@@ -34,6 +34,38 @@ export default function App() {
     setRemittances((prev) => [remittance, ...prev]);
   };
 
+  // Handle successful payout from create-gcash-payout
+  const onPayoutComplete = (payoutData) => {
+    // Add to transfers (Recent Activity)
+    const transfer = {
+      id: payoutData.txId,
+      recipientId: recipients.find(r => r.name === payoutData.recipient_name)?.id || "unknown",
+      amountUsd: payoutData.amount_usd,
+      status: "completed",
+      createdAt: payoutData.created_at,
+      note: `GCash payout`,
+    };
+    setTransfers((prev) => [transfer, ...prev]);
+
+    // Add to remittances (PH Payouts) if FX data available
+    if (payoutData.fx) {
+      const remittance = {
+        id: payoutData.txId,
+        createdAt: payoutData.created_at,
+        recipientHandle: recipients.find(r => r.name === payoutData.recipient_name)?.handle || "",
+        recipientName: payoutData.recipient_name,
+        payoutMethod: "gcash",
+        amountUsd: payoutData.amount_usd,
+        amountPhp: payoutData.fx.estimated_php,
+        fxRate: payoutData.fx.pbx_rate,
+        feeUsd: payoutData.fee_usd,
+        totalChargeUsd: payoutData.amount_usd + payoutData.fee_usd,
+        status: "completed",
+      };
+      addRemittance(remittance);
+    }
+  };
+
   // helper to create a new transfer and mutate balances
   const createTransfer = async ({ recipientId, amountUsd, note, quote, selectedRecipient }) => {
     const now = new Date().toISOString();
