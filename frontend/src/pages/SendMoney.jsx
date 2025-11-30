@@ -97,11 +97,20 @@ export default function SendMoney({
     }
 
     // Fallback to mock transfer for internal transfers
+    // Create a quote object from FX data for remittance record
+    const quoteForRemittance = fxQuote ? {
+      amountUsd: amountNumber,
+      amountPhp: Number((amountNumber * fxQuote.pbx_rate).toFixed(2)),
+      fxRate: fxQuote.pbx_rate,
+      feeUsd: 0, // No fee for internal transfers
+      totalChargeUsd: amountNumber,
+    } : null;
+
     const res = await createTransfer({
       recipientId: draft.recipientId,
       amountUsd: amountNumber,
       note: draft.note,
-      quote, // Pass the quote for remittance record
+      quote: quoteForRemittance, // Pass the quote for remittance record
       selectedRecipient, // Pass recipient info for remittance record
     });
 
