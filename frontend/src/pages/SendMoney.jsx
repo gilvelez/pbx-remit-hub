@@ -18,10 +18,10 @@ export default function SendMoney({
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null); // {ok, message}
   
-  // Quote state
-  const [quote, setQuote] = useState(null);
-  const [quoteError, setQuoteError] = useState("");
-  const [isQuoting, setIsQuoting] = useState(false);
+  // FX quote state (live rates from backend)
+  const [fxQuote, setFxQuote] = useState(null);
+  const [fxError, setFxError] = useState("");
+  const [isFetchingFx, setIsFetchingFx] = useState(false);
   const [hasAmountInput, setHasAmountInput] = useState(false);
 
   const selectedRecipient = useMemo(
@@ -36,7 +36,8 @@ export default function SendMoney({
     !Number.isNaN(amountNumber) &&
     amountNumber > 0 &&
     amountNumber <= balances.usd &&
-    !sending;
+    !sending &&
+    !fxError; // Disable if FX rate unavailable
 
   const openConfirm = () => {
     setResult(null);
@@ -48,14 +49,68 @@ export default function SendMoney({
     setResult(null);
     setIsConfirmOpen(false);
 
-    console.log("[SendMoney] Creating transfer with quote:", quote);
+    console.log("[SendMoney] Creating transfer with FX quote:", fxQuote);
     console.log("[SendMoney] Selected recipient:", selectedRecipient);
+
+    // If we have a live FX quote and recipient has GCash info, use real payout function
+    if (fxQuote && selectedRecipient?.gcashNumber) {
+      try {
+        const payoutRes = await fetch("/.netlify/functions/create-gcash-payout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount_usd: amountNumber,
+            gcash_number: selectedRecipient.gcashNumber,
+            recipient_name: selectedRecipient.name,
+          }),
+        });
+
+        const payoutData = await payoutRes.json();
+
+        setSending(false);
+
+        if (payoutRes.ok) {
+          setResult({
+            ok: true,
+            message: `Payout complete ✅ (${payoutData.txId})`,
+            payoutData,
+          });
+          setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
+          setHasAmountInput(false);
+          console.log("[SendMoney] Payout successful:", payoutData);
+        } else {
+          setResult({
+            ok: false,
+            message: "Payout failed. Please try again in a few minutes.",
+          });
+          console.error("[SendMoney] Payout error:", payoutData);
+        }
+      } catch (error) {
+        setSending(false);
+        setResult({
+          ok: false,
+          message: "We couldn't complete your payout right now. Please try again in a few minutes.",
+        });
+        console.error("[SendMoney] Payout exception:", error);
+      }
+      return;
+    }
+
+    // Fallback to mock transfer for internal transfers
+    // Create a quote object from FX data for remittance record
+    const quoteForRemittance = fxQuote ? {
+      amountUsd: amountNumber,
+      amountPhp: Number((amountNumber * fxQuote.pbx_rate).toFixed(2)),
+      fxRate: fxQuote.pbx_rate,
+      feeUsd: 0, // No fee for internal transfers
+      totalChargeUsd: amountNumber,
+    } : null;
 
     const res = await createTransfer({
       recipientId: draft.recipientId,
       amountUsd: amountNumber,
       note: draft.note,
-      quote, // Pass the quote for remittance record
+      quote: quoteForRemittance, // Pass the quote for remittance record
       selectedRecipient, // Pass recipient info for remittance record
     });
 
@@ -70,98 +125,54 @@ export default function SendMoney({
     }
   };
 
-  // Fetch quote when amount changes
+  // Fetch live FX quote when amount changes (debounced)
   useEffect(() => {
     const raw = draft.amountUsd;
     const usd = Number(raw || 0);
 
-    if (!hasAmountInput || !usd || usd <= 0) {
-      // If there is no active input yet, don't fetch a new quote,
-      // but DO NOT clear the existing quote here.
+    if (!usd || usd <= 0) {
+      setFxQuote(null);
+      setFxError("");
       return;
     }
 
     let cancelled = false;
-
-    const run = async () => {
+    const timeoutId = setTimeout(async () => {
       try {
-        setIsQuoting(true);
-        setQuoteError("");
+        setIsFetchingFx(true);
+        setFxError("");
 
-        const res = await fetch("/.netlify/functions/quote-remittance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amountUsd: usd,
-            payoutMethod: "gcash",
-          }),
-        });
+        const res = await fetch(
+          `/.netlify/functions/get-fx-quote?amount_usd=${usd}`
+        );
+
+        if (!res.ok) {
+          throw new Error(`FX API error: ${res.status}`);
+        }
 
         const data = await res.json();
 
-        if (cancelled) return;
-
-        if (!res.ok || !data.ok) {
-          // Backend failed – use a front-end fallback so the user still sees something
-          const FX = 55;
-          const feeUsd = 2;
-          const totalChargeUsd = usd + feeUsd;
-          const amountPhp = usd * FX;
-
-          setQuote({
-            id: "fallback",
-            payoutMethod: "gcash",
-            amountUsd: usd,
-            feeUsd,
-            totalChargeUsd,
-            fxRate: FX,
-            amountPhp,
-            currencyFrom: "USD",
-            currencyTo: "PHP",
-            expiresAt: null,
-          });
-
-          setQuoteError("Sandbox quote loaded with fallback.");
-          return;
+        if (!cancelled) {
+          setFxQuote(data);
         }
-
-        setQuote(data.quote);
       } catch (err) {
         if (!cancelled) {
-          // Network or other error – again, use fallback
-          const FX = 55;
-          const feeUsd = 2;
-          const totalChargeUsd = usd + feeUsd;
-          const amountPhp = usd * FX;
-
-          setQuote({
-            id: "fallback_error",
-            payoutMethod: "gcash",
-            amountUsd: usd,
-            feeUsd,
-            totalChargeUsd,
-            fxRate: FX,
-            amountPhp,
-            currencyFrom: "USD",
-            currencyTo: "PHP",
-            expiresAt: null,
-          });
-
-          setQuoteError("Sandbox quote loaded with fallback.");
+          setFxQuote(null);
+          setFxError("Live rate unavailable, please try again");
+          console.error("[FX] Error fetching live rate:", err);
         }
       } finally {
         if (!cancelled) {
-          setIsQuoting(false);
+          setIsFetchingFx(false);
         }
       }
-    };
-
-    run();
+    }, 300); // 300ms debounce
 
     return () => {
       cancelled = true;
+      clearTimeout(timeoutId);
     };
-  }, [draft.amountUsd, hasAmountInput]);
+  }, [draft.amountUsd]);
 
   return (
     <div className="grid gap-5 md:grid-cols-5">
@@ -189,9 +200,9 @@ export default function SendMoney({
               onChange={(amountUsd) => {
                 setDraft((d) => ({ ...d, amountUsd }));
                 if (!amountUsd) {
-                  // User manually cleared the field - clear quote and reset flag
-                  setQuote(null);
-                  setQuoteError("");
+                  // User manually cleared the field - clear FX quote and reset flag
+                  setFxQuote(null);
+                  setFxError("");
                   setHasAmountInput(false);
                 } else {
                   // User is typing a new amount
@@ -273,45 +284,44 @@ export default function SendMoney({
             <div className="flex justify-between text-sm mt-1">
               <span className="text-slate-300">Amount (USD)</span>
               <span className="font-semibold">
-                {quote ? `$${quote.amountUsd.toFixed(2)}` : "—"}
+                {draft.amountUsd ? `$${Number(draft.amountUsd).toFixed(2)}` : "—"}
               </span>
             </div>
 
-            <div className="flex justify-between text-sm mt-1">
-              <span className="text-slate-300">Est. PHP for recipient</span>
-              <span className="font-semibold">
-                {quote
-                  ? quote.amountPhp.toLocaleString("en-PH", {
+            {/* Live FX Rate Section */}
+            {fxQuote && draft.amountUsd && (
+              <>
+                <div className="flex justify-between text-xs mt-2 pt-2 border-t border-slate-800">
+                  <span className="text-slate-400">PBX rate (live)</span>
+                  <span className="font-semibold text-emerald-400">
+                    1 USD = {fxQuote.pbx_rate.toFixed(2)} PHP
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-slate-300">Estimated PHP</span>
+                  <span className="font-semibold text-slate-100">
+                    ₱{(Number(draft.amountUsd) * fxQuote.pbx_rate).toLocaleString("en-PH", {
                       maximumFractionDigits: 2,
-                    }) + " ₱"
-                  : "—"}
-              </span>
-            </div>
-
-            <div className="flex justify-between text-xs mt-1 text-slate-400">
-              <span>FX</span>
-              <span>{quote ? `1 USD = ${quote.fxRate} PHP` : "—"}</span>
-            </div>
-
-            <div className="flex justify-between text-xs mt-1 text-slate-400">
-              <span>Fee</span>
-              <span>{quote ? `$${quote.feeUsd.toFixed(2)}` : "—"}</span>
-            </div>
-
-            <div className="flex justify-between text-xs mt-1 text-slate-400">
-              <span>Total charge</span>
-              <span>
-                {quote ? `$${quote.totalChargeUsd.toFixed(2)}` : "—"}
-              </span>
-            </div>
-
-            {isQuoting && (
-              <p className="text-xs text-slate-400 mt-1">Updating quote…</p>
+                    })}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[11px] mt-1 text-slate-500">
+                  <span>Mid-market: {fxQuote.mid_market.toFixed(2)}</span>
+                  <span>Spread: {fxQuote.spread_percent.toFixed(2)}%</span>
+                </div>
+              </>
             )}
-            {quoteError && (
-              <p className="text-[11px] text-amber-300 mt-1">
-                Using sandbox quote. (FX and fees are for demo only.)
-              </p>
+
+            {isFetchingFx && draft.amountUsd && (
+              <div className="text-xs text-slate-400 mt-2">
+                Fetching live rate...
+              </div>
+            )}
+
+            {fxError && draft.amountUsd && (
+              <div className="text-xs text-amber-300 mt-2">
+                Live rate unavailable
+              </div>
             )}
 
             <p className="text-[11px] text-slate-500 mt-2">

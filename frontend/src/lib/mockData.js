@@ -5,6 +5,7 @@ export const initialRecipients = [
     handle: "@maria",
     country: "PH",
     payoutMethod: "GCASH",
+    gcashNumber: "09171234567", // Added for real payout
   },
   {
     id: "r2",
