@@ -327,9 +327,45 @@ export default function SendMoney({
             <div className="flex justify-between text-sm mt-1">
               <span className="text-slate-300">Amount (USD)</span>
               <span className="font-semibold">
-                {quote ? `$${quote.amountUsd.toFixed(2)}` : "—"}
+                {draft.amountUsd ? `$${Number(draft.amountUsd).toFixed(2)}` : "—"}
               </span>
             </div>
+
+            {/* Live FX Rate Section */}
+            {fxQuote && (
+              <>
+                <div className="flex justify-between text-xs mt-2 pt-2 border-t border-slate-800">
+                  <span className="text-slate-400">PBX rate (live)</span>
+                  <span className="font-semibold text-emerald-400">
+                    1 USD = {fxQuote.pbx_rate.toFixed(2)} PHP
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm mt-1">
+                  <span className="text-slate-300">Est. receive amount</span>
+                  <span className="font-semibold text-slate-100">
+                    ₱{(Number(draft.amountUsd) * fxQuote.pbx_rate).toLocaleString("en-PH", {
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                </div>
+                <div className="flex justify-between text-[11px] mt-1 text-slate-500">
+                  <span>Mid-market: {fxQuote.mid_market.toFixed(2)}</span>
+                  <span>Spread: {fxQuote.spread_percent.toFixed(2)}%</span>
+                </div>
+              </>
+            )}
+
+            {isFetchingFx && (
+              <div className="text-xs text-slate-400 mt-1">
+                Fetching live rate...
+              </div>
+            )}
+
+            {fxError && (
+              <div className="text-xs text-amber-300 mt-1">
+                {fxError}
+              </div>
+            )}
 
             <div className="flex justify-between text-sm mt-1">
               <span className="text-slate-300">Est. PHP for recipient</span>
