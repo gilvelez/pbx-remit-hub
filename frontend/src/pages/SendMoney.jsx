@@ -200,9 +200,9 @@ export default function SendMoney({
               onChange={(amountUsd) => {
                 setDraft((d) => ({ ...d, amountUsd }));
                 if (!amountUsd) {
-                  // User manually cleared the field - clear quote and reset flag
-                  setQuote(null);
-                  setQuoteError("");
+                  // User manually cleared the field - clear FX quote and reset flag
+                  setFxQuote(null);
+                  setFxError("");
                   setHasAmountInput(false);
                 } else {
                   // User is typing a new amount
