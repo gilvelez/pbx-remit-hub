@@ -8,6 +8,7 @@ export default function SendMoney({
   balances,
   createTransfer,
   setPage,
+  onPayoutComplete,
 }) {
   const [draft, setDraft] = useState({
     recipientId: recipients[0]?.id || "",
@@ -55,13 +56,23 @@ export default function SendMoney({
     // If recipient has GCash info, use sandbox payout function (always succeeds)
     if (selectedRecipient?.gcashNumber) {
       try {
+        // Prepare FX data for payout
+        const fxData = fxQuote ? {
+          mid_market: fxQuote.mid_market,
+          pbx_rate: fxQuote.pbx_rate,
+          spread_percent: fxQuote.spread_percent,
+          estimated_php: amountNumber * fxQuote.pbx_rate,
+        } : null;
+
         const payoutRes = await fetch("/.netlify/functions/create-gcash-payout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             amount_usd: amountNumber,
-            gcash_number: selectedRecipient.gcashNumber,
             recipient_name: selectedRecipient.name,
+            gcash_number: selectedRecipient.gcashNumber,
+            fx: fxData,
+            fee_usd: 0, // No fee for sandbox
           }),
         });
 
@@ -72,11 +83,17 @@ export default function SendMoney({
         if (payoutRes.ok) {
           setResult({
             ok: true,
-            message: `Payout complete ✅ (${payoutData.txId})`,
+            message: "Payout complete ✅",
             payoutData,
           });
           setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
           setHasAmountInput(false);
+          
+          // Add to Recent Activity and PH Payouts
+          if (onPayoutComplete) {
+            onPayoutComplete(payoutData);
+          }
+          
           console.log("[SendMoney] Payout successful:", payoutData);
         } else {
           setResult({
@@ -226,18 +243,71 @@ export default function SendMoney({
               />
             </div>
 
-            {result && (
-              <div
-                className={[
-                  "rounded-xl px-3 py-2 text-sm",
-                  result.ok
-                    ? "bg-emerald-500/15 text-emerald-200"
-                    : "bg-rose-500/15 text-rose-200",
-                ].join(" ")}
-              >
+            {result && result.ok && result.payoutData ? (
+              <div className="rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4">
+                <div className="mb-3 text-base font-bold text-emerald-200">
+                  {result.message}
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">To:</span>
+                    <span className="font-semibold text-slate-100">
+                      {result.payoutData.recipient_name} ({result.payoutData.gcash_number})
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Amount sent:</span>
+                    <span className="font-semibold text-slate-100">
+                      ${result.payoutData.amount_usd.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Fee:</span>
+                    <span className="font-semibold text-slate-100">
+                      ${result.payoutData.fee_usd.toFixed(2)}
+                    </span>
+                  </div>
+                  {result.payoutData.fx && (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">PBX rate:</span>
+                        <span className="font-semibold text-emerald-300">
+                          1 USD = {result.payoutData.fx.pbx_rate.toFixed(2)} PHP
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-400">Est. PHP received:</span>
+                        <span className="font-bold text-emerald-200">
+                          ₱{result.payoutData.fx.estimated_php.toLocaleString("en-PH", {
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-xs text-slate-500">
+                        <span>Mid-market: {result.payoutData.fx.mid_market.toFixed(2)}</span>
+                        <span>Spread: {result.payoutData.fx.spread_percent.toFixed(2)}%</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="mt-3 border-t border-emerald-900 pt-2">
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span>Ref:</span>
+                      <span className="font-mono">{result.payoutData.txId}</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-slate-400">
+                      <span>Time:</span>
+                      <span>
+                        {new Date(result.payoutData.created_at).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : result && !result.ok ? (
+              <div className="rounded-xl bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
                 {result.message}
               </div>
-            )}
+            ) : null}
 
             <button
               disabled={!canSend}
