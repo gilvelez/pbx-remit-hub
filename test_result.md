@@ -101,3 +101,85 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+## ==================== PayMongo Integration (Dec 4, 2024) ====================
+
+user_problem_statement: "Integrate real PayMongo API for GCash payouts, replacing mock sandbox payout system"
+
+backend:
+  - task: "Create PayMongo shared client with Basic Auth"
+    implemented: true
+    working: "NA"
+    file: "/app/paymongoClient.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created shared PayMongo client at project root. Implements HTTP Basic Auth using PAYMONGO_SECRET_KEY from env. Includes error handling for invalid JSON and API errors."
+
+  - task: "Create pbx-create-transfer Netlify function"
+    implemented: true
+    working: "NA"
+    file: "/app/netlify/functions/pbx-create-transfer.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created function using PayMongo Transfer V2 API (POST /v2/batch_transfers). Accepts amountPhp, institution_code, account_name, account_number. Converts PHP to centavos. Returns PayMongo response with batch transfer ID."
+
+  - task: "Create pbx-list-institutions Netlify function"
+    implemented: true
+    working: "NA"
+    file: "/app/netlify/functions/pbx-list-institutions.js"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Created function to fetch supported banks/e-wallets from PayMongo API (GET /v2/receiving_institutions). Simple pass-through endpoint for frontend."
+
+frontend:
+  - task: "Update SendMoney.jsx to use real PayMongo transfer"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/pages/SendMoney.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Updated GCash payout logic to call pbx-create-transfer endpoint. Passes PHP amount, GCSH institution code, recipient details. Formats PayMongo response for UI display. Updated subtitle to 'Real Payouts'."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Create pbx-create-transfer Netlify function"
+    - "Create pbx-list-institutions Netlify function"
+    - "Update SendMoney.jsx to use real PayMongo transfer"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "PayMongo integration implemented following user's detailed instructions. Created 3 new files: paymongoClient.js (shared client with Basic Auth), pbx-create-transfer.js (Transfer V2 batch transfer endpoint), pbx-list-institutions.js (fetch supported banks). Updated SendMoney.jsx to call real transfer endpoint instead of mock. Ready for testing on deployed Netlify site. IMPORTANT: Testing requires PAYMONGO_SECRET_KEY env var to be set in Netlify dashboard. Local testing will not work for Netlify functions."
+
+testing_notes:
+  - "All Netlify Function tests MUST be done on deployed site (functions return 404 locally)"
+  - "Required env vars: PAYMONGO_SECRET_KEY, OXR_API_KEY"
+  - "Test with first recipient 'Maria Santos' who has gcashNumber: 09171234567"
+  - "GCash institution code hardcoded to 'GCSH'"
+  - "Amount conversion: PHP * 100 = centavos for PayMongo API"
+  - "See /app/TEST_PLAN_PAYMONGO.md for comprehensive test scenarios"
+  - "See /app/PAYMONGO_INTEGRATION.md for full integration documentation"
+

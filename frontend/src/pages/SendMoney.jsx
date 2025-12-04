@@ -53,26 +53,28 @@ export default function SendMoney({
     console.log("[SendMoney] Creating transfer with FX quote:", fxQuote);
     console.log("[SendMoney] Selected recipient:", selectedRecipient);
 
-    // If recipient has GCash info, use sandbox payout function (always succeeds)
+    // If recipient has GCash info, use real PayMongo API
     if (selectedRecipient?.gcashNumber) {
       try {
-        // Prepare FX data for payout
-        const fxData = fxQuote ? {
-          mid_market: fxQuote.mid_market,
-          pbx_rate: fxQuote.pbx_rate,
-          spread_percent: fxQuote.spread_percent,
-          estimated_php: amountNumber * fxQuote.pbx_rate,
-        } : null;
+        // Calculate PHP amount using the live FX rate
+        const amountPhp = fxQuote ? amountNumber * fxQuote.pbx_rate : 0;
 
-        const payoutRes = await fetch("/.netlify/functions/create-gcash-payout", {
+        // Call the real PayMongo transfer endpoint
+        const payoutRes = await fetch("/.netlify/functions/pbx-create-transfer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            amount_usd: amountNumber,
-            recipient_name: selectedRecipient.name,
-            gcash_number: selectedRecipient.gcashNumber,
-            fx: fxData,
-            fee_usd: 0, // No fee for sandbox
+            amountPhp: amountPhp,
+            institution_code: "GCSH", // GCash institution code
+            account_name: selectedRecipient.name,
+            account_number: selectedRecipient.gcashNumber,
+            provider: "instapay",
+            description: `PBX transfer to ${selectedRecipient.name}`,
+            metadata: {
+              usd_amount: amountNumber,
+              fx_rate: fxQuote?.pbx_rate,
+              user_id: "demo-user",
+            },
           }),
         });
 
@@ -81,26 +83,42 @@ export default function SendMoney({
         setSending(false);
 
         if (payoutRes.ok) {
+          // Format response for UI display
+          const formattedPayoutData = {
+            txId: payoutData.data?.id || `PBX-${Date.now()}`,
+            recipient_name: selectedRecipient.name,
+            gcash_number: selectedRecipient.gcashNumber,
+            amount_usd: amountNumber,
+            fee_usd: 0,
+            created_at: new Date().toISOString(),
+            fx: fxQuote ? {
+              mid_market: fxQuote.mid_market,
+              pbx_rate: fxQuote.pbx_rate,
+              spread_percent: fxQuote.spread_percent,
+              estimated_php: amountPhp,
+            } : null,
+          };
+
           setResult({
             ok: true,
             message: "Payout complete ✅",
-            payoutData,
+            payoutData: formattedPayoutData,
           });
           setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
           setHasAmountInput(false);
           
           // Add to Recent Activity and PH Payouts
           if (onPayoutComplete) {
-            onPayoutComplete(payoutData);
+            onPayoutComplete(formattedPayoutData);
           }
           
-          console.log("[SendMoney] Payout successful:", payoutData);
+          console.log("[SendMoney] PayMongo transfer successful:", payoutData);
         } else {
           setResult({
             ok: false,
-            message: "Payout failed. Please try again in a few minutes.",
+            message: payoutData.error || "Payout failed. Please try again in a few minutes.",
           });
-          console.error("[SendMoney] Payout error:", payoutData);
+          console.error("[SendMoney] PayMongo transfer error:", payoutData);
         }
       } catch (error) {
         setSending(false);
@@ -108,7 +126,7 @@ export default function SendMoney({
           ok: false,
           message: "We couldn't complete your payout right now. Please try again in a few minutes.",
         });
-        console.error("[SendMoney] Payout exception:", error);
+        console.error("[SendMoney] PayMongo transfer exception:", error);
       }
       return;
     }
@@ -198,7 +216,7 @@ export default function SendMoney({
         <Card>
           <CardHeader
             title="Send Money"
-            subtitle="Send USD → PBX USDC internally (Sandbox UI)"
+            subtitle="Send USD → PHP via PayMongo (Real Payouts)"
           />
 
           <div className="grid gap-4">
@@ -395,7 +413,7 @@ export default function SendMoney({
             )}
 
             <p className="text-[11px] text-slate-500 mt-2">
-              Sandbox quote only. In production this will use live FX + real payout partner APIs.
+              Live FX rates + PayMongo real-time transfers to PH banks & e-wallets.
             </p>
           </div>
         </Card>
