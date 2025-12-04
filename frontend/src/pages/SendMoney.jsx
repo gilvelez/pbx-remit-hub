@@ -413,7 +413,7 @@ export default function SendMoney({
             )}
 
             <p className="text-[11px] text-slate-500 mt-2">
-              Sandbox quote only. In production this will use live FX + real payout partner APIs.
+              Live FX rates + PayMongo real-time transfers to PH banks & e-wallets.
             </p>
           </div>
         </Card>
