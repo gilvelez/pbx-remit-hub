@@ -216,7 +216,7 @@ export default function SendMoney({
         <Card>
           <CardHeader
             title="Send Money"
-            subtitle="Send USD → PBX USDC internally (Sandbox UI)"
+            subtitle="Send USD → PHP via PayMongo (Real Payouts)"
           />
 
           <div className="grid gap-4">
