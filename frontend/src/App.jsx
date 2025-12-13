@@ -231,6 +231,14 @@ function MainApp() {
 }
 
 function TopNav({ page, setPage }) {
+  const { logout } = useSession();
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+  
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
@@ -246,13 +254,19 @@ function TopNav({ page, setPage }) {
           </div>
         </div>
 
-        <nav className="flex gap-2">
-          <NavButton active={page === "send"} onClick={() => setPage("send")}>
+        <nav className="flex gap-2 items-center">
+          <NavButton active={page === "send"} onClick={() => { setPage("send"); navigate("/send"); }}>
             Send Money
           </NavButton>
-          <NavButton active={page === "wallet"} onClick={() => setPage("wallet")}>
+          <NavButton active={page === "wallet"} onClick={() => { setPage("wallet"); navigate("/wallet"); }}>
             Wallet
           </NavButton>
+          <button
+            onClick={handleLogout}
+            className="ml-2 rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition"
+          >
+            Logout
+          </button>
         </nav>
       </div>
     </header>
