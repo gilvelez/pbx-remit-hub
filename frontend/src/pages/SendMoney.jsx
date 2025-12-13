@@ -497,11 +497,19 @@ function PlaidConnectBanner() {
               body: JSON.stringify({ public_token }),
             });
 
-            const exText = await exRes.text();   // ✅ read once
-            const exData = JSON.parse(exText);   // ✅ parse once
+            // ✅ Read body ONCE
+            const exText = await exRes.text();
+            let exData = null;
+            
+            try {
+              exData = exText ? JSON.parse(exText) : null;
+            } catch (e) {
+              throw new Error("Invalid response from server");
+            }
 
-            if (!exRes.ok || !exData.access_token) {
-              throw new Error(exData.error || "Missing access_token");
+            if (!exRes.ok || !exData?.access_token) {
+              const msg = exData?.error || "Missing access_token";
+              throw new Error(msg);
             }
 
             setStatus("connected");
