@@ -460,6 +460,7 @@ function PlaidConnectBanner() {
         headers: {
           "Content-Type": "application/json",
           "X-Session-Token": session.token || "",
+          "X-Session-Verified": String(session.verified),
         },
       });
 
