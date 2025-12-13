@@ -464,17 +464,25 @@ function PlaidConnectBanner() {
         },
       });
 
-      const ltText = await ltRes.text();   // ✅ read once
-      const ltData = JSON.parse(ltText);   // ✅ parse once
+      // ✅ Read body ONCE
+      const ltText = await ltRes.text();
+      let ltData = null;
       
-      // Check for 403 (verification required)
-      if (ltRes.status === 403) {
-        throw new Error(ltData.error || "Verification required");
+      try {
+        ltData = ltText ? JSON.parse(ltText) : null;
+      } catch (e) {
+        throw new Error("Invalid response from server");
       }
       
-      const link_token = ltData.link_token;
+      // Check for errors
+      if (!ltRes.ok) {
+        const msg = ltData?.error || ltData?.message || `Request failed (${ltRes.status})`;
+        throw new Error(msg);
+      }
+      
+      const link_token = ltData?.link_token;
 
-      if (!link_token) throw new Error("Missing link_token");
+      if (!link_token) throw new Error("Missing link_token from server");
 
       // 2) open Plaid Link
       const handler = window.Plaid.create({
