@@ -219,11 +219,11 @@ function MainApp() {
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <TopNav page={page} setPage={setPage} />
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
-        {page === "send" ? (
-          <SendMoney {...value} />
-        ) : (
-          <Wallet {...value} />
-        )}
+        <Routes>
+          <Route path="/" element={<Navigate to="/send" replace />} />
+          <Route path="/send" element={<SendMoney {...value} />} />
+          <Route path="/wallet" element={<Wallet {...value} />} />
+        </Routes>
       </main>
       <Footer />
     </div>
