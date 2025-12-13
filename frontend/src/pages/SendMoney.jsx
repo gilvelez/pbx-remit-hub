@@ -436,19 +436,41 @@ export default function SendMoney({
 function PlaidConnectBanner() {
   const [status, setStatus] = React.useState("idle"); 
   const [lastError, setLastError] = React.useState("");
+  
+  // Import session context at component level
+  const SessionContext = React.createContext(null);
+  let session = { exists: false, verified: false };
+  try {
+    const sessionStr = sessionStorage.getItem('pbx_session');
+    if (sessionStr) {
+      session = JSON.parse(sessionStr);
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
 
   const onConnect = async () => {
     try {
       setStatus("loading");
       setLastError("");
 
-      // 1) get link_token from Netlify (READ ONCE)
+      // 1) get link_token from Netlify (READ ONCE) with session token
       const ltRes = await fetch("/.netlify/functions/create-link-token", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": session.token || "",
+        },
       });
 
       const ltText = await ltRes.text();   // ✅ read once
       const ltData = JSON.parse(ltText);   // ✅ parse once
+      
+      // Check for 403 (verification required)
+      if (ltRes.status === 403) {
+        throw new Error(ltData.error || "Verification required");
+      }
+      
       const link_token = ltData.link_token;
 
       if (!link_token) throw new Error("Missing link_token");
