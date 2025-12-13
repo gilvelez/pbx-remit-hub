@@ -5,8 +5,7 @@ import { useSession } from '../contexts/SessionContext';
 export default function Verify() {
   const [code, setCode] = useState('');
   const [error, setError] = useState('');
-  const [verifying, setVerifying] = useState(false);
-  const { session, verify } = useSession();
+  const { session, setSession } = useSession();
   const navigate = useNavigate();
 
   useEffect(() => {
