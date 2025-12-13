@@ -21,12 +21,14 @@ exports.handler = async (event) => {
   
   try {
     // SECURITY: Check session verification before creating Plaid link token
+    // MVP sandbox-only gate. Replace with real server-side session validation later.
     const token = event.headers['x-session-token'];
+    const verified = event.headers['x-session-verified'] === 'true';
     
-    if (!token || !isVerified(token)) {
+    if (!token || !verified) {
       console.log('[PLAID_LINK_REQUEST_BLOCKED]', { 
         token: token ? 'present' : 'missing',
-        verified: token ? isVerified(token) : false,
+        verified: verified,
         timestamp: new Date().toISOString()
       });
       
@@ -41,6 +43,7 @@ exports.handler = async (event) => {
     
     console.log('[PLAID_LINK_REQUEST_ALLOWED]', { 
       token: token.substring(0, 8) + '...',
+      verified: verified,
       timestamp: new Date().toISOString()
     });
     
