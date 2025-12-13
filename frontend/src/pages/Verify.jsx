@@ -77,10 +77,10 @@ export default function Verify() {
 
             <button
               type="submit"
-              disabled={verifying || code.length !== 6}
+              disabled={code.length !== 6}
               className="w-full rounded-2xl bg-emerald-500 px-4 py-3 text-sm font-bold text-slate-950 hover:bg-emerald-400 transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {verifying ? 'Verifying...' : 'Verify'}
+              Verify
             </button>
           </form>
 
