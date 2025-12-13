@@ -17,32 +17,20 @@ exports.handler = async (event) => {
   }
   
   try {
-    // SECURITY: Check session verification before creating Plaid link token
-    // MVP sandbox-only gate. Replace with real server-side session validation later.
-    const token = event.headers['x-session-token'];
-    const verified = event.headers['x-session-verified'] === 'true';
+    // SECURITY: Hard gate for Plaid Link token creation
+    // MVP sandbox-only gate. Replace with server-side session validation when real auth is implemented.
+    const token = event.headers["x-session-token"];
+    const verified = (event.headers["x-session-verified"] || "").toLowerCase() === "true";
     
     if (!token || !verified) {
-      console.log('[PLAID_LINK_REQUEST_BLOCKED]', { 
-        token: token ? 'present' : 'missing',
-        verified: verified,
-        timestamp: new Date().toISOString()
-      });
-      
+      console.log("PLAID_LINK_REQUEST_BLOCKED", { hasToken: !!token, verified, ts: Date.now() });
       return {
         statusCode: 403,
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ 
-          error: 'Verification required before connecting bank' 
-        })
+        body: JSON.stringify({ error: "Verification required before connecting bank" })
       };
     }
     
-    console.log('[PLAID_LINK_REQUEST_ALLOWED]', { 
-      token: token.substring(0, 8) + '...',
-      verified: verified,
-      timestamp: new Date().toISOString()
-    });
+    console.log("PLAID_LINK_REQUEST_ALLOWED", { ts: Date.now() });
     
     const body = JSON.parse(event.body || '{}');
     const client_user_id = body.client_user_id || 'pbx-user-123';
