@@ -4,27 +4,25 @@ import { auditLog } from '../lib/auditLog';
 const SessionContext = createContext(null);
 
 export function SessionProvider({ children }) {
-  // CRITICAL: Initialize with default state first
-  const [session, setSession] = useState({
-    exists: false,
-    verified: false,
-    token: null,
-    user: null,
-  });
-
-  // Load from sessionStorage AFTER initial render
-  useEffect(() => {
+  // CRITICAL: Initialize state with function to avoid reading storage multiple times
+  const [session, setSession] = useState(() => {
     try {
       const raw = sessionStorage.getItem('pbx_session');
       if (raw) {
-        const parsed = JSON.parse(raw);
-        setSession(parsed);
+        return JSON.parse(raw);
       }
     } catch (e) {
       console.error('Failed to parse session from storage:', e);
       sessionStorage.removeItem('pbx_session');
     }
-  }, []);
+    // Default state
+    return {
+      exists: false,
+      verified: false,
+      token: null,
+      user: null,
+    };
+  });
 
   // Persist to sessionStorage whenever session changes
   useEffect(() => {
