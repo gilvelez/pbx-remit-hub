@@ -13,6 +13,57 @@ import {
 } from "./lib/mockData.js";
 
 export default function App() {
+  return (
+    <BrowserRouter>
+      <SessionProvider>
+        <AppContent />
+      </SessionProvider>
+    </BrowserRouter>
+  );
+}
+
+function AppContent() {
+  const { session } = useSession();
+  
+  return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login" element={<Login />} />
+      
+      {/* Protected routes */}
+      <Route
+        path="/*"
+        element={
+          <ProtectedApp session={session} />
+        }
+      />
+    </Routes>
+  );
+}
+
+function ProtectedApp({ session }) {
+  const navigate = useNavigate();
+  
+  // Redirect to login if no session
+  if (!session.exists) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  // Redirect to verify if session exists but not verified
+  if (!session.verified) {
+    return <Navigate to="/verify" replace />;
+  }
+  
+  return (
+    <Routes>
+      <Route path="/verify" element={<Verify />} />
+      <Route path="/plaid-gate-test" element={<PlaidGateTest />} />
+      <Route path="/*" element={<MainApp />} />
+    </Routes>
+  );
+}
+
+function MainApp() {
   const [page, setPage] = useState("send"); // "send" | "wallet"
   const [recipients] = useState(initialRecipients);
 
