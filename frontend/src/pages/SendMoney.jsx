@@ -519,6 +519,25 @@ function PlaidConnectBanner() {
     }
   };
 
+  // Gate: Only show connect button if verified
+  if (!session.exists || !session.verified) {
+    return (
+      <div className="rounded-2xl border border-amber-800 bg-amber-950/30 p-3">
+        <div className="flex items-center gap-3">
+          <div className="text-2xl">⚠️</div>
+          <div>
+            <div className="text-sm font-semibold text-amber-200">
+              Verification Required
+            </div>
+            <div className="text-xs text-amber-300">
+              Verification required before connecting a bank
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
       <div className="flex items-center justify-between gap-3">
