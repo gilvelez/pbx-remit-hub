@@ -115,6 +115,16 @@ export default function PlaidGateTest() {
           </div>
         </div>
 
+        {/* Connect Bank Button (only if verified) */}
+        {session.exists && session.verified && (
+          <div className="mt-6 rounded-3xl border border-emerald-800 bg-emerald-950/30 p-6">
+            <h3 className="text-lg font-bold text-emerald-200 mb-3">Plaid Link Available</h3>
+            <button className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-bold text-slate-950 hover:bg-emerald-400 transition">
+              Connect Bank (Demo)
+            </button>
+          </div>
+        )}
+
         {/* Test Scenarios */}
         <div className="mt-6 rounded-3xl border border-slate-800 bg-slate-950 p-6">
           <h3 className="text-lg font-bold text-white mb-4">Test Scenarios</h3>
@@ -123,6 +133,11 @@ export default function PlaidGateTest() {
             <p>✓ Logged in but not verified → Plaid Link blocked</p>
             <p>✓ Logged in + verified → Plaid Link enabled</p>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-6 text-center text-xs text-slate-500">
+          Sandbox demo verification gate (MVP).
         </div>
       </div>
     </div>
