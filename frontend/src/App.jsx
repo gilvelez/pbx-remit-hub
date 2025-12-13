@@ -29,8 +29,10 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
       
+      {/* Test page - accessible in all states for screenshots */}
+      <Route path="/plaid-gate-test" element={<PlaidGateTest />} />
+      
       {/* Protected routes - require session + verification */}
-      <Route path="/plaid-gate-test" element={<ProtectedRoute><PlaidGateTest /></ProtectedRoute>} />
       <Route path="/*" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
     </Routes>
   );
