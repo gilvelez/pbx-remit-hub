@@ -1,5 +1,4 @@
 const { Configuration, PlaidApi, PlaidEnvironments } = require('plaid');
-const { isVerified, maybeCleanup } = require('./sessionStore');
 
 const config = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
@@ -13,8 +12,6 @@ const config = new Configuration({
 const plaid = new PlaidApi(config);
 
 exports.handler = async (event) => {
-  maybeCleanup();
-  
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
