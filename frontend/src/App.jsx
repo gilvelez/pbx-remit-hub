@@ -212,7 +212,7 @@ function MainApp() {
         setBalances((b) => ({ ...b }));
       },
     }),
-    [page, recipients, balances, transfers, remittances]
+    [page, recipients, balances, transfers, remittances, createTransfer, onPayoutComplete]
   );
 
   return (
