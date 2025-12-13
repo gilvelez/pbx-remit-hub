@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { SessionProvider, useSession } from "./contexts/SessionContext.jsx";
 import SendMoney from "./pages/SendMoney.jsx";
 import Wallet from "./pages/Wallet.jsx";
+import Login from "./pages/Login.jsx";
+import Verify from "./pages/Verify.jsx";
+import PlaidGateTest from "./pages/PlaidGateTest.jsx";
 import {
   initialRecipients,
   initialBalances,
