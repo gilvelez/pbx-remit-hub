@@ -4,22 +4,35 @@ import { auditLog } from '../lib/auditLog';
 const SessionContext = createContext(null);
 
 export function SessionProvider({ children }) {
-  const [session, setSession] = useState(() => {
-    // Load from sessionStorage on mount
-    const stored = sessionStorage.getItem('pbx_session');
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch (e) {
-        return { exists: false, verified: false, token: null, user: null };
-      }
-    }
-    return { exists: false, verified: false, token: null, user: null };
+  // CRITICAL: Initialize with default state first
+  const [session, setSession] = useState({
+    exists: false,
+    verified: false,
+    token: null,
+    user: null,
   });
+
+  // Load from sessionStorage AFTER initial render
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('pbx_session');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setSession(parsed);
+      }
+    } catch (e) {
+      console.error('Failed to parse session from storage:', e);
+      sessionStorage.removeItem('pbx_session');
+    }
+  }, []);
 
   // Persist to sessionStorage whenever session changes
   useEffect(() => {
-    sessionStorage.setItem('pbx_session', JSON.stringify(session));
+    try {
+      sessionStorage.setItem('pbx_session', JSON.stringify(session));
+    } catch (e) {
+      console.error('Failed to save session to storage:', e);
+    }
   }, [session]);
 
   const login = (email) => {
@@ -62,18 +75,18 @@ export function SessionProvider({ children }) {
   };
 
   return (
-    <SessionContext.Provider value={{ session, login, verify, logout }}>
+    <SessionContext.Provider value={{ session, setSession, login, verify, logout }}>
       {children}
     </SessionContext.Provider>
   );
 }
 
 export function useSession() {
-  const context = useContext(SessionContext);
-  if (!context) {
-    throw new Error('useSession must be used within SessionProvider');
+  const ctx = useContext(SessionContext);
+  if (!ctx) {
+    throw new Error('useSession must be used inside SessionProvider');
   }
-  return context;
+  return ctx;
 }
 
 function generateUUID() {
