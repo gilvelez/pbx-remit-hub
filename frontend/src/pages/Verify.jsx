@@ -13,12 +13,13 @@ export default function Verify() {
     // Redirect to login if no session
     if (!session.exists) {
       navigate('/login');
+      return;
     }
     // Redirect to main app if already verified
     if (session.verified) {
       navigate('/send');
     }
-  }, [session, navigate]);
+  }, [session.exists, session.verified, navigate]);
 
   const handleVerify = async (e) => {
     e.preventDefault();
