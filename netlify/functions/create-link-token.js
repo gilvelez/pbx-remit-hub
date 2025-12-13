@@ -1,4 +1,5 @@
 const { Configuration, PlaidApi, PlaidEnvironments } = require('plaid');
+const { isVerified, maybeCleanup } = require('./sessionStore');
 
 const config = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
@@ -12,10 +13,37 @@ const config = new Configuration({
 const plaid = new PlaidApi(config);
 
 exports.handler = async (event) => {
+  maybeCleanup();
+  
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
+  
   try {
+    // SECURITY: Check session verification before creating Plaid link token
+    const token = event.headers['x-session-token'];
+    
+    if (!token || !isVerified(token)) {
+      console.log('[PLAID_LINK_REQUEST_BLOCKED]', { 
+        token: token ? 'present' : 'missing',
+        verified: token ? isVerified(token) : false,
+        timestamp: new Date().toISOString()
+      });
+      
+      return {
+        statusCode: 403,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ 
+          error: 'Verification required before connecting bank' 
+        })
+      };
+    }
+    
+    console.log('[PLAID_LINK_REQUEST_ALLOWED]', { 
+      token: token.substring(0, 8) + '...',
+      timestamp: new Date().toISOString()
+    });
+    
     const body = JSON.parse(event.body || '{}');
     const client_user_id = body.client_user_id || 'pbx-user-123';
 
