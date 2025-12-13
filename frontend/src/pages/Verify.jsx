@@ -21,27 +21,20 @@ export default function Verify() {
     }
   }, [session.exists, session.verified, navigate]);
 
-  const handleVerify = async (e) => {
+  const handleVerify = (e) => {
     e.preventDefault();
     setError('');
 
-    // Demo: any 6-digit code works
-    if (!/^\d{6}$/.test(code)) {
-      setError('Please enter a 6-digit code');
+    // Demo: any 6-digit code works (LOCAL VERIFICATION - NO BACKEND CALL)
+    const isSixDigits = /^\d{6}$/.test(code);
+    if (!isSixDigits) {
+      setError('Enter any 6-digit code (demo).');
       return;
     }
 
-    setVerifying(true);
-
-    try {
-      await verify();
-      navigate('/send');
-    } catch (err) {
-      setError('Verification failed. Please try again.');
-      console.error('Verification error:', err);
-    } finally {
-      setVerifying(false);
-    }
+    // Set verified locally (MVP sandbox-only)
+    setSession({ ...session, verified: true });
+    navigate('/send');
   };
 
   return (
