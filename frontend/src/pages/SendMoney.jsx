@@ -454,34 +454,31 @@ function PlaidConnectBanner() {
       setStatus("loading");
       setLastError("");
 
-      // 1) get link_token from Netlify (READ ONCE) with session token
-      const ltRes = await fetch("/.netlify/functions/create-link-token", {
+      // 1) get link_token from Netlify (consume body exactly once)
+      const res = await fetch("/.netlify/functions/create-link-token", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Session-Token": session.token || "",
-          "X-Session-Verified": String(session.verified),
+          "X-Session-Token": session?.token || "",
+          "X-Session-Verified": String(!!session?.verified),
         },
+        body: JSON.stringify({}),
       });
 
-      // ✅ Read body ONCE
-      const ltText = await ltRes.text();
-      let ltData = null;
-      
+      // ✅ consume body exactly once
+      const text = await res.text();
+      let data = {};
       try {
-        ltData = ltText ? JSON.parse(ltText) : null;
-      } catch (e) {
-        throw new Error("Invalid response from server");
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
       }
-      
-      // Check for errors
-      if (!ltRes.ok) {
-        const msg = ltData?.error || ltData?.message || `Request failed (${ltRes.status})`;
-        throw new Error(msg);
-      }
-      
-      const link_token = ltData?.link_token;
 
+      if (!res.ok) {
+        throw new Error(data?.error || `Request failed (${res.status})`);
+      }
+
+      const link_token = data?.link_token;
       if (!link_token) throw new Error("Missing link_token from server");
 
       // 2) open Plaid Link
