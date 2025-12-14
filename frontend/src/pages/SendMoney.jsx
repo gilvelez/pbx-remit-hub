@@ -433,12 +433,10 @@ export default function SendMoney({
 
 /* ---------------- UI helpers ---------------- */
 
+import PlaidLinkButton from "../components/PlaidLinkButton";
+
 function PlaidConnectBanner() {
-  const [status, setStatus] = React.useState("idle"); 
-  const [lastError, setLastError] = React.useState("");
-  
-  // Import session context at component level
-  const SessionContext = React.createContext(null);
+  // Get session from sessionStorage
   let session = { exists: false, verified: false };
   try {
     const sessionStr = sessionStorage.getItem('pbx_session');
@@ -448,88 +446,6 @@ function PlaidConnectBanner() {
   } catch (e) {
     // Ignore parsing errors
   }
-
-  const onConnect = async () => {
-    try {
-      setStatus("loading");
-      setLastError("");
-
-      // 1) get link_token from Netlify (consume body exactly once)
-      const res = await fetch("/.netlify/functions/create-link-token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Session-Token": session?.token || "",
-          "X-Session-Verified": String(!!session?.verified),
-        },
-        body: JSON.stringify({}),
-      });
-
-      // ✅ consume body exactly once
-      const text = await res.text();
-      let data = {};
-      try {
-        data = text ? JSON.parse(text) : {};
-      } catch {
-        data = { raw: text };
-      }
-
-      if (!res.ok) {
-        throw new Error(data?.error || `Request failed (${res.status})`);
-      }
-
-      const link_token = data?.link_token;
-      if (!link_token) throw new Error("Missing link_token from server");
-
-      // 2) open Plaid Link
-      const handler = window.Plaid.create({
-        token: link_token,
-
-        onSuccess: async (public_token, metadata) => {
-          try {
-            // 3) exchange public_token (consume body exactly once)
-            const res = await fetch("/.netlify/functions/exchange-public-token", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ public_token }),
-            });
-
-            // ✅ consume body exactly once
-            const text = await res.text();
-            let data = {};
-            try {
-              data = text ? JSON.parse(text) : {};
-            } catch {
-              data = { raw: text };
-            }
-
-            if (!res.ok || !data?.access_token) {
-              throw new Error(data?.error || "Missing access_token");
-            }
-
-            setStatus("connected");
-          } catch (err) {
-            setStatus("error");
-            setLastError(err.message || "Exchange failed");
-          }
-        },
-
-        onExit: (err, metadata) => {
-          if (err) {
-            setStatus("error");
-            setLastError(err.display_message || err.error_message || "Plaid exited");
-          } else {
-            setStatus("idle");
-          }
-        },
-      });
-
-      handler.open();
-    } catch (err) {
-      setStatus("error");
-      setLastError(err.message || "Link token failed");
-    }
-  };
 
   // Gate: Only show connect button if verified
   if (!session.exists || !session.verified) {
