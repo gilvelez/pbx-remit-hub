@@ -12,9 +12,15 @@ export default function PlaidLinkButton({ session }) {
   }, [session?.verified, session?.token]);
 
   async function getLinkToken() {
+    console.log("📡 getLinkToken called");
     setErr("");
     setLoading(true);
     try {
+      console.log("📤 Fetching create-link-token with headers:", {
+        sessionToken: session?.token ? 'present' : 'missing',
+        sessionVerified: session?.verified
+      });
+      
       const res = await fetch("/.netlify/functions/create-link-token", {
         method: "POST",
         headers: {
@@ -25,15 +31,27 @@ export default function PlaidLinkButton({ session }) {
         body: JSON.stringify({}),
       });
 
+      console.log("📥 Response received:", { status: res.status, ok: res.ok });
+
       // read once
       const text = await res.text();
       const data = text ? JSON.parse(text) : {};
+      
+      console.log("📋 Response data:", data);
 
-      if (!res.ok) throw new Error(data?.error || `Request failed (${res.status})`);
-      if (!data?.link_token) throw new Error("Missing link_token from server");
+      if (!res.ok) {
+        console.log("❌ Request failed:", data?.error);
+        throw new Error(data?.error || `Request failed (${res.status})`);
+      }
+      if (!data?.link_token) {
+        console.log("❌ Missing link_token in response");
+        throw new Error("Missing link_token from server");
+      }
 
+      console.log("✅ Link token received:", data.link_token.substring(0, 20) + '...');
       setLinkToken(data.link_token);
     } catch (e) {
+      console.error("❌ getLinkToken error:", e);
       setErr(e.message || "Failed to create link token");
     } finally {
       setLoading(false);
