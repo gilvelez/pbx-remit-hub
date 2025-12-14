@@ -81,13 +81,28 @@ export default function PlaidLinkButton({ session }) {
     <div className="flex flex-col gap-2">
       <button
         onClick={async () => {
-          if (!canOpen) return;
-          if (!linkToken) {
-            await getLinkToken();
+          console.log("🔵 Button clicked! State:", { canOpen, linkToken: !!linkToken, ready, loading });
+          
+          if (!canOpen) {
+            console.log("❌ Can't open - not verified or no token");
+            return;
           }
+          
+          if (!linkToken) {
+            console.log("📡 Fetching link token...");
+            await getLinkToken();
+            console.log("✅ Link token fetched");
+          }
+          
           // Open after linkToken is set
           setTimeout(() => {
-            if (ready) open();
+            console.log("🚀 Attempting to open Plaid. Ready:", ready);
+            if (ready) {
+              open();
+              console.log("✅ Plaid open() called");
+            } else {
+              console.log("⏳ Plaid not ready yet");
+            }
           }, 100);
         }}
         disabled={!canOpen || loading || (linkToken && !ready)}
