@@ -487,26 +487,24 @@ function PlaidConnectBanner() {
 
         onSuccess: async (public_token, metadata) => {
           try {
-            // 3) exchange public_token (READ ONCE)
-            const exRes = await fetch("/.netlify/functions/exchange-public-token", {
+            // 3) exchange public_token (consume body exactly once)
+            const res = await fetch("/.netlify/functions/exchange-public-token", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ public_token }),
             });
 
-            // ✅ Read body ONCE
-            const exText = await exRes.text();
-            let exData = null;
-            
+            // ✅ consume body exactly once
+            const text = await res.text();
+            let data = {};
             try {
-              exData = exText ? JSON.parse(exText) : null;
-            } catch (e) {
-              throw new Error("Invalid response from server");
+              data = text ? JSON.parse(text) : {};
+            } catch {
+              data = { raw: text };
             }
 
-            if (!exRes.ok || !exData?.access_token) {
-              const msg = exData?.error || "Missing access_token";
-              throw new Error(msg);
+            if (!res.ok || !data?.access_token) {
+              throw new Error(data?.error || "Missing access_token");
             }
 
             setStatus("connected");
