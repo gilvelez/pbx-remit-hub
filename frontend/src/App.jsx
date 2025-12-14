@@ -28,6 +28,7 @@ function AppRoutes() {
       {/* Public routes - NO PROTECTION */}
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
+      <Route path="/privacy" element={<Privacy />} />
       
       {/* Test page - accessible in all states for screenshots */}
       <Route path="/plaid-gate-test" element={<PlaidGateTest />} />
