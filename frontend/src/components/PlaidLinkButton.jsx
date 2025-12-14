@@ -43,6 +43,7 @@ export default function PlaidLinkButton({ session }) {
   const { open, ready } = usePlaidLink({
     token: linkToken,
     onSuccess: async (public_token) => {
+      console.log("✅ Plaid onSuccess called with token:", public_token);
       // Exchange token
       try {
         const res = await fetch("/.netlify/functions/exchange-public-token", {
@@ -55,17 +56,26 @@ export default function PlaidLinkButton({ session }) {
         const data = text ? JSON.parse(text) : {};
         
         if (res.ok) {
-          console.log("Bank connected successfully:", data);
+          console.log("✅ Bank connected successfully:", data);
           // Show success state
           setErr("");
         }
       } catch (e) {
-        console.error("Token exchange error:", e);
+        console.error("❌ Token exchange error:", e);
       }
     },
   });
 
   const canOpen = !!session?.verified && !!session?.token;
+
+  // Debug logging
+  console.log("🔍 PlaidLink state:", { 
+    linkToken: linkToken ? `${linkToken.substring(0, 10)}...` : null, 
+    ready, 
+    canOpen, 
+    sessionVerified: session?.verified,
+    sessionToken: session?.token ? 'present' : 'missing'
+  });
 
   return (
     <div className="flex flex-col gap-2">
