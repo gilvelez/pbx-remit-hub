@@ -207,7 +207,7 @@ export default function Privacy() {
                 <p className="font-semibold text-white mb-2">PBX Privacy Team</p>
                 <p>Email: <a href="mailto:info@pbxexchange.com" className="text-emerald-400 hover:text-emerald-300">info@pbxexchange.com</a></p>
                 <p className="mt-2 text-sm text-slate-400">
-                  Please include "Privacy Request" in your email subject line for faster processing.
+                  Please include &ldquo;Privacy Request&rdquo; in your email subject line for faster processing.
                 </p>
               </div>
               <p className="mt-4">
