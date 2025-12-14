@@ -470,27 +470,13 @@ function PlaidConnectBanner() {
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold">
-            {status === "connected" ? "Bank Connected ✅" : "Connect your bank"}
-          </div>
+          <div className="text-sm font-semibold">Connect your bank</div>
           <div className="text-xs text-slate-400">
-            Plaid Sandbox
-            {status === "connected" ? " • Ready for ACH debit" : " • Connect to continue"}
+            Plaid Sandbox • Connect to continue
           </div>
-          {status === "error" && (
-            <div className="mt-1 text-xs text-rose-300">
-              {lastError}
-            </div>
-          )}
         </div>
 
-        <button
-          onClick={onConnect}
-          disabled={status === "loading"}
-          className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {status === "loading" ? "Opening..." : status === "connected" ? "Reconnect" : "Connect Bank"}
-        </button>
+        <PlaidLinkButton session={session} />
       </div>
     </div>
   );
