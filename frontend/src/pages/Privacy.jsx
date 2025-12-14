@@ -145,7 +145,7 @@ export default function Privacy() {
                 <strong className="text-emerald-400">Blockchain Transparency:</strong> USDC transactions are recorded on public blockchains. While wallet addresses are pseudonymous, transaction amounts and timestamps are publicly visible.
               </p>
               <p className="mt-3">
-                By using PBX's USDC services, you agree to Circle's Privacy Policy available at: 
+                By using PBX&apos;s USDC services, you agree to Circle&apos;s Privacy Policy available at: 
                 <a href="https://www.circle.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 ml-1">
                   https://www.circle.com/legal/privacy-policy
                 </a>
