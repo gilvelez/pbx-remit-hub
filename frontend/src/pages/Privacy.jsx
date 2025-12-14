@@ -109,7 +109,7 @@ export default function Privacy() {
                 <strong className="text-emerald-400">Important Security Notice:</strong> PBX never receives or stores your bank login credentials. All authentication is handled directly by Plaid using bank-grade encryption.
               </p>
               <p className="mt-3">
-                By connecting your bank account via Plaid, you agree to Plaid's Privacy Policy available at: 
+                By connecting your bank account via Plaid, you agree to Plaid&apos;s Privacy Policy available at: 
                 <a href="https://plaid.com/legal" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 ml-1">
                   https://plaid.com/legal
                 </a>
