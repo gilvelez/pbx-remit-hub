@@ -289,15 +289,14 @@ function NavButton({ active, children, ...props }) {
 }
 
 function Footer() {
-  const { logout } = useSession();
   const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   
   return (
     <footer className="border-t border-slate-800 bg-slate-950 mt-8">
       <div className="mx-auto max-w-5xl px-4 py-6">
-        <div className="flex flex-col items-center gap-3">
-          <div className="flex items-center gap-4 text-xs">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
             <button
               onClick={() => navigate('/privacy')}
               className="text-slate-400 hover:text-emerald-400 transition"
@@ -305,7 +304,26 @@ function Footer() {
               Privacy Policy
             </button>
             <span className="text-slate-700">•</span>
-            <span className="text-slate-500">PBX Sandbox MVP</span>
+            <button
+              onClick={() => navigate('/terms')}
+              className="text-slate-400 hover:text-emerald-400 transition"
+            >
+              Terms of Service
+            </button>
+            <span className="text-slate-700">•</span>
+            <button
+              onClick={() => navigate('/data-retention')}
+              className="text-slate-400 hover:text-emerald-400 transition"
+            >
+              Data Retention Policy
+            </button>
+            <span className="text-slate-700">•</span>
+            <button
+              onClick={() => navigate('/security')}
+              className="text-slate-400 hover:text-emerald-400 transition"
+            >
+              Security
+            </button>
           </div>
           <p className="text-xs text-slate-500">
             © {currentYear} Philippine Bayani Exchange (PBX). All rights reserved.
