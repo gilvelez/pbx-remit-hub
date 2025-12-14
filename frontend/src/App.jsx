@@ -7,6 +7,9 @@ import Login from "./pages/Login.jsx";
 import Verify from "./pages/Verify.jsx";
 import PlaidGateTest from "./pages/PlaidGateTest.jsx";
 import Privacy from "./pages/Privacy.jsx";
+import DataRetention from "./pages/DataRetention.jsx";
+import Terms from "./pages/Terms.jsx";
+import Security from "./pages/Security.jsx";
 import {
   initialRecipients,
   initialBalances,
