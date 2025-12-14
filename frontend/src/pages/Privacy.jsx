@@ -122,7 +122,7 @@ export default function Privacy() {
             <h2 className="text-2xl font-bold text-white mb-4">4. Circle Data Disclosure</h2>
             <div className="space-y-3 text-base leading-relaxed">
               <p>
-                PBX uses <strong>Circle Internet Financial, LLC</strong> ("Circle") for digital wallet services and USDC (USD Coin) stablecoin transactions.
+                PBX uses <strong>Circle Internet Financial, LLC</strong> (&ldquo;Circle&rdquo;) for digital wallet services and USDC (USD Coin) stablecoin transactions.
               </p>
               <p>
                 <strong>What Circle Does:</strong>
