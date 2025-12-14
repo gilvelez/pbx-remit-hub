@@ -6,6 +6,7 @@ import Wallet from "./pages/Wallet.jsx";
 import Login from "./pages/Login.jsx";
 import Verify from "./pages/Verify.jsx";
 import PlaidGateTest from "./pages/PlaidGateTest.jsx";
+import Privacy from "./pages/Privacy.jsx";
 import {
   initialRecipients,
   initialBalances,
