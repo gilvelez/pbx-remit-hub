@@ -227,7 +227,7 @@ export default function Privacy() {
                 <strong>How We Notify You:</strong>
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
-                <li>We will update the "Last Updated" date at the top of this page</li>
+                <li>We will update the &ldquo;Last Updated&rdquo; date at the top of this page</li>
                 <li>Material changes will be communicated via email to your registered address</li>
                 <li>Continued use of PBX services after updates constitutes acceptance of the revised policy</li>
               </ul>
