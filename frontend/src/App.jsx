@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { SessionProvider, useSession } from "./contexts/SessionContext.jsx";
 import SendMoney from "./pages/SendMoney.jsx";
 import Wallet from "./pages/Wallet.jsx";
+import Login from "./pages/Login.jsx";
+import Verify from "./pages/Verify.jsx";
+import PlaidGateTest from "./pages/PlaidGateTest.jsx";
 import {
   initialRecipients,
   initialBalances,
@@ -8,6 +13,46 @@ import {
 } from "./lib/mockData.js";
 
 export default function App() {
+  return (
+    <BrowserRouter>
+      <SessionProvider>
+        <AppRoutes />
+      </SessionProvider>
+    </BrowserRouter>
+  );
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public routes - NO PROTECTION */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/verify" element={<Verify />} />
+      
+      {/* Test page - accessible in all states for screenshots */}
+      <Route path="/plaid-gate-test" element={<PlaidGateTest />} />
+      
+      {/* Protected routes - require session + verification */}
+      <Route path="/*" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+    </Routes>
+  );
+}
+
+function ProtectedRoute({ children }) {
+  const { session } = useSession();
+  
+  if (!session.exists) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!session.verified) {
+    return <Navigate to="/verify" replace />;
+  }
+  
+  return children;
+}
+
+function MainApp() {
   const [page, setPage] = useState("send"); // "send" | "wallet"
   const [recipients] = useState(initialRecipients);
 
@@ -156,18 +201,18 @@ export default function App() {
         setBalances((b) => ({ ...b }));
       },
     }),
-    [page, recipients, balances, transfers, remittances]
+    [page, recipients, balances, transfers, remittances, createTransfer, onPayoutComplete]
   );
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <TopNav page={page} setPage={setPage} />
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
-        {page === "send" ? (
-          <SendMoney {...value} />
-        ) : (
-          <Wallet {...value} />
-        )}
+        <Routes>
+          <Route path="/" element={<Navigate to="/send" replace />} />
+          <Route path="/send" element={<SendMoney {...value} />} />
+          <Route path="/wallet" element={<Wallet {...value} />} />
+        </Routes>
       </main>
       <Footer />
     </div>
@@ -175,6 +220,14 @@ export default function App() {
 }
 
 function TopNav({ page, setPage }) {
+  const { logout } = useSession();
+  const navigate = useNavigate();
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+  
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
@@ -190,13 +243,19 @@ function TopNav({ page, setPage }) {
           </div>
         </div>
 
-        <nav className="flex gap-2">
-          <NavButton active={page === "send"} onClick={() => setPage("send")}>
+        <nav className="flex gap-2 items-center">
+          <NavButton active={page === "send"} onClick={() => { setPage("send"); navigate("/send"); }}>
             Send Money
           </NavButton>
-          <NavButton active={page === "wallet"} onClick={() => setPage("wallet")}>
+          <NavButton active={page === "wallet"} onClick={() => { setPage("wallet"); navigate("/wallet"); }}>
             Wallet
           </NavButton>
+          <button
+            onClick={handleLogout}
+            className="ml-2 rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition"
+          >
+            Logout
+          </button>
         </nav>
       </div>
     </header>

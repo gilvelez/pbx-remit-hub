@@ -15,7 +15,23 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
   }
+  
   try {
+    // SECURITY: Hard gate for Plaid Link token creation
+    // MVP sandbox-only gate. Replace with server-side session validation when real auth is implemented.
+    const token = event.headers["x-session-token"];
+    const verified = (event.headers["x-session-verified"] || "").toLowerCase() === "true";
+    
+    if (!token || !verified) {
+      console.log("PLAID_LINK_REQUEST_BLOCKED", { hasToken: !!token, verified, ts: Date.now() });
+      return {
+        statusCode: 403,
+        body: JSON.stringify({ error: "Verification required before connecting bank" })
+      };
+    }
+    
+    console.log("PLAID_LINK_REQUEST_ALLOWED", { ts: Date.now() });
+    
     const body = JSON.parse(event.body || '{}');
     const client_user_id = body.client_user_id || 'pbx-user-123';
 

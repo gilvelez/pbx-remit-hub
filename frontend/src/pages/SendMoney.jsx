@@ -436,22 +436,50 @@ export default function SendMoney({
 function PlaidConnectBanner() {
   const [status, setStatus] = React.useState("idle"); 
   const [lastError, setLastError] = React.useState("");
+  
+  // Import session context at component level
+  const SessionContext = React.createContext(null);
+  let session = { exists: false, verified: false };
+  try {
+    const sessionStr = sessionStorage.getItem('pbx_session');
+    if (sessionStr) {
+      session = JSON.parse(sessionStr);
+    }
+  } catch (e) {
+    // Ignore parsing errors
+  }
 
   const onConnect = async () => {
     try {
       setStatus("loading");
       setLastError("");
 
-      // 1) get link_token from Netlify (READ ONCE)
-      const ltRes = await fetch("/.netlify/functions/create-link-token", {
+      // 1) get link_token from Netlify (consume body exactly once)
+      const res = await fetch("/.netlify/functions/create-link-token", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": session?.token || "",
+          "X-Session-Verified": String(!!session?.verified),
+        },
+        body: JSON.stringify({}),
       });
 
-      const ltText = await ltRes.text();   // ✅ read once
-      const ltData = JSON.parse(ltText);   // ✅ parse once
-      const link_token = ltData.link_token;
+      // ✅ consume body exactly once
+      const text = await res.text();
+      let data = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = { raw: text };
+      }
 
-      if (!link_token) throw new Error("Missing link_token");
+      if (!res.ok) {
+        throw new Error(data?.error || `Request failed (${res.status})`);
+      }
+
+      const link_token = data?.link_token;
+      if (!link_token) throw new Error("Missing link_token from server");
 
       // 2) open Plaid Link
       const handler = window.Plaid.create({
@@ -459,18 +487,24 @@ function PlaidConnectBanner() {
 
         onSuccess: async (public_token, metadata) => {
           try {
-            // 3) exchange public_token (READ ONCE)
-            const exRes = await fetch("/.netlify/functions/exchange-public-token", {
+            // 3) exchange public_token (consume body exactly once)
+            const res = await fetch("/.netlify/functions/exchange-public-token", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ public_token }),
             });
 
-            const exText = await exRes.text();   // ✅ read once
-            const exData = JSON.parse(exText);   // ✅ parse once
+            // ✅ consume body exactly once
+            const text = await res.text();
+            let data = {};
+            try {
+              data = text ? JSON.parse(text) : {};
+            } catch {
+              data = { raw: text };
+            }
 
-            if (!exRes.ok || !exData.access_token) {
-              throw new Error(exData.error || "Missing access_token");
+            if (!res.ok || !data?.access_token) {
+              throw new Error(data?.error || "Missing access_token");
             }
 
             setStatus("connected");
@@ -497,6 +531,25 @@ function PlaidConnectBanner() {
     }
   };
 
+  // Gate: Only show connect button if verified
+  if (!session.exists || !session.verified) {
+    return (
+      <div className="rounded-2xl border border-amber-800 bg-amber-950/30 p-3">
+        <div className="flex items-center gap-3">
+          <div className="text-2xl">⚠️</div>
+          <div>
+            <div className="text-sm font-semibold text-amber-200">
+              Verification Required
+            </div>
+            <div className="text-xs text-amber-300">
+              Verification required before connecting a bank
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
       <div className="flex items-center justify-between gap-3">
@@ -518,7 +571,7 @@ function PlaidConnectBanner() {
         <button
           onClick={onConnect}
           disabled={status === "loading"}
-          className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-white disabled:opacity-60"
+          className="rounded-xl bg-slate-100 px-3 py-2 text-xs font-bold text-slate-950 hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {status === "loading" ? "Opening..." : status === "connected" ? "Reconnect" : "Connect Bank"}
         </button>
