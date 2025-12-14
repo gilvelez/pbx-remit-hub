@@ -86,7 +86,7 @@ export default function Privacy() {
             <h2 className="text-2xl font-bold text-white mb-4">3. Plaid Data Disclosure</h2>
             <div className="space-y-3 text-base leading-relaxed">
               <p>
-                PBX uses <strong>Plaid Technologies, Inc.</strong> ("Plaid") to link your bank accounts securely.
+                PBX uses <strong>Plaid Technologies, Inc.</strong> (&ldquo;Plaid&rdquo;) to link your bank accounts securely.
               </p>
               <p>
                 <strong>What Plaid Does:</strong>
