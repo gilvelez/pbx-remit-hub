@@ -6,6 +6,10 @@ import Wallet from "./pages/Wallet.jsx";
 import Login from "./pages/Login.jsx";
 import Verify from "./pages/Verify.jsx";
 import PlaidGateTest from "./pages/PlaidGateTest.jsx";
+import Privacy from "./pages/Privacy.jsx";
+import DataRetention from "./pages/DataRetention.jsx";
+import Terms from "./pages/Terms.jsx";
+import Security from "./pages/Security.jsx";
 import {
   initialRecipients,
   initialBalances,
@@ -28,6 +32,12 @@ function AppRoutes() {
       {/* Public routes - NO PROTECTION */}
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
+      
+      {/* Legal & Compliance Pages - Public */}
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/data-retention" element={<DataRetention />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/security" element={<Security />} />
       
       {/* Test page - accessible in all states for screenshots */}
       <Route path="/plaid-gate-test" element={<PlaidGateTest />} />
@@ -279,9 +289,47 @@ function NavButton({ active, children, ...props }) {
 }
 
 function Footer() {
+  const navigate = useNavigate();
+  const currentYear = new Date().getFullYear();
+  
   return (
-    <footer className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-500">
-      PBX Sandbox MVP • UI mock for Plaid + Circle workflows
+    <footer className="border-t border-slate-800 bg-slate-950 mt-8">
+      <div className="mx-auto max-w-5xl px-4 py-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
+            <button
+              onClick={() => navigate('/privacy')}
+              className="text-slate-400 hover:text-emerald-400 transition"
+            >
+              Privacy Policy
+            </button>
+            <span className="text-slate-700">•</span>
+            <button
+              onClick={() => navigate('/terms')}
+              className="text-slate-400 hover:text-emerald-400 transition"
+            >
+              Terms of Service
+            </button>
+            <span className="text-slate-700">•</span>
+            <button
+              onClick={() => navigate('/data-retention')}
+              className="text-slate-400 hover:text-emerald-400 transition"
+            >
+              Data Retention Policy
+            </button>
+            <span className="text-slate-700">•</span>
+            <button
+              onClick={() => navigate('/security')}
+              className="text-slate-400 hover:text-emerald-400 transition"
+            >
+              Security
+            </button>
+          </div>
+          <p className="text-xs text-slate-500">
+            © {currentYear} Philippine Bayani Exchange (PBX). All rights reserved.
+          </p>
+        </div>
+      </div>
     </footer>
   );
 }
