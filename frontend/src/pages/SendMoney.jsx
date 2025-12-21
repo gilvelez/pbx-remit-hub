@@ -209,7 +209,7 @@ export default function SendMoney({
         <Card>
           <CardHeader
             title="Send Money"
-            subtitle="Send USD → PHP via PayMongo"
+            subtitle="Transfer USD → PHP"
           />
 
           <div className="grid gap-4">
