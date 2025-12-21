@@ -99,38 +99,48 @@ export const Landing = () => {
             </div>
           </div>
 
-          {/* Demo card with RatePreview */}
-          <div className="relative">
+          {/* Static Pricing Preview Panel */}
+          <div className="relative" id="demo">
             <div className="rounded-2xl border border-white/20 shadow-xl p-4 bg-white/95 backdrop-blur">
-              <div className="rounded-xl border border-slate-200 p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
-                    <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
-                  </div>
-                  <span className="text-xs text-slate-500">PBX • Demo</span>
+              <div className="rounded-xl border border-slate-200 p-5">
+                {/* Header with badge */}
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-slate-800">Clear Pricing Preview</h3>
+                  <span className="rounded-full bg-sky-100 text-sky-700 px-3 py-1 text-xs font-semibold">
+                    Demo Preview
+                  </span>
                 </div>
-                <div className="mt-4 grid gap-4">
-                  <div className="rounded-lg bg-slate-50 p-4">
-                    <div className="text-sm text-slate-500">Balance</div>
-                    <div className="text-3xl font-bold">$1,250.00</div>
-                  </div>
 
-                  <div className="rounded-lg border border-slate-200 p-4" id="demo">
-                    <div className="text-sm font-medium">Send USD → PHP</div>
-                    <RatePreview />
+                {/* Pricing rows */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between py-3 border-b border-slate-100">
+                    <span className="text-sm text-slate-600">Estimated FX Rate</span>
+                    <span className="text-sm font-semibold text-slate-800">₱58.25 / $1 USD</span>
                   </div>
-
-                  <div className="rounded-lg border border-slate-200 p-4">
-                    <div className="text-sm font-medium">Recent activity</div>
-                    <ul className="mt-2 text-sm text-slate-600 space-y-1">
-                      <li>✔ $200 → GCash • Completed</li>
-                      <li>✔ $500 → BPI • Completed</li>
-                      <li>⏳ $75 → GCash • Pending</li>
-                    </ul>
+                  <div className="flex items-center justify-between py-3 border-b border-slate-100">
+                    <span className="text-sm text-slate-600">Fees (Shown in demo)</span>
+                    <span className="text-sm font-semibold text-slate-800">$2.99 flat</span>
+                  </div>
+                  <div className="flex items-center justify-between py-3">
+                    <span className="text-sm text-slate-600">Availability</span>
+                    <span className="text-sm font-semibold text-slate-800">Varies by partner</span>
                   </div>
                 </div>
+
+                {/* Disclaimer */}
+                <p className="mt-4 text-xs text-slate-500 text-center">
+                  Demo rates shown are illustrative only. Actual rates, fees, and 
+                  availability will vary and are subject to partner pricing.
+                </p>
+
+                {/* CTA Button */}
+                <a
+                  href="/login"
+                  data-cta="try-demo-pricing"
+                  className="mt-4 block w-full rounded-lg bg-sky-600 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-sky-700 transition"
+                >
+                  Try the Demo
+                </a>
               </div>
             </div>
             <div
