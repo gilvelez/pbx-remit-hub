@@ -84,23 +84,19 @@ export const Landing = () => {
               </a>
             </div>
 
-            {/* Test Mode Bank Connection */}
+            {/* Test Mode Demo Button */}
             <div className="mt-6 text-center md:text-left">
               <a
-                href="/pbx-demo.html"
-                data-cta="test-bank-connection"
+                href="/login"
+                data-cta="try-demo"
                 className="inline-block rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 px-6 py-3 text-base font-bold shadow-lg hover:from-yellow-500 hover:to-yellow-600 transform hover:scale-105 transition-all"
               >
-                Connect your bank (Test Mode)
+                Try the Demo
               </a>
               <p className="mt-2 text-xs text-white/80">
-                Sandbox only — no real accounts or money.
+                Sandbox demo using test data only — no real funds move.
               </p>
             </div>
-
-            <p className="mt-4 text-xs text-white/90 text-center md:text-left">
-              MVP demo uses sandbox data—no real funds move.
-            </p>
           </div>
 
           {/* Demo card with RatePreview */}
