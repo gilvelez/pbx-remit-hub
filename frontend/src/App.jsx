@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import React, { useMemo, useState, useEffect } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, Link } from "react-router-dom";
 import { SessionProvider, useSession } from "./contexts/SessionContext.jsx";
 import SendMoney from "./pages/SendMoney.jsx";
 import Wallet from "./pages/Wallet.jsx";
@@ -16,6 +16,16 @@ import {
   initialBalances,
   initialTransfers,
 } from "./lib/mockData.js";
+
+// Theme colors - consistent across all pages
+const theme = {
+  navy: '#0A2540',
+  navyDark: '#061C33',
+  gold: '#F6C94B',
+  goldDark: '#D4A520',
+  red: '#C1121F',
+  offWhite: '#FAFAF7',
+};
 
 export default function App() {
   return (
@@ -67,14 +77,13 @@ function ProtectedRoute({ children }) {
 }
 
 function MainApp() {
-  const [page, setPage] = useState("send"); // "send" | "wallet"
+  const [page, setPage] = useState("send");
   const [recipients] = useState(initialRecipients);
 
   const [balances, setBalances] = useState(initialBalances);
   const [transfers, setTransfers] = useState(initialTransfers);
   const [remittances, setRemittances] = useState([]);
 
-  // Helper to create a remittance record from quote
   const makeRemittance = ({ recipientHandle, recipientName, payoutMethod, quote }) => ({
     id: `rem_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     createdAt: new Date().toISOString(),
@@ -93,9 +102,7 @@ function MainApp() {
     setRemittances((prev) => [remittance, ...prev]);
   };
 
-  // Handle successful payout from create-gcash-payout
   const onPayoutComplete = (payoutData) => {
-    // Add to transfers (Recent Activity)
     const transfer = {
       id: payoutData.txId,
       recipientId: recipients.find(r => r.name === payoutData.recipient_name)?.id || "unknown",
@@ -106,7 +113,6 @@ function MainApp() {
     };
     setTransfers((prev) => [transfer, ...prev]);
 
-    // Add to remittances (PH Payouts) if FX data available
     if (payoutData.fx) {
       const remittance = {
         id: payoutData.txId,
@@ -125,7 +131,6 @@ function MainApp() {
     }
   };
 
-  // helper to create a new transfer and mutate balances
   const createTransfer = async ({ recipientId, amountUsd, note, quote, selectedRecipient }) => {
     const now = new Date().toISOString();
     const newTransfer = {
@@ -137,7 +142,6 @@ function MainApp() {
       createdAt: now,
     };
 
-    // optimistic UI: mark pending + reduce USD immediately
     setTransfers((prev) => [newTransfer, ...prev]);
     setBalances((b) => ({
       ...b,
@@ -145,13 +149,10 @@ function MainApp() {
       pendingUsd: round2(b.pendingUsd + amountUsd),
     }));
 
-    // Mock async "backend"
     await sleep(1200);
 
-    // 92% success rate mock
     const success = Math.random() < 0.92;
     if (success) {
-      // completed: move pending -> USDC (1:1 mock)
       setTransfers((prev) =>
         prev.map((t) =>
           t.id === newTransfer.id ? { ...t, status: "completed" } : t
@@ -163,26 +164,18 @@ function MainApp() {
         usdc: round2(b.usdc + amountUsd),
       }));
 
-      // Create remittance record if quote and recipient provided
       if (quote && selectedRecipient) {
-        console.log("[App] Creating remittance with quote:", quote);
-        console.log("[App] Recipient:", selectedRecipient);
         const rem = makeRemittance({
           recipientHandle: selectedRecipient.handle,
           recipientName: selectedRecipient.name,
           payoutMethod: "gcash",
           quote,
         });
-        console.log("[App] Remittance created:", rem);
         addRemittance(rem);
-        console.log("[App] Remittance added to state");
-      } else {
-        console.log("[App] No remittance created - quote:", !!quote, "recipient:", !!selectedRecipient);
       }
 
       return { ok: true, transfer: { ...newTransfer, status: "completed" } };
     } else {
-      // failed: refund USD
       setTransfers((prev) =>
         prev.map((t) =>
           t.id === newTransfer.id
@@ -210,7 +203,6 @@ function MainApp() {
       createTransfer,
       onPayoutComplete,
       refreshBalances: async () => {
-        // mock refresh
         await sleep(400);
         setBalances((b) => ({ ...b }));
       },
@@ -219,8 +211,15 @@ function MainApp() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div 
+      className="min-h-screen"
+      style={{ 
+        backgroundColor: theme.offWhite,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4A520' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      }}
+    >
       <TopNav page={page} setPage={setPage} />
+      <FXRateBar />
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
         <Routes>
           <Route path="/" element={<Navigate to="/app/send" replace />} />
@@ -229,6 +228,62 @@ function MainApp() {
         </Routes>
       </main>
       <Footer />
+    </div>
+  );
+}
+
+// Real-time FX Rate Bar (read-only, indicative)
+function FXRateBar() {
+  const [rate, setRate] = useState(58.25);
+  const [lastUpdated, setLastUpdated] = useState(15);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLastUpdated(prev => {
+        if (prev >= 60) {
+          setRate(58.20 + Math.random() * 0.15);
+          return 0;
+        }
+        return prev + 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div 
+      className="py-2 border-b"
+      style={{ 
+        backgroundColor: 'white',
+        borderColor: 'rgba(10, 37, 64, 0.1)',
+      }}
+    >
+      <div className="mx-auto max-w-5xl px-4 flex flex-wrap items-center justify-center gap-3 text-sm">
+        {/* PH Flag */}
+        <div className="flex items-center gap-2">
+          <div className="w-5 h-3.5 rounded-sm overflow-hidden shadow-sm flex flex-col border border-slate-200">
+            <div className="h-1/2 bg-[#0038a8]" />
+            <div className="h-1/2 bg-[#ce1126]" />
+          </div>
+          <span style={{ color: theme.navy }} className="font-medium">USD → PHP</span>
+        </div>
+        
+        <span className="font-bold text-lg" style={{ color: theme.navy }}>₱{rate.toFixed(2)}</span>
+        
+        <span 
+          className="px-2 py-0.5 rounded-full text-xs font-semibold"
+          style={{ 
+            backgroundColor: `${theme.gold}30`,
+            color: theme.goldDark,
+          }}
+        >
+          Indicative
+        </span>
+        
+        <span className="text-xs" style={{ color: '#94a3b8' }}>
+          Updated {lastUpdated}s ago
+        </span>
+      </div>
     </div>
   );
 }
@@ -243,17 +298,41 @@ function TopNav({ page, setPage }) {
   };
   
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+    <header 
+      className="sticky top-0 z-50 border-b backdrop-blur"
+      style={{ 
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        borderColor: 'rgba(10, 37, 64, 0.1)',
+      }}
+    >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <div className="flex items-center gap-2">
-          <div className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-500 font-black text-slate-950">
-            PBX
-          </div>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-2">
+            <div 
+              className="h-10 w-10 rounded-2xl flex items-center justify-center"
+              style={{ 
+                backgroundColor: `${theme.gold}20`,
+                border: `1px solid ${theme.gold}40`,
+              }}
+            >
+              <span className="font-extrabold text-sm" style={{ color: theme.navy }}>PBX</span>
+            </div>
+          </Link>
           <div>
-            <div className="text-sm font-semibold tracking-wide">
+            <div className="text-sm font-semibold tracking-wide" style={{ color: theme.navy }}>
               Philippine Bayani Exchange
             </div>
-            <div className="text-xs text-slate-400">Sandbox MVP</div>
+            <div className="flex items-center gap-2">
+              <span 
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold"
+                style={{ 
+                  backgroundColor: `${theme.gold}30`,
+                  color: theme.goldDark,
+                }}
+              >
+                Demo Mode (Sandbox)
+              </span>
+            </div>
           </div>
         </div>
 
@@ -266,7 +345,12 @@ function TopNav({ page, setPage }) {
           </NavButton>
           <button
             onClick={handleLogout}
-            className="ml-2 rounded-xl bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition"
+            className="ml-2 rounded-xl px-3 py-2 text-xs font-semibold transition"
+            style={{ 
+              backgroundColor: theme.offWhite,
+              color: theme.navy,
+              border: `1px solid rgba(10, 37, 64, 0.15)`,
+            }}
           >
             Logout
           </button>
@@ -280,12 +364,12 @@ function NavButton({ active, children, ...props }) {
   return (
     <button
       {...props}
-      className={[
-        "rounded-xl px-3 py-2 text-sm font-semibold transition",
-        active
-          ? "bg-slate-100 text-slate-950"
-          : "bg-slate-900 text-slate-200 hover:bg-slate-800",
-      ].join(" ")}
+      className="rounded-xl px-4 py-2 text-sm font-semibold transition"
+      style={{ 
+        backgroundColor: active ? theme.gold : 'transparent',
+        color: active ? theme.navyDark : theme.navy,
+        border: active ? 'none' : `1px solid rgba(10, 37, 64, 0.15)`,
+      }}
     >
       {children}
     </button>
@@ -297,39 +381,72 @@ function Footer() {
   const currentYear = new Date().getFullYear();
   
   return (
-    <footer className="border-t border-slate-800 bg-slate-950 mt-8">
-      <div className="mx-auto max-w-5xl px-4 py-6">
+    <footer 
+      className="border-t mt-8 py-8"
+      style={{ 
+        backgroundColor: theme.navyDark,
+        borderColor: 'rgba(10, 37, 64, 0.2)',
+      }}
+    >
+      <div className="mx-auto max-w-5xl px-4">
         <div className="flex flex-col items-center gap-4">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div 
+              className="h-8 w-8 rounded-xl flex items-center justify-center"
+              style={{ 
+                backgroundColor: `${theme.gold}20`,
+                border: `1px solid ${theme.gold}40`,
+              }}
+            >
+              <span className="font-extrabold text-xs" style={{ color: theme.gold }}>PBX</span>
+            </div>
+            <span className="font-semibold text-white">Philippine Bayani Exchange</span>
+          </div>
+          
+          {/* Links */}
           <div className="flex flex-wrap items-center justify-center gap-3 text-xs">
             <button
               onClick={() => navigate('/privacy')}
-              className="text-slate-400 hover:text-emerald-400 transition"
+              className="transition hover:underline"
+              style={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
               Privacy Policy
             </button>
-            <span className="text-slate-700">•</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.3)' }}>•</span>
             <button
               onClick={() => navigate('/terms')}
-              className="text-slate-400 hover:text-emerald-400 transition"
+              className="transition hover:underline"
+              style={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
               Terms of Service
             </button>
-            <span className="text-slate-700">•</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.3)' }}>•</span>
             <button
               onClick={() => navigate('/data-retention')}
-              className="text-slate-400 hover:text-emerald-400 transition"
+              className="transition hover:underline"
+              style={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
-              Data Retention Policy
+              Data Retention
             </button>
-            <span className="text-slate-700">•</span>
+            <span style={{ color: 'rgba(255, 255, 255, 0.3)' }}>•</span>
             <button
               onClick={() => navigate('/security')}
-              className="text-slate-400 hover:text-emerald-400 transition"
+              className="transition hover:underline"
+              style={{ color: 'rgba(255, 255, 255, 0.6)' }}
             >
               Security
             </button>
           </div>
-          <p className="text-xs text-slate-500">
+          
+          {/* Compliance text */}
+          <p className="text-xs text-center max-w-2xl" style={{ color: 'rgba(255, 255, 255, 0.5)' }}>
+            PBX is a financial technology platform and does not provide banking or money transmission services directly. 
+            Services may be provided by licensed financial partners where required. 
+            Demo estimates shown; actual rates, fees, and availability vary.
+          </p>
+          
+          <p className="text-xs" style={{ color: 'rgba(255, 255, 255, 0.4)' }}>
             © {currentYear} Philippine Bayani Exchange (PBX). All rights reserved.
           </p>
         </div>
