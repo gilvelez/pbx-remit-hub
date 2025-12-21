@@ -387,6 +387,11 @@ function RatePreview() {
       >
         Preview transfer
       </button>
+      
+      <p className="mt-2 text-xs text-slate-500 text-center">
+        Demo rates shown are illustrative only. Actual rates, fees, and 
+        availability will vary and are subject to partner pricing.
+      </p>
     </form>
   );
 }
