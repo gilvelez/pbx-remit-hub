@@ -401,7 +401,7 @@ function Footer() {
             >
               <span className="font-extrabold text-xs" style={{ color: theme.gold }}>PBX</span>
             </div>
-            <span className="font-semibold text-white">Philippine Bayani Exchange</span>
+            <span className="font-semibold text-white">PBX • Built in the United States</span>
           </div>
           
           {/* Links */}
