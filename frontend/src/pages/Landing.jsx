@@ -230,36 +230,53 @@ export default function Landing() {
         }}
       >
         <div className="mx-auto max-w-7xl px-6 text-center">
+          {/* Section badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#f6c94b]/20 mb-6">
+            <span className="text-sm font-semibold text-[#8b6914]">Example Pricing (Demo)</span>
+          </div>
+
           <h2 className="font-serif text-4xl md:text-5xl text-slate-900">
-            Fair pricing that rewards sending more
+            Simple, transparent pricing
           </h2>
           <p className="mt-4 max-w-3xl mx-auto text-slate-700">
-            PBX uses tiered pricing with capped fees — designed for people who 
-            move money between the U.S. and the Philippines regularly.
+            See estimated fees at different transfer amounts. The more you send, the better the value.
           </p>
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Tier title="Starter" price="$1 – $250" note="Ideal for small sends" />
-            <Tier title="Regular" price="$2.99 fee" note="Most popular" />
-            <Tier title="Plus" price="$4.99 fee" note="Best value" />
-            <Tier
-              title="Max"
-              price="$7.99 max fee"
-              note="Capped pricing"
+          {/* 4-Tier Pricing Grid */}
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <PricingTier 
+              transferAmount="$100"
+              totalFees="$2.99"
+              note="Small transfers"
+            />
+            <PricingTier 
+              transferAmount="$300"
+              totalFees="$4.49"
+              note="Regular transfers"
+            />
+            <PricingTier 
+              transferAmount="$500"
+              totalFees="$5.99"
+              note="Family support"
+            />
+            <PricingTier 
+              transferAmount="$1,000"
+              totalFees="$8.99"
+              note="Best value"
               highlight
             />
           </div>
 
-          <p className="mt-8 text-xs text-slate-600">
-            Demo pricing shown for illustration only. Actual fees, rates, and
-            availability will vary and are subject to partner pricing.
+          {/* Disclaimer - visible without scrolling */}
+          <p className="mt-6 text-sm text-slate-600 max-w-2xl mx-auto">
+            Demo examples only. Actual rates, fees, and availability may vary by amount, corridor, and payout partner.
           </p>
 
           <a
             href="/login"
-            className="mt-6 inline-flex justify-center rounded-2xl bg-[#f6c94b] px-10 py-4 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
+            className="mt-8 inline-flex justify-center rounded-2xl bg-[#f6c94b] px-10 py-4 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
           >
-            Send Money Securely
+            Try the Demo
           </a>
         </div>
       </section>
@@ -306,16 +323,38 @@ export default function Landing() {
   );
 }
 
-function Tier({ title, price, note, highlight }) {
+function PricingTier({ transferAmount, totalFees, note, highlight }) {
   return (
     <div
-      className={`rounded-2xl bg-white/80 border border-slate-200 p-6 shadow-sm ${
-        highlight ? "ring-2 ring-[#f6c94b]/60" : ""
+      className={`rounded-2xl p-6 text-center transition ${
+        highlight 
+          ? "bg-[#0A2540] text-white ring-2 ring-[#f6c94b] shadow-xl" 
+          : "bg-white/90 border border-slate-200 shadow-sm"
       }`}
     >
-      <div className="font-extrabold text-slate-900">{title}</div>
-      <div className="mt-2 text-2xl font-extrabold text-slate-900">{price}</div>
-      <div className="mt-2 text-slate-700">{note}</div>
+      {/* Transfer amount */}
+      <div className={`text-sm font-medium mb-2 ${highlight ? "text-white/70" : "text-slate-500"}`}>
+        Send
+      </div>
+      <div className={`text-3xl font-extrabold mb-3 ${highlight ? "text-white" : "text-slate-900"}`}>
+        {transferAmount}
+      </div>
+      
+      {/* Divider */}
+      <div className={`h-px w-12 mx-auto mb-3 ${highlight ? "bg-[#f6c94b]" : "bg-slate-200"}`} />
+      
+      {/* Fee */}
+      <div className={`text-sm font-medium mb-1 ${highlight ? "text-white/70" : "text-slate-500"}`}>
+        Estimated fee
+      </div>
+      <div className={`text-2xl font-extrabold mb-2 ${highlight ? "text-[#f6c94b]" : "text-[#0A2540]"}`}>
+        ~{totalFees}
+      </div>
+      
+      {/* Note */}
+      <div className={`text-xs ${highlight ? "text-white/60" : "text-slate-500"}`}>
+        {note}
+      </div>
     </div>
   );
 }
