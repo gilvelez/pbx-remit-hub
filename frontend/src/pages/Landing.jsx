@@ -306,7 +306,7 @@ export const Landing = () => {
           </div>
           <p className="text-xs text-slate-500 text-center md:text-right max-w-2xl">
             © {new Date().getFullYear()} PBX. Demo experience using sandbox data; no real funds move. 
-            PBX is not a bank or licensed money transmitter at this stage. Services may be provided by licensed partners where required. 
+            PBX is a financial technology platform and does not provide banking or money transmission services directly. Services may be provided by licensed partners where required. 
             Availability, limits, and timing vary by destination and payout partner. 
             "Plaid" and "Circle" are trademarks of their respective owners and are used here illustratively.
           </p>
