@@ -23,6 +23,14 @@ html {
     scroll-margin-top: 96px;
 }
 
+/* Hide Emergent badge for partner-facing/compliance views */
+#emergent-badge {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
 body {
     margin: 0;
     font-family:
