@@ -33,8 +33,8 @@ export default function Landing() {
               <a href="#pricing" className="hover:text-white transition">
                 Pricing
               </a>
-              <a href="#security" className="hover:text-white transition">
-                Security
+              <a href="#how-it-works" className="hover:text-white transition">
+                How It Works
               </a>
               <a href="#faq" className="hover:text-white transition">
                 FAQ
@@ -54,17 +54,23 @@ export default function Landing() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* LEFT */}
             <div className="text-white">
-              <h1 className="font-serif text-5xl md:text-6xl leading-[1.05] tracking-tight">
-                Know exactly what
+              <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-[1.08] tracking-tight">
+                Move Money Seamlessly
                 <br />
-                arrives in PHP—
+                Between the U.S.
                 <br />
-                <span className="italic text-white/85">before you send.</span>
+                <span className="italic text-white/90">and the Philippines</span>
               </h1>
 
               <p className="mt-6 max-w-xl text-lg text-white/80 leading-relaxed">
-                Built for overseas Filipinos. Clear estimates, secure
-                infrastructure, and peace of mind for families back home.
+                A U.S.-built, secure platform for expats, travelers, families, 
+                retirees, and businesses moving money across borders—clearly, 
+                quickly, and transparently.
+              </p>
+
+              {/* Trust line */}
+              <p className="mt-4 text-sm text-white/60">
+                Built in the United States • Designed for cross-border living • Secure financial infrastructure
               </p>
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
@@ -72,7 +78,7 @@ export default function Landing() {
                   href="/login"
                   className="inline-flex justify-center rounded-2xl bg-[#f6c94b] px-8 py-4 font-extrabold text-[#1b1b1b] shadow-lg hover:brightness-105 transition"
                 >
-                  Try the Demo
+                  Send Money Across Borders
                 </a>
                 <a
                   href="#how-it-works"
@@ -120,7 +126,7 @@ export default function Landing() {
                   href="/login"
                   className="mt-4 inline-flex w-full justify-center rounded-2xl bg-[#f6c94b] px-6 py-3.5 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
                 >
-                  Try the Demo
+                  Transfer USD to PHP
                 </a>
               </div>
             </div>
@@ -155,7 +161,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* HOW IT WORKS */}
+      {/* HOW IT WORKS / WHY PBX IS DIFFERENT */}
       <section
         id="how-it-works"
         className="py-16 bg-[#0A2540]"
@@ -163,10 +169,10 @@ export default function Landing() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center mb-12">
             <h2 className="font-serif text-4xl md:text-5xl text-white">
-              How PBX Works
+              Why PBX is Different
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-white/70">
-              Built for the Filipino community, with transparency at every step.
+              U.S.-built platform designed for cross-border users with transparency at every step.
             </p>
           </div>
 
@@ -180,7 +186,7 @@ export default function Landing() {
               </div>
               <h3 className="text-xl font-extrabold text-white mb-3">Built for Trust</h3>
               <p className="text-white/70 leading-relaxed">
-                Platform-first design using regulated financial infrastructure. Your money moves through secure, compliant channels.
+                U.S.-based financial infrastructure designed to meet high regulatory and security standards.
               </p>
             </div>
 
@@ -193,7 +199,7 @@ export default function Landing() {
               </div>
               <h3 className="text-xl font-extrabold text-white mb-3">Know the Cost Before You Send</h3>
               <p className="text-white/70 leading-relaxed">
-                Clear estimates before committing — no surprises. See exactly what your family receives in PHP.
+                Upfront FX rates and fees so users always know exactly what will arrive.
               </p>
             </div>
 
@@ -201,12 +207,12 @@ export default function Landing() {
             <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-8 hover:bg-white/10 transition">
               <div className="w-12 h-12 rounded-xl bg-[#f6c94b]/20 flex items-center justify-center mb-5">
                 <svg className="w-6 h-6 text-[#f6c94b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-extrabold text-white mb-3">Filipino-First</h3>
+              <h3 className="text-xl font-extrabold text-white mb-3">Built for Life Between Countries</h3>
               <p className="text-white/70 leading-relaxed">
-                Designed for OFWs and families back home. Every feature built with the Filipino experience in mind.
+                Designed for expats, travelers, families, retirees, and businesses moving money between the U.S. and the Philippines.
               </p>
             </div>
           </div>
@@ -228,16 +234,16 @@ export default function Landing() {
             Fair pricing that rewards sending more
           </h2>
           <p className="mt-4 max-w-3xl mx-auto text-slate-700">
-            PBX uses tiered pricing with capped fees — designed for overseas
-            Filipinos who support family regularly.
+            PBX uses tiered pricing with capped fees — designed for people who 
+            move money between the U.S. and the Philippines regularly.
           </p>
 
           <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Tier title="Starter" price="$1 – $250" note="Ideal for small sends" />
-            <Tier title="Family" price="$2.99 fee" note="Most popular" />
-            <Tier title="OFW Plus" price="$4.99 fee" note="Best value" />
+            <Tier title="Regular" price="$2.99 fee" note="Most popular" />
+            <Tier title="Plus" price="$4.99 fee" note="Best value" />
             <Tier
-              title="Bayani Max"
+              title="Max"
               price="$7.99 max fee"
               note="Capped pricing"
               highlight
@@ -253,7 +259,7 @@ export default function Landing() {
             href="/login"
             className="mt-6 inline-flex justify-center rounded-2xl bg-[#f6c94b] px-10 py-4 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
           >
-            Try the Demo
+            Send Money Securely
           </a>
         </div>
       </section>
@@ -269,12 +275,12 @@ export default function Landing() {
       >
         <div className="mx-auto max-w-4xl px-6 text-center">
           <h3 className="font-serif text-4xl md:text-5xl text-slate-900">
-            For our <span className="font-extrabold">kababayan</span>, built for
-            home.
+            Built for people with lives between two countries.
           </h3>
           <p className="mt-4 text-lg text-slate-700">
-            Sending money isn't just a transaction. It's groceries, tuition,
-            medicine, and peace of mind.
+            Moving money across borders isn't just a transaction. It's supporting 
+            family, managing businesses, and living life seamlessly between the 
+            U.S. and the Philippines.
           </p>
         </div>
       </section>
@@ -285,14 +291,14 @@ export default function Landing() {
           <div className="flex justify-center items-center gap-3 mb-4">
             <div className="h-9 w-9 rounded-2xl bg-[#f6c94b]/20 border border-[#f6c94b]/40" />
             <div className="font-extrabold text-white">PBX</div>
-            <div className="text-white/50">Philippine Bayani Exchange</div>
+            <div className="text-white/50">Built in the United States</div>
           </div>
           <p>
-            PBX is a financial technology platform and does not provide banking
-            or money transmission services directly. Services may be provided by
-            licensed financial partners where required. Demo estimates shown;
-            actual rates, fees, and availability vary and are subject to partner
-            pricing.
+            PBX is a financial technology platform built in the United States 
+            and does not provide banking or money transmission services directly. 
+            Services may be provided by licensed financial partners where required. 
+            Demo estimates shown; actual rates, fees, and availability vary and 
+            are subject to partner pricing.
           </p>
         </div>
       </footer>
