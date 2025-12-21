@@ -30,6 +30,9 @@ export default function App() {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public Landing Page */}
+      <Route path="/" element={<Landing />} />
+      
       {/* Public routes - NO PROTECTION */}
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
@@ -44,7 +47,7 @@ function AppRoutes() {
       <Route path="/plaid-gate-test" element={<PlaidGateTest />} />
       
       {/* Protected routes - require session + verification */}
-      <Route path="/*" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+      <Route path="/app/*" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
     </Routes>
   );
 }
