@@ -230,36 +230,53 @@ export default function Landing() {
         }}
       >
         <div className="mx-auto max-w-7xl px-6 text-center">
+          {/* Section badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#f6c94b]/20 mb-6">
+            <span className="text-sm font-semibold text-[#8b6914]">Example Pricing (Demo)</span>
+          </div>
+
           <h2 className="font-serif text-4xl md:text-5xl text-slate-900">
-            Fair pricing that rewards sending more
+            Simple, transparent pricing
           </h2>
           <p className="mt-4 max-w-3xl mx-auto text-slate-700">
-            PBX uses tiered pricing with capped fees — designed for people who 
-            move money between the U.S. and the Philippines regularly.
+            See estimated fees at different transfer amounts. The more you send, the better the value.
           </p>
 
-          <div className="mt-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Tier title="Starter" price="$1 – $250" note="Ideal for small sends" />
-            <Tier title="Regular" price="$2.99 fee" note="Most popular" />
-            <Tier title="Plus" price="$4.99 fee" note="Best value" />
-            <Tier
-              title="Max"
-              price="$7.99 max fee"
-              note="Capped pricing"
+          {/* 4-Tier Pricing Grid */}
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <PricingTier 
+              transferAmount="$100"
+              totalFees="$2.99"
+              note="Small transfers"
+            />
+            <PricingTier 
+              transferAmount="$300"
+              totalFees="$4.49"
+              note="Regular transfers"
+            />
+            <PricingTier 
+              transferAmount="$500"
+              totalFees="$5.99"
+              note="Family support"
+            />
+            <PricingTier 
+              transferAmount="$1,000"
+              totalFees="$8.99"
+              note="Best value"
               highlight
             />
           </div>
 
-          <p className="mt-8 text-xs text-slate-600">
-            Demo pricing shown for illustration only. Actual fees, rates, and
-            availability will vary and are subject to partner pricing.
+          {/* Disclaimer - visible without scrolling */}
+          <p className="mt-6 text-sm text-slate-600 max-w-2xl mx-auto">
+            Demo examples only. Actual rates, fees, and availability may vary by amount, corridor, and payout partner.
           </p>
 
           <a
             href="/login"
-            className="mt-6 inline-flex justify-center rounded-2xl bg-[#f6c94b] px-10 py-4 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
+            className="mt-8 inline-flex justify-center rounded-2xl bg-[#f6c94b] px-10 py-4 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
           >
-            Send Money Securely
+            Try the Demo
           </a>
         </div>
       </section>
