@@ -323,16 +323,38 @@ export default function Landing() {
   );
 }
 
-function Tier({ title, price, note, highlight }) {
+function PricingTier({ transferAmount, totalFees, note, highlight }) {
   return (
     <div
-      className={`rounded-2xl bg-white/80 border border-slate-200 p-6 shadow-sm ${
-        highlight ? "ring-2 ring-[#f6c94b]/60" : ""
+      className={`rounded-2xl p-6 text-center transition ${
+        highlight 
+          ? "bg-[#0A2540] text-white ring-2 ring-[#f6c94b] shadow-xl" 
+          : "bg-white/90 border border-slate-200 shadow-sm"
       }`}
     >
-      <div className="font-extrabold text-slate-900">{title}</div>
-      <div className="mt-2 text-2xl font-extrabold text-slate-900">{price}</div>
-      <div className="mt-2 text-slate-700">{note}</div>
+      {/* Transfer amount */}
+      <div className={`text-sm font-medium mb-2 ${highlight ? "text-white/70" : "text-slate-500"}`}>
+        Send
+      </div>
+      <div className={`text-3xl font-extrabold mb-3 ${highlight ? "text-white" : "text-slate-900"}`}>
+        {transferAmount}
+      </div>
+      
+      {/* Divider */}
+      <div className={`h-px w-12 mx-auto mb-3 ${highlight ? "bg-[#f6c94b]" : "bg-slate-200"}`} />
+      
+      {/* Fee */}
+      <div className={`text-sm font-medium mb-1 ${highlight ? "text-white/70" : "text-slate-500"}`}>
+        Estimated fee
+      </div>
+      <div className={`text-2xl font-extrabold mb-2 ${highlight ? "text-[#f6c94b]" : "text-[#0A2540]"}`}>
+        ~{totalFees}
+      </div>
+      
+      {/* Note */}
+      <div className={`text-xs ${highlight ? "text-white/60" : "text-slate-500"}`}>
+        {note}
+      </div>
     </div>
   );
 }
