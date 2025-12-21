@@ -1,9 +1,9 @@
 // PBX Landing Page — CRA/React (JavaScript)
 // - Single HERO (bilingual) + About section (removes duplication)
-// - RatePreview demo (mock), a11y labels, data-cta attributes
+// - Static Pricing Preview panel, a11y labels, data-cta attributes
 // - TailwindCSS expected
 
-import React, { useMemo, useState } from "react";
+import React from "react";
 
 export const Landing = () => {
   return (
