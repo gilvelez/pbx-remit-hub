@@ -320,7 +320,7 @@ function TopNav({ page, setPage }) {
           </Link>
           <div>
             <div className="text-sm font-semibold tracking-wide" style={{ color: theme.navy }}>
-              Philippine Bayani Exchange
+              PBX Cross-Border Transfer
             </div>
             <div className="flex items-center gap-2">
               <span 
@@ -401,7 +401,7 @@ function Footer() {
             >
               <span className="font-extrabold text-xs" style={{ color: theme.gold }}>PBX</span>
             </div>
-            <span className="font-semibold text-white">Philippine Bayani Exchange</span>
+            <span className="font-semibold text-white">PBX • Built in the United States</span>
           </div>
           
           {/* Links */}

@@ -209,7 +209,7 @@ export default function SendMoney({
         <Card>
           <CardHeader
             title="Send Money"
-            subtitle="Send USD → PHP via PayMongo"
+            subtitle="Transfer USD → PHP"
           />
 
           <div className="grid gap-4">
@@ -417,7 +417,7 @@ export default function SendMoney({
             )}
 
             <p className="text-[11px] mt-2" style={{ color: '#94a3b8' }}>
-              Live FX rates + PayMongo real-time transfers to PH banks & e-wallets.
+              Estimated FX rates and illustrative transfers via licensed Philippine payout partners.
             </p>
           </div>
         </Card>
