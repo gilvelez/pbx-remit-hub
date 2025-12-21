@@ -68,32 +68,51 @@ function Header() {
 ============================================ */
 function HeroSection() {
   return (
-    <section className="relative overflow-hidden min-h-[500px]">
-      {/* Warm golden sunset gradient matching mockup */}
+    <section className="relative overflow-hidden min-h-[550px]">
+      {/* Background matching mockup - dark navy top to golden bottom */}
       <div 
         className="absolute inset-0 -z-20"
         style={{
-          background: `linear-gradient(160deg, 
-            #0d1b2a 0%, 
-            #1b263b 8%,
-            #2d3142 15%,
-            #4a3f35 25%,
-            #6b5b45 35%,
-            #8b7355 45%,
-            #b8956a 55%,
-            #d4a84a 65%,
-            #e8be5a 75%,
-            #f5d36a 85%,
-            #fce588 95%,
-            #fff8dc 100%)`,
+          background: `linear-gradient(175deg, 
+            #0d1421 0%, 
+            #1a2633 12%,
+            #2a3b4d 22%,
+            #3d4a4f 32%,
+            #5a5a42 42%,
+            #7a6a35 52%,
+            #9a7a28 60%,
+            #ba8a1a 68%,
+            #d49a10 76%,
+            #e8b020 84%,
+            #f5c530 90%,
+            #ffd54f 96%,
+            #ffe082 100%)`,
         }}
       />
       
-      {/* Wave pattern overlay for depth */}
+      {/* Decorative wave curves like in mockup */}
       <div 
-        className="absolute inset-0 -z-10 opacity-20"
+        className="absolute inset-0 -z-10"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='20' viewBox='0 0 100 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M21.184 20c.357-.13.72-.264 1.088-.402l1.768-.661C33.64 15.347 39.647 14 50 14c10.271 0 15.362 1.222 24.629 4.928.955.383 1.869.74 2.75 1.072h6.225c-2.51-.73-5.139-1.691-8.233-2.928C65.888 13.278 60.562 12 50 12c-10.626 0-16.855 1.397-26.66 5.063l-1.767.662c-2.475.923-4.66 1.674-6.724 2.275h6.335zm0-20C13.258 2.892 8.077 4 0 4V2c5.744 0 9.951-.574 14.85-2h6.334zM77.38 0C85.239 2.966 90.502 4 100 4V2c-6.842 0-11.386-.542-16.396-2h-6.225zM0 14c8.44 0 13.718-1.21 22.272-4.402l1.768-.661C33.64 5.347 39.647 4 50 4c10.271 0 15.362 1.222 24.629 4.928C84.112 12.722 89.438 14 100 14v-2c-10.271 0-15.362-1.222-24.629-4.928C65.888 3.278 60.562 2 50 2 39.374 2 33.145 3.397 23.34 7.063l-1.767.662C13.223 10.84 8.163 12 0 12v2z' fill='%23ffffff' fill-opacity='0.08' fill-rule='evenodd'/%3E%3C/svg%3E")`,
+          background: `
+            radial-gradient(ellipse 120% 80% at 80% 20%, rgba(212,170,32,0.3) 0%, transparent 50%),
+            radial-gradient(ellipse 100% 60% at 20% 80%, rgba(255,213,79,0.4) 0%, transparent 40%),
+            radial-gradient(ellipse 80% 50% at 60% 60%, rgba(186,138,26,0.25) 0%, transparent 50%)
+          `,
+        }}
+      />
+      
+      {/* Subtle diagonal stripes for texture */}
+      <div 
+        className="absolute inset-0 -z-10 opacity-10"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            135deg,
+            transparent,
+            transparent 40px,
+            rgba(255,255,255,0.05) 40px,
+            rgba(255,255,255,0.05) 80px
+          )`,
         }}
       />
 
