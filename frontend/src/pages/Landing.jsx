@@ -155,6 +155,64 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* HOW IT WORKS */}
+      <section
+        id="how-it-works"
+        className="py-16 bg-[#0A2540]"
+      >
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center mb-12">
+            <h2 className="font-serif text-4xl md:text-5xl text-white">
+              Why PBX is Different
+            </h2>
+            <p className="mt-4 max-w-2xl mx-auto text-white/70">
+              Built for the Filipino community, with transparency at every step.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-8 hover:bg-white/10 transition">
+              <div className="w-12 h-12 rounded-xl bg-[#f6c94b]/20 flex items-center justify-center mb-5">
+                <svg className="w-6 h-6 text-[#f6c94b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-extrabold text-white mb-3">Built for Trust</h3>
+              <p className="text-white/70 leading-relaxed">
+                Platform-first design using regulated financial infrastructure. Your money moves through secure, compliant channels.
+              </p>
+            </div>
+
+            {/* Card 2 */}
+            <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-8 hover:bg-white/10 transition">
+              <div className="w-12 h-12 rounded-xl bg-[#f6c94b]/20 flex items-center justify-center mb-5">
+                <svg className="w-6 h-6 text-[#f6c94b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-extrabold text-white mb-3">Know the Cost Before You Send</h3>
+              <p className="text-white/70 leading-relaxed">
+                Clear estimates before committing — no surprises. See exactly what your family receives in PHP.
+              </p>
+            </div>
+
+            {/* Card 3 */}
+            <div className="rounded-2xl bg-white/5 backdrop-blur border border-white/10 p-8 hover:bg-white/10 transition">
+              <div className="w-12 h-12 rounded-xl bg-[#f6c94b]/20 flex items-center justify-center mb-5">
+                <svg className="w-6 h-6 text-[#f6c94b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-extrabold text-white mb-3">Filipino-First</h3>
+              <p className="text-white/70 leading-relaxed">
+                Designed for OFWs and families back home. Every feature built with the Filipino experience in mind.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* PRICING */}
       <section
         id="pricing"
