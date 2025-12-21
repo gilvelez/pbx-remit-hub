@@ -10,6 +10,7 @@ import Privacy from "./pages/Privacy.jsx";
 import DataRetention from "./pages/DataRetention.jsx";
 import Terms from "./pages/Terms.jsx";
 import Security from "./pages/Security.jsx";
+import { Landing } from "./pages/Landing.jsx";
 import {
   initialRecipients,
   initialBalances,
