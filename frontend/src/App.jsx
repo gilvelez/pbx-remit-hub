@@ -10,6 +10,7 @@ import Privacy from "./pages/Privacy.jsx";
 import DataRetention from "./pages/DataRetention.jsx";
 import Terms from "./pages/Terms.jsx";
 import Security from "./pages/Security.jsx";
+import { Landing } from "./pages/Landing.jsx";
 import {
   initialRecipients,
   initialBalances,
@@ -29,6 +30,9 @@ export default function App() {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public Landing Page */}
+      <Route path="/" element={<Landing />} />
+      
       {/* Public routes - NO PROTECTION */}
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
@@ -43,7 +47,7 @@ function AppRoutes() {
       <Route path="/plaid-gate-test" element={<PlaidGateTest />} />
       
       {/* Protected routes - require session + verification */}
-      <Route path="/*" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
+      <Route path="/app/*" element={<ProtectedRoute><MainApp /></ProtectedRoute>} />
     </Routes>
   );
 }
@@ -219,7 +223,7 @@ function MainApp() {
       <TopNav page={page} setPage={setPage} />
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
         <Routes>
-          <Route path="/" element={<Navigate to="/send" replace />} />
+          <Route path="/" element={<Navigate to="/app/send" replace />} />
           <Route path="/send" element={<SendMoney {...value} />} />
           <Route path="/wallet" element={<Wallet {...value} />} />
         </Routes>
@@ -254,10 +258,10 @@ function TopNav({ page, setPage }) {
         </div>
 
         <nav className="flex gap-2 items-center">
-          <NavButton active={page === "send"} onClick={() => { setPage("send"); navigate("/send"); }}>
+          <NavButton active={page === "send"} onClick={() => { setPage("send"); navigate("/app/send"); }}>
             Send Money
           </NavButton>
-          <NavButton active={page === "wallet"} onClick={() => { setPage("wallet"); navigate("/wallet"); }}>
+          <NavButton active={page === "wallet"} onClick={() => { setPage("wallet"); navigate("/app/wallet"); }}>
             Wallet
           </NavButton>
           <button

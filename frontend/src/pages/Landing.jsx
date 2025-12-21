@@ -57,9 +57,15 @@ export const Landing = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-16 md:pt-24 pb-20 md:pb-28 grid md:grid-cols-2 gap-10 items-center">
           <div className="text-white">
             <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight leading-tight text-center md:text-left">
-              <span className="text-yellow-300 drop-shadow-md">Para sa Bayaning Pilipino</span>,<br />
-              <span className="text-blue-950 drop-shadow-md">bawat padala ay pagmamahal.</span>
+              <span className="text-yellow-300 drop-shadow-md">Send money home</span>
+              <br />
+              <span className="text-white drop-shadow-md">with clarity and security.</span>
             </h1>
+
+            <p className="mt-3 text-sm text-white/90 text-center md:text-left max-w-lg">
+              Built for overseas Filipinos. This demo illustrates how transfers can be handled through 
+              secure financial infrastructure.
+            </p>
 
             <div className="mt-6 flex flex-wrap gap-3 md:justify-start justify-center">
               <a
@@ -78,23 +84,19 @@ export const Landing = () => {
               </a>
             </div>
 
-            {/* Test Mode Bank Connection */}
+            {/* Test Mode Demo Button */}
             <div className="mt-6 text-center md:text-left">
               <a
-                href="/pbx-demo.html"
-                data-cta="test-bank-connection"
+                href="/login"
+                data-cta="try-demo"
                 className="inline-block rounded-xl bg-gradient-to-r from-yellow-400 to-yellow-500 text-slate-900 px-6 py-3 text-base font-bold shadow-lg hover:from-yellow-500 hover:to-yellow-600 transform hover:scale-105 transition-all"
               >
-                Connect your bank (Test Mode)
+                Try the Demo
               </a>
               <p className="mt-2 text-xs text-white/80">
-                Sandbox only — no real accounts or money.
+                Sandbox demo using test data only — no real funds move.
               </p>
             </div>
-
-            <p className="mt-4 text-xs text-white/90 text-center md:text-left">
-              MVP demo uses sandbox data—no real funds move.
-            </p>
           </div>
 
           {/* Demo card with RatePreview */}
@@ -385,6 +387,11 @@ function RatePreview() {
       >
         Preview transfer
       </button>
+      
+      <p className="mt-2 text-xs text-slate-500 text-center">
+        Demo rates shown are illustrative only. Actual rates, fees, and 
+        availability will vary and are subject to partner pricing.
+      </p>
     </form>
   );
 }

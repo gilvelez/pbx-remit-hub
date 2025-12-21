@@ -16,7 +16,7 @@ export default function Verify() {
     }
     // Redirect to main app if already verified
     if (session.verified) {
-      navigate('/send');
+      navigate('/app/send');
     }
   }, [session.exists, session.verified, navigate]);
 
@@ -33,7 +33,7 @@ export default function Verify() {
 
     // Set verified locally (MVP sandbox-only)
     setSession({ ...session, verified: true });
-    navigate('/send');
+    navigate('/app/send');
   };
 
   return (
