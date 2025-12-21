@@ -320,7 +320,7 @@ function TopNav({ page, setPage }) {
           </Link>
           <div>
             <div className="text-sm font-semibold tracking-wide" style={{ color: theme.navy }}>
-              Philippine Bayani Exchange
+              PBX Cross-Border Transfer
             </div>
             <div className="flex items-center gap-2">
               <span 
