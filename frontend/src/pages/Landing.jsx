@@ -75,7 +75,7 @@ export default function Landing() {
                   Try the Demo
                 </a>
                 <a
-                  href="#how"
+                  href="#how-it-works"
                   className="inline-flex justify-center rounded-2xl bg-white/10 border border-white/25 px-8 py-4 font-bold text-white hover:bg-white/15 transition"
                 >
                   How PBX Works →
