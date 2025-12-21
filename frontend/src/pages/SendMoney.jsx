@@ -3,6 +3,17 @@ import RecipientSelect from "../components/send/RecipientSelect.jsx";
 import AmountInput from "../components/send/AmountInput.jsx";
 import ConfirmModal from "../components/send/ConfirmModal.jsx";
 
+// Theme colors
+const theme = {
+  navy: '#0A2540',
+  navyDark: '#061C33',
+  gold: '#F6C94B',
+  goldDark: '#D4A520',
+  red: '#C1121F',
+  offWhite: '#FAFAF7',
+  success: '#10b981',
+};
+
 export default function SendMoney({
   recipients,
   balances,
@@ -17,9 +28,8 @@ export default function SendMoney({
   });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState(null); // {ok, message}
+  const [result, setResult] = useState(null);
   
-  // FX quote state (live rates from backend)
   const [fxQuote, setFxQuote] = useState(null);
   const [fxError, setFxError] = useState("");
   const [isFetchingFx, setIsFetchingFx] = useState(false);
@@ -38,7 +48,7 @@ export default function SendMoney({
     amountNumber > 0 &&
     amountNumber <= balances.usd &&
     !sending &&
-    !fxError; // Disable if FX rate unavailable
+    !fxError;
 
   const openConfirm = () => {
     setResult(null);
@@ -50,22 +60,16 @@ export default function SendMoney({
     setResult(null);
     setIsConfirmOpen(false);
 
-    console.log("[SendMoney] Creating transfer with FX quote:", fxQuote);
-    console.log("[SendMoney] Selected recipient:", selectedRecipient);
-
-    // If recipient has GCash info, use real PayMongo API
     if (selectedRecipient?.gcashNumber) {
       try {
-        // Calculate PHP amount using the live FX rate
         const amountPhp = fxQuote ? amountNumber * fxQuote.pbx_rate : 0;
 
-        // Call the real PayMongo transfer endpoint
         const payoutRes = await fetch("/.netlify/functions/pbx-create-transfer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             amountPhp: amountPhp,
-            institution_code: "GCSH", // GCash institution code
+            institution_code: "GCSH",
             account_name: selectedRecipient.name,
             account_number: selectedRecipient.gcashNumber,
             provider: "instapay",
@@ -83,7 +87,6 @@ export default function SendMoney({
         setSending(false);
 
         if (payoutRes.ok) {
-          // Format response for UI display
           const formattedPayoutData = {
             txId: payoutData.data?.id || `PBX-${Date.now()}`,
             recipient_name: selectedRecipient.name,
@@ -107,37 +110,30 @@ export default function SendMoney({
           setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
           setHasAmountInput(false);
           
-          // Add to Recent Activity and PH Payouts
           if (onPayoutComplete) {
             onPayoutComplete(formattedPayoutData);
           }
-          
-          console.log("[SendMoney] PayMongo transfer successful:", payoutData);
         } else {
           setResult({
             ok: false,
-            message: payoutData.error || "Payout failed. Please try again in a few minutes.",
+            message: payoutData.error || "Payout failed. Please try again.",
           });
-          console.error("[SendMoney] PayMongo transfer error:", payoutData);
         }
       } catch (error) {
         setSending(false);
         setResult({
           ok: false,
-          message: "We couldn't complete your payout right now. Please try again in a few minutes.",
+          message: "We couldn't complete your payout right now. Please try again.",
         });
-        console.error("[SendMoney] PayMongo transfer exception:", error);
       }
       return;
     }
 
-    // Fallback to mock transfer for internal transfers
-    // Create a quote object from FX data for remittance record
     const quoteForRemittance = fxQuote ? {
       amountUsd: amountNumber,
       amountPhp: Number((amountNumber * fxQuote.pbx_rate).toFixed(2)),
       fxRate: fxQuote.pbx_rate,
-      feeUsd: 0, // No fee for internal transfers
+      feeUsd: 0,
       totalChargeUsd: amountNumber,
     } : null;
 
@@ -145,22 +141,20 @@ export default function SendMoney({
       recipientId: draft.recipientId,
       amountUsd: amountNumber,
       note: draft.note,
-      quote: quoteForRemittance, // Pass the quote for remittance record
-      selectedRecipient, // Pass recipient info for remittance record
+      quote: quoteForRemittance,
+      selectedRecipient,
     });
 
     setSending(false);
     if (res.ok) {
       setResult({ ok: true, message: "Transfer complete ✅" });
       setDraft((d) => ({ ...d, amountUsd: "", note: "" }));
-      setHasAmountInput(false); // Reset flag but keep the quote visible
-      // IMPORTANT: do NOT call setQuote(null) here - keep last quote visible
+      setHasAmountInput(false);
     } else {
-      setResult({ ok: false, message: "Transfer failed ❌ (mock)" });
+      setResult({ ok: false, message: "Transfer failed ❌" });
     }
   };
 
-  // Fetch live FX quote when amount changes (debounced)
   useEffect(() => {
     const raw = draft.amountUsd;
     const usd = Number(raw || 0);
@@ -193,15 +187,14 @@ export default function SendMoney({
       } catch (err) {
         if (!cancelled) {
           setFxQuote(null);
-          setFxError("Live rate unavailable, please try again");
-          console.error("[FX] Error fetching live rate:", err);
+          setFxError("Live rate unavailable");
         }
       } finally {
         if (!cancelled) {
           setIsFetchingFx(false);
         }
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => {
       cancelled = true;
@@ -216,43 +209,58 @@ export default function SendMoney({
         <Card>
           <CardHeader
             title="Send Money"
-            subtitle="Send USD → PHP via PayMongo (Real Payouts)"
+            subtitle="Send USD → PHP via PayMongo"
           />
 
           <div className="grid gap-4">
             <PlaidConnectBanner />
 
-            <RecipientSelect
-              recipients={recipients}
-              value={draft.recipientId}
-              onChange={(recipientId) =>
-                setDraft((d) => ({ ...d, recipientId }))
-              }
-            />
-
-            <AmountInput
-              value={draft.amountUsd}
-              onChange={(amountUsd) => {
-                setDraft((d) => ({ ...d, amountUsd }));
-                if (!amountUsd) {
-                  // User manually cleared the field - clear FX quote and reset flag
-                  setFxQuote(null);
-                  setFxError("");
-                  setHasAmountInput(false);
-                } else {
-                  // User is typing a new amount
-                  setHasAmountInput(true);
+            <div>
+              <label className="mb-2 block text-xs font-semibold" style={{ color: theme.navy }}>
+                Recipient
+              </label>
+              <RecipientSelect
+                recipients={recipients}
+                value={draft.recipientId}
+                onChange={(recipientId) =>
+                  setDraft((d) => ({ ...d, recipientId }))
                 }
-              }}
-              max={balances.usd}
-            />
+              />
+            </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-slate-300">
+              <label className="mb-2 block text-xs font-semibold" style={{ color: theme.navy }}>
+                Amount (USD)
+              </label>
+              <AmountInput
+                value={draft.amountUsd}
+                onChange={(amountUsd) => {
+                  setDraft((d) => ({ ...d, amountUsd }));
+                  if (!amountUsd) {
+                    setFxQuote(null);
+                    setFxError("");
+                    setHasAmountInput(false);
+                  } else {
+                    setHasAmountInput(true);
+                  }
+                }}
+                max={balances.usd}
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-xs font-semibold" style={{ color: theme.navy }}>
                 Note (optional)
               </label>
               <input
-                className="w-full rounded-xl border border-slate-800 bg-slate-900 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
+                style={{ 
+                  backgroundColor: theme.offWhite,
+                  border: '1px solid #e2e8f0',
+                  color: theme.navy,
+                }}
+                onFocus={(e) => e.target.style.borderColor = theme.gold}
+                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
                 placeholder="e.g. For school, food, meds"
                 value={draft.note}
                 onChange={(e) =>
@@ -262,67 +270,57 @@ export default function SendMoney({
             </div>
 
             {result && result.ok && result.payoutData ? (
-              <div className="rounded-2xl border border-emerald-800 bg-emerald-950/50 p-4">
-                <div className="mb-3 text-base font-bold text-emerald-200">
+              <div 
+                className="rounded-2xl p-4"
+                style={{ 
+                  backgroundColor: `${theme.success}10`,
+                  border: `1px solid ${theme.success}30`,
+                }}
+              >
+                <div className="mb-3 text-base font-bold" style={{ color: theme.success }}>
                   {result.message}
                 </div>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">To:</span>
-                    <span className="font-semibold text-slate-100">
+                    <span style={{ color: '#64748b' }}>To:</span>
+                    <span className="font-semibold" style={{ color: theme.navy }}>
                       {result.payoutData.recipient_name} ({result.payoutData.gcash_number})
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Amount sent:</span>
-                    <span className="font-semibold text-slate-100">
+                    <span style={{ color: '#64748b' }}>Amount sent:</span>
+                    <span className="font-semibold" style={{ color: theme.navy }}>
                       ${result.payoutData.amount_usd.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-slate-400">Fee:</span>
-                    <span className="font-semibold text-slate-100">
-                      ${result.payoutData.fee_usd.toFixed(2)}
                     </span>
                   </div>
                   {result.payoutData.fx && (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">PBX rate:</span>
-                        <span className="font-semibold text-emerald-300">
+                        <span style={{ color: '#64748b' }}>PBX rate:</span>
+                        <span className="font-semibold" style={{ color: theme.gold }}>
                           1 USD = {result.payoutData.fx.pbx_rate.toFixed(2)} PHP
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Est. PHP received:</span>
-                        <span className="font-bold text-emerald-200">
+                        <span style={{ color: '#64748b' }}>Est. PHP received:</span>
+                        <span className="font-bold" style={{ color: theme.success }}>
                           ₱{result.payoutData.fx.estimated_php.toLocaleString("en-PH", {
                             maximumFractionDigits: 2,
                           })}
                         </span>
                       </div>
-                      <div className="flex justify-between text-xs text-slate-500">
-                        <span>Mid-market: {result.payoutData.fx.mid_market.toFixed(2)}</span>
-                        <span>Spread: {result.payoutData.fx.spread_percent.toFixed(2)}%</span>
-                      </div>
                     </>
                   )}
-                  <div className="mt-3 border-t border-emerald-900 pt-2">
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span>Ref:</span>
-                      <span className="font-mono">{result.payoutData.txId}</span>
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-400">
-                      <span>Time:</span>
-                      <span>
-                        {new Date(result.payoutData.created_at).toLocaleString()}
-                      </span>
-                    </div>
-                  </div>
                 </div>
               </div>
             ) : result && !result.ok ? (
-              <div className="rounded-xl bg-rose-500/15 px-3 py-2 text-sm text-rose-200">
+              <div 
+                className="rounded-xl px-4 py-3 text-sm"
+                style={{ 
+                  backgroundColor: `${theme.red}10`,
+                  color: theme.red,
+                }}
+              >
                 {result.message}
               </div>
             ) : null}
@@ -330,19 +328,23 @@ export default function SendMoney({
             <button
               disabled={!canSend}
               onClick={openConfirm}
-              className={[
-                "mt-1 w-full rounded-2xl px-4 py-3 text-sm font-bold transition",
-                canSend
-                  ? "bg-emerald-500 text-slate-950 hover:bg-emerald-400"
-                  : "bg-slate-800 text-slate-400",
-              ].join(" ")}
+              className="mt-1 w-full rounded-2xl px-4 py-3.5 text-sm font-bold transition shadow-lg hover:brightness-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                backgroundColor: canSend ? theme.gold : '#e2e8f0',
+                color: canSend ? theme.navyDark : '#94a3b8',
+              }}
             >
               {sending ? "Sending..." : "Send"}
             </button>
 
             <button
               onClick={() => setPage("wallet")}
-              className="w-full rounded-2xl border border-slate-800 bg-slate-900 px-4 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-800"
+              className="w-full rounded-2xl px-4 py-3 text-sm font-semibold transition"
+              style={{ 
+                backgroundColor: 'transparent',
+                color: theme.navy,
+                border: `1px solid rgba(10, 37, 64, 0.15)`,
+              }}
             >
               View Wallet
             </button>
@@ -358,42 +360,44 @@ export default function SendMoney({
           <div className="grid gap-3 text-sm">
             <Row label="Recipient">
               {selectedRecipient ? (
-                <div className="font-semibold">
+                <div className="font-semibold" style={{ color: theme.navy }}>
                   {selectedRecipient.name}{" "}
-                  <span className="text-slate-400">
+                  <span style={{ color: '#94a3b8' }}>
                     ({selectedRecipient.handle})
                   </span>
                 </div>
               ) : (
-                <div className="text-slate-400">Select a recipient</div>
+                <div style={{ color: '#94a3b8' }}>Select a recipient</div>
               )}
             </Row>
 
             <div className="flex justify-between text-sm mt-1">
-              <span className="text-slate-300">Amount (USD)</span>
-              <span className="font-semibold">
+              <span style={{ color: '#64748b' }}>Amount (USD)</span>
+              <span className="font-semibold" style={{ color: theme.navy }}>
                 {draft.amountUsd ? `$${Number(draft.amountUsd).toFixed(2)}` : "—"}
               </span>
             </div>
 
-            {/* Live FX Rate Section */}
             {fxQuote && draft.amountUsd && (
               <>
-                <div className="flex justify-between text-xs mt-2 pt-2 border-t border-slate-800">
-                  <span className="text-slate-400">PBX rate (live)</span>
-                  <span className="font-semibold text-emerald-400">
+                <div 
+                  className="flex justify-between text-xs mt-2 pt-2"
+                  style={{ borderTop: '1px solid #e2e8f0' }}
+                >
+                  <span style={{ color: '#94a3b8' }}>PBX rate (live)</span>
+                  <span className="font-semibold" style={{ color: theme.gold }}>
                     1 USD = {fxQuote.pbx_rate.toFixed(2)} PHP
                   </span>
                 </div>
                 <div className="flex justify-between text-sm mt-1">
-                  <span className="text-slate-300">Estimated PHP</span>
-                  <span className="font-semibold text-slate-100">
+                  <span style={{ color: '#64748b' }}>Estimated PHP</span>
+                  <span className="font-semibold" style={{ color: theme.navy }}>
                     ₱{(Number(draft.amountUsd) * fxQuote.pbx_rate).toLocaleString("en-PH", {
                       maximumFractionDigits: 2,
                     })}
                   </span>
                 </div>
-                <div className="flex justify-between text-[11px] mt-1 text-slate-500">
+                <div className="flex justify-between text-[11px] mt-1" style={{ color: '#94a3b8' }}>
                   <span>Mid-market: {fxQuote.mid_market.toFixed(2)}</span>
                   <span>Spread: {fxQuote.spread_percent.toFixed(2)}%</span>
                 </div>
@@ -401,18 +405,18 @@ export default function SendMoney({
             )}
 
             {isFetchingFx && draft.amountUsd && (
-              <div className="text-xs text-slate-400 mt-2">
+              <div className="text-xs mt-2" style={{ color: '#94a3b8' }}>
                 Fetching live rate...
               </div>
             )}
 
             {fxError && draft.amountUsd && (
-              <div className="text-xs text-amber-300 mt-2">
+              <div className="text-xs mt-2" style={{ color: theme.goldDark }}>
                 Live rate unavailable
               </div>
             )}
 
-            <p className="text-[11px] text-slate-500 mt-2">
+            <p className="text-[11px] mt-2" style={{ color: '#94a3b8' }}>
               Live FX rates + PayMongo real-time transfers to PH banks & e-wallets.
             </p>
           </div>
@@ -436,28 +440,30 @@ export default function SendMoney({
 import PlaidLinkButton from "../components/PlaidLinkButton";
 
 function PlaidConnectBanner() {
-  // Get session from sessionStorage
   let session = { exists: false, verified: false };
   try {
     const sessionStr = sessionStorage.getItem('pbx_session');
     if (sessionStr) {
       session = JSON.parse(sessionStr);
     }
-  } catch (e) {
-    // Ignore parsing errors
-  }
+  } catch (e) {}
 
-  // Gate: Only show connect button if verified
   if (!session.exists || !session.verified) {
     return (
-      <div className="rounded-2xl border border-amber-800 bg-amber-950/30 p-3">
+      <div 
+        className="rounded-2xl p-4"
+        style={{ 
+          backgroundColor: `${theme.goldDark}15`,
+          border: `1px solid ${theme.goldDark}30`,
+        }}
+      >
         <div className="flex items-center gap-3">
           <div className="text-2xl">⚠️</div>
           <div>
-            <div className="text-sm font-semibold text-amber-200">
+            <div className="text-sm font-semibold" style={{ color: theme.goldDark }}>
               Verification Required
             </div>
-            <div className="text-xs text-amber-300">
+            <div className="text-xs" style={{ color: theme.goldDark }}>
               Verification required before connecting a bank
             </div>
           </div>
@@ -467,11 +473,19 @@ function PlaidConnectBanner() {
   }
 
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-900 p-3">
+    <div 
+      className="rounded-2xl p-4"
+      style={{ 
+        backgroundColor: theme.offWhite,
+        border: '1px solid #e2e8f0',
+      }}
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-semibold">Connect your bank</div>
-          <div className="text-xs text-slate-400">
+          <div className="text-sm font-semibold" style={{ color: theme.navy }}>
+            Connect your bank
+          </div>
+          <div className="text-xs" style={{ color: '#94a3b8' }}>
             Plaid Sandbox • Connect to continue
           </div>
         </div>
@@ -484,7 +498,13 @@ function PlaidConnectBanner() {
 
 function Card({ children }) {
   return (
-    <div className="rounded-3xl border border-slate-800 bg-slate-950 p-5 shadow-xl shadow-black/30">
+    <div 
+      className="rounded-2xl p-5 shadow-lg"
+      style={{ 
+        backgroundColor: 'white',
+        border: '1px solid rgba(10, 37, 64, 0.08)',
+      }}
+    >
       {children}
     </div>
   );
@@ -493,16 +513,21 @@ function Card({ children }) {
 function CardHeader({ title, subtitle }) {
   return (
     <div className="mb-4">
-      <div className="text-lg font-bold">{title}</div>
-      {subtitle && <div className="text-xs text-slate-400">{subtitle}</div>}
+      <div className="text-lg font-bold" style={{ color: theme.navy, fontFamily: 'Georgia, serif' }}>
+        {title}
+      </div>
+      {subtitle && <div className="text-xs" style={{ color: '#94a3b8' }}>{subtitle}</div>}
     </div>
   );
 }
 
 function Row({ label, children }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-xl bg-slate-900 px-3 py-2">
-      <div className="text-xs font-semibold text-slate-400">{label}</div>
+    <div 
+      className="flex items-center justify-between gap-3 rounded-xl px-3 py-2"
+      style={{ backgroundColor: theme.offWhite }}
+    >
+      <div className="text-xs font-semibold" style={{ color: '#64748b' }}>{label}</div>
       <div className="text-right">{children}</div>
     </div>
   );
