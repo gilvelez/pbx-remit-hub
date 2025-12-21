@@ -223,7 +223,7 @@ function MainApp() {
       <TopNav page={page} setPage={setPage} />
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
         <Routes>
-          <Route path="/" element={<Navigate to="/send" replace />} />
+          <Route path="/" element={<Navigate to="/app/send" replace />} />
           <Route path="/send" element={<SendMoney {...value} />} />
           <Route path="/wallet" element={<Wallet {...value} />} />
         </Routes>
