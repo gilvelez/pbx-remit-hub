@@ -7,6 +7,22 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+}
+
+/* Prevent anchor targets hiding under sticky header */
+#how-it-works {
+    scroll-margin-top: 96px;
+}
+
+#pricing {
+    scroll-margin-top: 96px;
+}
+
 body {
     margin: 0;
     font-family:
