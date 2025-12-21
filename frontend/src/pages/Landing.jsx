@@ -163,7 +163,7 @@ export default function Landing() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="text-center mb-12">
             <h2 className="font-serif text-4xl md:text-5xl text-white">
-              Why PBX is Different
+              How PBX Works
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-white/70">
               Built for the Filipino community, with transparency at every step.
