@@ -75,13 +75,13 @@ export default function Landing() {
 
               <div className="mt-8 flex flex-col sm:flex-row gap-4">
                 <a
-                  href="/login"
+                  href="/onboarding/personal"
                   className="inline-flex justify-center rounded-2xl bg-[#f6c94b] px-8 py-4 font-extrabold text-[#1b1b1b] shadow-lg hover:brightness-105 transition"
                 >
-                  Send Money Across Borders
+                  Get Started Free
                 </a>
                 <a
-                  href="#how-it-works"
+                  href="/how-it-works"
                   className="inline-flex justify-center rounded-2xl bg-white/10 border border-white/25 px-8 py-4 font-bold text-white hover:bg-white/15 transition"
                 >
                   How PBX Works →
