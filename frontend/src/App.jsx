@@ -355,6 +355,9 @@ function TopNav({ page, setPage }) {
         </div>
 
         <nav className="flex gap-2 items-center">
+          <NavButton active={page === "dashboard"} onClick={() => { setPage("dashboard"); navigate("/app/dashboard"); }}>
+            Dashboard
+          </NavButton>
           <NavButton active={page === "send"} onClick={() => { setPage("send"); navigate("/app/send"); }}>
             Send Money
           </NavButton>
