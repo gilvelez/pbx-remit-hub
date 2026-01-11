@@ -11,6 +11,13 @@ import DataRetention from "./pages/DataRetention.jsx";
 import Terms from "./pages/Terms.jsx";
 import Security from "./pages/Security.jsx";
 import { Landing } from "./pages/Landing.jsx";
+import Pricing from "./pages/Pricing.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import OnboardingPersonal from "./pages/OnboardingPersonal.jsx";
+import OnboardingBusiness from "./pages/OnboardingBusiness.jsx";
+import HowItWorks from "./pages/HowItWorks.jsx";
+import Business from "./pages/Business.jsx";
+import Roadmap from "./pages/Roadmap.jsx";
 import {
   initialRecipients,
   initialBalances,
@@ -46,6 +53,16 @@ function AppRoutes() {
       {/* Public routes - NO PROTECTION */}
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
+      
+      {/* New Subscription Model Pages - Public */}
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/business" element={<Business />} />
+      <Route path="/roadmap" element={<Roadmap />} />
+      
+      {/* Onboarding Flows - Public */}
+      <Route path="/onboarding/personal" element={<OnboardingPersonal />} />
+      <Route path="/onboarding/business" element={<OnboardingBusiness />} />
       
       {/* Legal & Compliance Pages - Public */}
       <Route path="/privacy" element={<Privacy />} />
@@ -222,7 +239,8 @@ function MainApp() {
       <FXRateBar />
       <main className="mx-auto w-full max-w-5xl px-4 py-6">
         <Routes>
-          <Route path="/" element={<Navigate to="/app/send" replace />} />
+          <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+          <Route path="/dashboard" element={<Dashboard balances={balances} remittances={remittances} />} />
           <Route path="/send" element={<SendMoney {...value} />} />
           <Route path="/wallet" element={<Wallet {...value} />} />
         </Routes>
@@ -337,6 +355,9 @@ function TopNav({ page, setPage }) {
         </div>
 
         <nav className="flex gap-2 items-center">
+          <NavButton active={page === "dashboard"} onClick={() => { setPage("dashboard"); navigate("/app/dashboard"); }}>
+            Dashboard
+          </NavButton>
           <NavButton active={page === "send"} onClick={() => { setPage("send"); navigate("/app/send"); }}>
             Send Money
           </NavButton>
