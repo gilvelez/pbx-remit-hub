@@ -54,6 +54,16 @@ function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
       
+      {/* New Subscription Model Pages - Public */}
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/business" element={<Business />} />
+      <Route path="/roadmap" element={<Roadmap />} />
+      
+      {/* Onboarding Flows - Public */}
+      <Route path="/onboarding/personal" element={<OnboardingPersonal />} />
+      <Route path="/onboarding/business" element={<OnboardingBusiness />} />
+      
       {/* Legal & Compliance Pages - Public */}
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/data-retention" element={<DataRetention />} />
