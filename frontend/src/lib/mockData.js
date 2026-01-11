@@ -34,6 +34,7 @@ export const initialBalances = {
   usd: 250.0,
   usdc: 120.0,
   pendingUsd: 0.0,
+  php: 50000.0,  // PBX Wallet balance in PHP
 };
 
 export const initialTransfers = [
