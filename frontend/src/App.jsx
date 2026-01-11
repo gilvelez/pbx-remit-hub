@@ -11,6 +11,13 @@ import DataRetention from "./pages/DataRetention.jsx";
 import Terms from "./pages/Terms.jsx";
 import Security from "./pages/Security.jsx";
 import { Landing } from "./pages/Landing.jsx";
+import Pricing from "./pages/Pricing.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import OnboardingPersonal from "./pages/OnboardingPersonal.jsx";
+import OnboardingBusiness from "./pages/OnboardingBusiness.jsx";
+import HowItWorks from "./pages/HowItWorks.jsx";
+import Business from "./pages/Business.jsx";
+import Roadmap from "./pages/Roadmap.jsx";
 import {
   initialRecipients,
   initialBalances,
