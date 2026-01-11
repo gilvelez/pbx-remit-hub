@@ -232,51 +232,63 @@ export default function Landing() {
         <div className="mx-auto max-w-7xl px-6 text-center">
           {/* Section badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#f6c94b]/20 mb-6">
-            <span className="text-sm font-semibold text-[#8b6914]">Example Pricing (Demo)</span>
+            <span className="text-sm font-semibold text-[#8b6914]">Subscription Plans</span>
           </div>
 
           <h2 className="font-serif text-4xl md:text-5xl text-slate-900">
-            Simple, transparent pricing
+            Choose Your Plan
           </h2>
           <p className="mt-4 max-w-3xl mx-auto text-slate-700">
-            See estimated fees at different transfer amounts. The more you send, the better the value.
+            From individuals to enterprises — lower FX spreads and better rates with every tier.
           </p>
 
-          {/* 4-Tier Pricing Grid */}
+          {/* 4-Tier Subscription Grid */}
           <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            <PricingTier 
-              transferAmount="$100"
-              totalFees="$2.99"
-              note="Small transfers"
+            <SubscriptionTier 
+              name="Basic"
+              price="Free"
+              spread="~1.5%"
+              fee="$2.00/transfer"
+              note="Pay-per-use"
+              ctaLink="/onboarding/personal"
             />
-            <PricingTier 
-              transferAmount="$300"
-              totalFees="$4.49"
-              note="Regular transfers"
-            />
-            <PricingTier 
-              transferAmount="$500"
-              totalFees="$5.99"
-              note="Family support"
-            />
-            <PricingTier 
-              transferAmount="$1,000"
-              totalFees="$8.99"
-              note="Best value"
+            <SubscriptionTier 
+              name="Premium"
+              price="$10/mo"
+              spread="~0.8%"
+              fee="Free transfers"
+              note="Best for individuals"
               highlight
+              ctaLink="/onboarding/personal"
+            />
+            <SubscriptionTier 
+              name="SME"
+              price="$50/mo"
+              spread="~0.5%"
+              fee="Free transfers"
+              note="Up to $100k/mo"
+              ctaLink="/onboarding/business"
+            />
+            <SubscriptionTier 
+              name="Enterprise"
+              price="Custom"
+              spread="~0.3%"
+              fee="Free transfers"
+              note="Unlimited volume"
+              ctaLink="/onboarding/business"
             />
           </div>
 
-          {/* Disclaimer - visible without scrolling */}
+          {/* Disclaimer */}
           <p className="mt-6 text-sm text-slate-600 max-w-2xl mx-auto">
-            Demo examples only. Actual rates, fees, and availability may vary by amount, corridor, and payout partner.
+            All pricing shown is for demonstration purposes. Actual rates may vary.
           </p>
 
           <a
-            href="/login"
+            href="/pricing"
             className="mt-8 inline-flex justify-center rounded-2xl bg-[#f6c94b] px-10 py-4 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
           >
-            Try the Demo
+            Compare All Plans
           </a>
         </div>
       </section>
