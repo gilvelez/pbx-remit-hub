@@ -1,30 +1,23 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Check, X } from "lucide-react";
-
-// Theme colors
-const theme = {
-  navy: '#0A2540',
-  navyDark: '#061C33',
-  gold: '#F6C94B',
-  goldDark: '#D4A520',
-  offWhite: '#FAFAF7',
-};
+import { Check, X, Minus } from "lucide-react";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../components/ui/card";
+import { Button } from "../components/ui/button";
 
 const plans = [
   {
     name: "Basic",
-    price: "$0",
-    period: "/mo",
-    description: "Essential features, pay per transfer",
-    fxSpread: "~1.5%",
-    transferFee: "$2.00",
+    price: "Free",
+    period: "",
+    description: "For individual users starting out",
     features: {
-      support24: false,
-      dedicatedManager: false,
-      apiAccess: false,
-      priorityProcessing: false,
-      monthlyLimit: "$5,000",
+      wallet: true,
+      recurring: false,
+      interest: false,
+      interestRate: null,
+      fxLock: "15 min",
+      support: "Standard",
+      monthlyLimit: "₱250,000",
     },
     cta: "Get Started",
     ctaLink: "/onboarding/personal",
@@ -32,37 +25,38 @@ const plans = [
   },
   {
     name: "Premium",
-    price: "$10",
+    price: "₱499",
     period: "/mo",
-    description: "Lower fees and premium support",
-    fxSpread: "~0.8%",
-    transferFee: "$0 (free)",
+    description: "For individuals & families",
     features: {
-      support24: true,
-      dedicatedManager: false,
-      apiAccess: false,
-      priorityProcessing: true,
-      monthlyLimit: "$25,000",
+      wallet: true,
+      recurring: true,
+      interest: true,
+      interestRate: "1% APY",
+      fxLock: "15 min",
+      support: "Priority",
+      monthlyLimit: "₱1,250,000",
     },
-    cta: "Get Started",
+    cta: "Choose Premium",
     ctaLink: "/onboarding/personal",
     highlight: true,
+    badge: "Popular",
   },
   {
     name: "SME",
-    price: "$50",
+    price: "₱2,499",
     period: "/mo",
-    description: "For small & medium enterprises",
-    fxSpread: "~0.5%",
-    transferFee: "$0 (free)",
+    description: "For small business teams",
     features: {
-      support24: true,
-      dedicatedManager: false,
-      apiAccess: true,
-      priorityProcessing: true,
-      monthlyLimit: "$100,000",
+      wallet: true,
+      recurring: true,
+      interest: false,
+      interestRate: null,
+      fxLock: "15 min",
+      support: "Priority",
+      monthlyLimit: "₱5,000,000",
     },
-    cta: "Get Started",
+    cta: "Choose SME",
     ctaLink: "/onboarding/business",
     highlight: false,
   },
@@ -70,14 +64,14 @@ const plans = [
     name: "Enterprise",
     price: "Custom",
     period: "",
-    description: "Bespoke rates for large volumes",
-    fxSpread: "~0.3%",
-    transferFee: "$0 (free)",
+    description: "For large organizations",
     features: {
-      support24: true,
-      dedicatedManager: true,
-      apiAccess: true,
-      priorityProcessing: true,
+      wallet: true,
+      recurring: true,
+      interest: false,
+      interestRate: null,
+      fxLock: "15 min",
+      support: "Dedicated Manager",
       monthlyLimit: "Unlimited",
     },
     cta: "Contact Sales",
@@ -90,31 +84,31 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: theme.offWhite }}>
+    <div className="min-h-screen bg-neutral-950 text-gray-100">
       {/* Header */}
-      <nav className="bg-white border-b border-slate-200">
+      <nav className="border-b border-neutral-800">
         <div className="mx-auto max-w-7xl px-6 py-4 flex justify-between items-center">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `${theme.gold}20`, border: `1px solid ${theme.gold}40` }}>
-              <span className="font-extrabold text-sm" style={{ color: theme.navy }}>PBX</span>
+            <div className="h-10 w-10 rounded-2xl flex items-center justify-center bg-amber-500/20 border border-amber-500/40">
+              <span className="font-extrabold text-sm text-amber-400">PBX</span>
             </div>
-            <span className="font-bold text-lg" style={{ color: theme.navy }}>PBX</span>
+            <span className="font-bold text-lg text-amber-400">PBX</span>
           </Link>
           <div className="hidden md:flex items-center gap-6 text-sm">
-            <Link to="/how-it-works" className="hover:text-[#F6C94B] transition" style={{ color: theme.navy }}>How It Works</Link>
-            <Link to="/business" className="hover:text-[#F6C94B] transition" style={{ color: theme.navy }}>Business</Link>
-            <Link to="/login" className="rounded-xl px-5 py-2 font-semibold transition" style={{ backgroundColor: theme.gold, color: theme.navyDark }}>Login</Link>
+            <Link to="/how-it-works" className="text-gray-300 hover:text-amber-400 transition">How It Works</Link>
+            <Link to="/business" className="text-gray-300 hover:text-amber-400 transition">Business</Link>
+            <Link to="/login" className="rounded-xl px-5 py-2 font-semibold bg-red-600 hover:bg-red-700 text-white transition">Login</Link>
           </div>
         </div>
       </nav>
 
       {/* Hero */}
       <div className="text-center py-16 px-6">
-        <h1 className="text-4xl md:text-5xl font-bold mb-4" style={{ color: theme.navy, fontFamily: 'Georgia, serif' }}>
-          Simple, Transparent Pricing
+        <h1 className="text-4xl md:text-5xl font-bold text-amber-400 mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+          Choose Your Plan
         </h1>
-        <p className="text-lg max-w-2xl mx-auto" style={{ color: '#64748b' }}>
-          Choose a plan that fits your needs. Save more on every transfer with lower FX spreads.
+        <p className="text-lg max-w-2xl mx-auto text-gray-300">
+          Find the perfect plan for your needs — from individuals to enterprises.
         </p>
       </div>
 
@@ -122,115 +116,166 @@ export default function Pricing() {
       <div className="max-w-7xl mx-auto px-6 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan) => (
-            <div
+            <Card
               key={plan.name}
-              className={`rounded-2xl p-6 flex flex-col transition-all ${
+              className={`relative flex flex-col border bg-neutral-900 text-gray-100 ${
                 plan.highlight
-                  ? "bg-[#0A2540] text-white ring-2 ring-[#F6C94B] shadow-xl scale-105"
-                  : "bg-white border border-slate-200 shadow-sm"
+                  ? "border-amber-500 shadow-lg shadow-amber-500/20"
+                  : "border-neutral-800"
               }`}
             >
-              {plan.highlight && (
-                <div className="text-xs font-bold text-center py-1 px-3 rounded-full mb-3 self-center" style={{ backgroundColor: theme.gold, color: theme.navyDark }}>
-                  MOST POPULAR
+              {plan.badge && (
+                <div className="absolute top-0 right-0 bg-amber-500 text-neutral-900 text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  {plan.badge}
                 </div>
               )}
-              <h3 className={`text-xl font-bold ${plan.highlight ? "text-white" : ""}`} style={{ color: plan.highlight ? 'white' : theme.navy }}>
-                {plan.name}
-              </h3>
-              <div className="mt-3">
-                <span className={`text-4xl font-extrabold ${plan.highlight ? "text-[#F6C94B]" : ""}`} style={{ color: plan.highlight ? theme.gold : theme.navy }}>
-                  {plan.price}
-                </span>
-                <span className={`text-sm ${plan.highlight ? "text-white/70" : "text-slate-500"}`}>{plan.period}</span>
-              </div>
-              <p className={`mt-2 text-sm ${plan.highlight ? "text-white/80" : "text-slate-600"}`}>
-                {plan.description}
-              </p>
-              <div className="mt-4 pt-4 border-t" style={{ borderColor: plan.highlight ? 'rgba(255,255,255,0.2)' : '#e2e8f0' }}>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className={plan.highlight ? "text-white/70" : "text-slate-500"}>FX Spread</span>
-                  <span className={`font-semibold ${plan.highlight ? "text-[#F6C94B]" : ""}`} style={{ color: plan.highlight ? theme.gold : theme.navy }}>{plan.fxSpread}</span>
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-amber-400">{plan.name}</CardTitle>
+                <CardDescription className="text-gray-400">{plan.description}</CardDescription>
+              </CardHeader>
+              <CardContent className="flex-1">
+                <div className="mb-4">
+                  <span className="text-4xl font-bold text-gray-100">{plan.price}</span>
+                  {plan.period && <span className="text-base text-gray-400">{plan.period}</span>}
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className={plan.highlight ? "text-white/70" : "text-slate-500"}>Transfer Fee</span>
-                  <span className={`font-semibold ${plan.highlight ? "text-white" : ""}`} style={{ color: plan.highlight ? 'white' : theme.navy }}>{plan.transferFee}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => navigate(plan.ctaLink)}
-                className={`mt-6 w-full rounded-xl py-3 font-semibold transition ${
-                  plan.highlight
-                    ? "bg-[#F6C94B] text-[#0A2540] hover:brightness-105"
-                    : "bg-[#0A2540] text-white hover:bg-[#061C33]"
-                }`}
-              >
-                {plan.cta}
-              </button>
-            </div>
+                <ul className="text-sm space-y-3">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-green-500" />
+                    <span>PBX Wallet access</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    {plan.features.recurring ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <X className="w-4 h-4 text-gray-600" />
+                    )}
+                    <span className={!plan.features.recurring ? "text-gray-500" : ""}>
+                      Recurring Transfers
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    {plan.features.interest ? (
+                      <Check className="w-4 h-4 text-green-500" />
+                    ) : (
+                      <X className="w-4 h-4 text-gray-600" />
+                    )}
+                    <span className={!plan.features.interest ? "text-gray-500" : ""}>
+                      {plan.features.interestRate ? (
+                        <><strong className="text-amber-400">{plan.features.interestRate}</strong> Interest</>
+                      ) : (
+                        "Interest on Balance"
+                      )}
+                    </span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-4 h-4 text-xs font-bold text-amber-400">15m</span>
+                    <span>FX Rate Lock</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Minus className="w-4 h-4 text-gray-500" />
+                    <span className="text-gray-400">{plan.features.support} Support</span>
+                  </li>
+                </ul>
+              </CardContent>
+              <CardFooter className="pt-4">
+                <Button
+                  onClick={() => navigate(plan.ctaLink)}
+                  className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
+                  data-testid={`pricing-cta-${plan.name.toLowerCase()}`}
+                >
+                  {plan.cta}
+                </Button>
+              </CardFooter>
+            </Card>
           ))}
         </div>
       </div>
 
-      {/* Comparison Table */}
+      {/* Feature Comparison Table */}
       <div className="max-w-6xl mx-auto px-6 pb-16">
-        <h2 className="text-2xl font-bold text-center mb-8" style={{ color: theme.navy }}>Feature Comparison</h2>
+        <h2 className="text-2xl font-bold text-center text-amber-400 mb-8">Feature Comparison</h2>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm bg-white rounded-xl shadow-sm border border-slate-200">
-            <thead>
-              <tr style={{ backgroundColor: theme.offWhite }}>
-                <th className="text-left p-4 font-semibold" style={{ color: theme.navy }}>Features</th>
+          <table className="w-full text-sm bg-neutral-900 border border-neutral-700 rounded-xl overflow-hidden">
+            <thead className="bg-neutral-800 text-gray-100">
+              <tr>
+                <th className="text-left p-4 font-semibold">Feature</th>
                 {plans.map((p) => (
-                  <th key={p.name} className="p-4 font-semibold text-center" style={{ color: theme.navy }}>{p.name}</th>
+                  <th key={p.name} className="p-4 font-semibold text-center text-amber-400">{p.name}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>Monthly Price</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center" style={{ color: '#64748b' }}>{p.price}{p.period}</td>)}
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">Monthly Fee</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center text-gray-100">
+                    {p.price}{p.period}
+                  </td>
+                ))}
               </tr>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>FX Spread Markup</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center font-semibold" style={{ color: theme.gold }}>{p.fxSpread}</td>)}
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">PBX Wallet (Hold Funds)</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center">
+                    <Check className="mx-auto text-green-500" size={18} />
+                  </td>
+                ))}
               </tr>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>Transfer Fee per Send</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center" style={{ color: '#64748b' }}>{p.transferFee}</td>)}
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">Recurring Transfers</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center">
+                    {p.features.recurring ? (
+                      <Check className="mx-auto text-green-500" size={18} />
+                    ) : (
+                      <Minus className="mx-auto text-gray-600" size={18} />
+                    )}
+                  </td>
+                ))}
               </tr>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>Monthly Limit</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center" style={{ color: '#64748b' }}>{p.features.monthlyLimit}</td>)}
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">Interest on Balance</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center">
+                    {p.features.interest ? (
+                      <span className="text-amber-400 font-semibold">{p.features.interestRate}</span>
+                    ) : (
+                      <Minus className="mx-auto text-gray-600" size={18} />
+                    )}
+                  </td>
+                ))}
               </tr>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>24/7 Support</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center">{p.features.support24 ? <Check className="mx-auto text-green-600" size={18} /> : <X className="mx-auto text-slate-300" size={18} />}</td>)}
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">FX Rate Lock Window</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center text-gray-100">15 min</td>
+                ))}
               </tr>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>Priority Processing</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center">{p.features.priorityProcessing ? <Check className="mx-auto text-green-600" size={18} /> : <X className="mx-auto text-slate-300" size={18} />}</td>)}
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">Monthly Limit</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center text-gray-100">{p.features.monthlyLimit}</td>
+                ))}
               </tr>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>API Access</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center">{p.features.apiAccess ? <Check className="mx-auto text-green-600" size={18} /> : <X className="mx-auto text-slate-300" size={18} />}</td>)}
-              </tr>
-              <tr className="border-t border-slate-100">
-                <td className="p-4 font-medium" style={{ color: theme.navy }}>Dedicated Account Manager</td>
-                {plans.map((p) => <td key={p.name} className="p-4 text-center">{p.features.dedicatedManager ? <Check className="mx-auto text-green-600" size={18} /> : <X className="mx-auto text-slate-300" size={18} />}</td>)}
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">Support Level</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center text-gray-100">{p.features.support}</td>
+                ))}
               </tr>
             </tbody>
           </table>
         </div>
-        <p className="text-center text-xs mt-4" style={{ color: '#94a3b8' }}>
-          All pricing is illustrative for demo purposes. Actual rates may vary.
+        <p className="text-center text-xs mt-4 text-gray-500">
+          All pricing shown is for demonstration purposes. Actual rates may vary.
         </p>
       </div>
 
       {/* Footer */}
-      <footer className="py-8" style={{ backgroundColor: theme.navyDark }}>
+      <footer className="py-8 border-t border-neutral-800">
         <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>
-            © {new Date().getFullYear()} PBX. Built in the United States. Demo purposes only.
+          <p className="text-xs text-gray-500">
+            © {new Date().getFullYear()} Philippine Bayani Exchange (PBX). Built in the United States.
           </p>
         </div>
       </footer>
