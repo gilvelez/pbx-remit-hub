@@ -30,20 +30,20 @@ export default function Landing() {
             </div>
 
             <div className="hidden md:flex items-center gap-8 text-sm text-white/85">
-              <a href="#pricing" className="hover:text-white transition">
+              <a href="/pricing" className="hover:text-white transition">
                 Pricing
               </a>
-              <a href="#how-it-works" className="hover:text-white transition">
+              <a href="/how-it-works" className="hover:text-white transition">
                 How It Works
               </a>
-              <a href="#faq" className="hover:text-white transition">
-                FAQ
+              <a href="/business" className="hover:text-white transition">
+                Business
               </a>
               <a
-                href="/login"
+                href="/onboarding/personal"
                 className="rounded-xl bg-[#f6c94b] px-5 py-2.5 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
               >
-                Try the Demo
+                Get Started
               </a>
             </div>
           </div>
