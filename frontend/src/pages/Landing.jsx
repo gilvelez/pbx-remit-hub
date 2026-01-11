@@ -335,7 +335,7 @@ export default function Landing() {
   );
 }
 
-function PricingTier({ transferAmount, totalFees, note, highlight }) {
+function SubscriptionTier({ name, price, spread, fee, note, highlight, ctaLink }) {
   return (
     <div
       className={`rounded-2xl p-6 text-center transition ${
@@ -344,29 +344,48 @@ function PricingTier({ transferAmount, totalFees, note, highlight }) {
           : "bg-white/90 border border-slate-200 shadow-sm"
       }`}
     >
-      {/* Transfer amount */}
-      <div className={`text-sm font-medium mb-2 ${highlight ? "text-white/70" : "text-slate-500"}`}>
-        Send
+      {/* Plan name */}
+      <div className={`text-lg font-bold mb-2 ${highlight ? "text-white" : "text-slate-900"}`}>
+        {name}
       </div>
-      <div className={`text-3xl font-extrabold mb-3 ${highlight ? "text-white" : "text-slate-900"}`}>
-        {transferAmount}
+      
+      {/* Price */}
+      <div className={`text-3xl font-extrabold mb-3 ${highlight ? "text-[#f6c94b]" : "text-slate-900"}`}>
+        {price}
       </div>
       
       {/* Divider */}
       <div className={`h-px w-12 mx-auto mb-3 ${highlight ? "bg-[#f6c94b]" : "bg-slate-200"}`} />
       
-      {/* Fee */}
+      {/* FX Spread */}
       <div className={`text-sm font-medium mb-1 ${highlight ? "text-white/70" : "text-slate-500"}`}>
-        Estimated fee
+        FX Spread
       </div>
-      <div className={`text-2xl font-extrabold mb-2 ${highlight ? "text-[#f6c94b]" : "text-[#0A2540]"}`}>
-        ~{totalFees}
+      <div className={`text-xl font-bold mb-2 ${highlight ? "text-[#f6c94b]" : "text-[#0A2540]"}`}>
+        {spread}
+      </div>
+      
+      {/* Transfer Fee */}
+      <div className={`text-sm mb-2 ${highlight ? "text-white/80" : "text-slate-600"}`}>
+        {fee}
       </div>
       
       {/* Note */}
-      <div className={`text-xs ${highlight ? "text-white/60" : "text-slate-500"}`}>
+      <div className={`text-xs mb-4 ${highlight ? "text-white/60" : "text-slate-500"}`}>
         {note}
       </div>
+      
+      {/* CTA */}
+      <a
+        href={ctaLink}
+        className={`block w-full rounded-xl py-2.5 text-sm font-semibold transition ${
+          highlight
+            ? "bg-[#f6c94b] text-[#0A2540] hover:brightness-105"
+            : "bg-[#0A2540] text-white hover:bg-[#061C33]"
+        }`}
+      >
+        Get Started
+      </a>
     </div>
   );
 }
