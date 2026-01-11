@@ -89,44 +89,44 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* RIGHT CARD */}
+            {/* RIGHT CARD - FX Preview */}
             <div className="flex justify-center lg:justify-end">
               <div className="w-full max-w-md rounded-[28px] bg-white/90 backdrop-blur border border-white/30 shadow-2xl p-6">
                 <div className="text-sm text-slate-600 font-semibold">
-                  Demo Preview
+                  FX Rate Preview
                 </div>
 
                 <div className="mt-3 rounded-2xl bg-white border border-slate-200 shadow-sm p-5">
                   <h3 className="text-xl font-extrabold text-slate-900">
-                    Clear Pricing Preview
+                    Better Rates, Better Value
                   </h3>
 
                   <div className="mt-4 divide-y divide-slate-200 text-sm">
                     <div className="flex justify-between py-3">
-                      <span>Estimated FX Rate</span>
-                      <span className="font-extrabold">₱58.25 / $1</span>
+                      <span>Basic Plan Rate</span>
+                      <span className="font-extrabold">₱54.20 / $1</span>
                     </div>
                     <div className="flex justify-between py-3">
-                      <span>Fees</span>
-                      <span className="font-extrabold">Shown in demo</span>
+                      <span>Premium Plan Rate</span>
+                      <span className="font-extrabold text-[#0A2540]">₱54.60 / $1</span>
                     </div>
                     <div className="flex justify-between py-3">
-                      <span>Availability</span>
-                      <span className="font-extrabold">Varies by partner</span>
+                      <span>Enterprise Rate</span>
+                      <span className="font-extrabold text-[#f6c94b]">₱54.85 / $1</span>
                     </div>
                   </div>
                 </div>
 
                 <p className="mt-4 text-xs text-slate-600 leading-relaxed">
-                  Demo estimates are illustrative only. Actual rates, fees, and
-                  availability will vary and are subject to partner pricing.
+                  Higher tiers unlock better FX rates. Rates shown are illustrative 
+                  and may vary in production.
                 </p>
 
                 <a
-                  href="/login"
+                  href="/pricing"
                   className="mt-4 inline-flex w-full justify-center rounded-2xl bg-[#f6c94b] px-6 py-3.5 font-extrabold text-[#1b1b1b] shadow hover:brightness-105 transition"
                 >
-                  Transfer USD to PHP
+                  Compare All Plans
                 </a>
               </div>
             </div>
