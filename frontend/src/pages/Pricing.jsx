@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Check, X, Minus } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../components/ui/card";
 import { Button } from "../components/ui/button";
+import LiveFXRate from "../components/LiveFXRate";
 
 const plans = [
   {
@@ -13,11 +14,10 @@ const plans = [
     features: {
       wallet: true,
       recurring: false,
-      interest: false,
-      interestRate: null,
+      betterRates: false,
       fxLock: "15 min",
       support: "Standard",
-      monthlyLimit: "₱250,000",
+      monthlyLimit: "$5,000",
     },
     cta: "Get Started",
     ctaLink: "/welcome",
@@ -25,17 +25,16 @@ const plans = [
   },
   {
     name: "Premium",
-    price: "₱499",
+    price: "$10",
     period: "/mo",
     description: "For individuals & families",
     features: {
       wallet: true,
       recurring: true,
-      interest: true,
-      interestRate: "1% APY",
+      betterRates: true,
       fxLock: "15 min",
       support: "Priority",
-      monthlyLimit: "₱1,250,000",
+      monthlyLimit: "$25,000",
     },
     cta: "Choose Premium",
     ctaLink: "/welcome",
@@ -44,17 +43,16 @@ const plans = [
   },
   {
     name: "SME",
-    price: "₱2,499",
+    price: "$50",
     period: "/mo",
     description: "For small business teams",
     features: {
       wallet: true,
       recurring: true,
-      interest: false,
-      interestRate: null,
+      betterRates: true,
       fxLock: "15 min",
       support: "Priority",
-      monthlyLimit: "₱5,000,000",
+      monthlyLimit: "$100,000",
     },
     cta: "Choose SME",
     ctaLink: "/welcome",
@@ -68,8 +66,7 @@ const plans = [
     features: {
       wallet: true,
       recurring: true,
-      interest: false,
-      interestRate: null,
+      betterRates: true,
       fxLock: "15 min",
       support: "Dedicated Manager",
       monthlyLimit: "Unlimited",
@@ -103,13 +100,21 @@ export default function Pricing() {
       </nav>
 
       {/* Hero */}
-      <div className="text-center py-16 px-6">
+      <div className="text-center py-12 px-6">
         <h1 className="text-4xl md:text-5xl font-bold text-amber-400 mb-4" style={{ fontFamily: 'Georgia, serif' }}>
           Choose Your Plan
         </h1>
-        <p className="text-lg max-w-2xl mx-auto text-gray-300">
+        <p className="text-lg max-w-2xl mx-auto text-gray-300 mb-6">
           Find the perfect plan for your needs — from individuals to enterprises.
         </p>
+        
+        {/* Live FX Rate - Contextual reinforcement */}
+        <div className="flex flex-col items-center gap-3">
+          <LiveFXRate variant="dark" showLockInfo={true} showDisclaimer={false} className="max-w-sm" />
+          <p className="text-sm text-gray-400">
+            Premium members get better locked rates on every transfer
+          </p>
+        </div>
       </div>
 
       {/* Plan Cards */}
@@ -137,6 +142,9 @@ export default function Pricing() {
                 <div className="mb-4">
                   <span className="text-4xl font-bold text-gray-100">{plan.price}</span>
                   {plan.period && <span className="text-base text-gray-400">{plan.period}</span>}
+                  {plan.price !== "Free" && plan.price !== "Custom" && (
+                    <span className="text-xs text-gray-500 ml-1">USD</span>
+                  )}
                 </div>
                 <ul className="text-sm space-y-3">
                   <li className="flex items-center gap-2">
@@ -154,17 +162,13 @@ export default function Pricing() {
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
-                    {plan.features.interest ? (
+                    {plan.features.betterRates ? (
                       <Check className="w-4 h-4 text-green-500" />
                     ) : (
                       <X className="w-4 h-4 text-gray-600" />
                     )}
-                    <span className={!plan.features.interest ? "text-gray-500" : ""}>
-                      {plan.features.interestRate ? (
-                        <><strong className="text-amber-400">{plan.features.interestRate}</strong> Interest</>
-                      ) : (
-                        "Interest on Balance"
-                      )}
+                    <span className={!plan.features.betterRates ? "text-gray-500" : ""}>
+                      Better FX Rates
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -206,7 +210,7 @@ export default function Pricing() {
             </thead>
             <tbody>
               <tr className="border-t border-neutral-700">
-                <td className="p-4 font-medium text-gray-300">Monthly Fee</td>
+                <td className="p-4 font-medium text-gray-300">Monthly Fee (USD)</td>
                 {plans.map((p) => (
                   <td key={p.name} className="p-4 text-center text-gray-100">
                     {p.price}{p.period}
@@ -214,10 +218,22 @@ export default function Pricing() {
                 ))}
               </tr>
               <tr className="border-t border-neutral-700">
-                <td className="p-4 font-medium text-gray-300">PBX Wallet (Hold Funds)</td>
+                <td className="p-4 font-medium text-gray-300">PBX Wallet</td>
                 {plans.map((p) => (
                   <td key={p.name} className="p-4 text-center">
                     <Check className="mx-auto text-green-500" size={18} />
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-t border-neutral-700">
+                <td className="p-4 font-medium text-gray-300">Better FX Rates</td>
+                {plans.map((p) => (
+                  <td key={p.name} className="p-4 text-center">
+                    {p.features.betterRates ? (
+                      <Check className="mx-auto text-green-500" size={18} />
+                    ) : (
+                      <Minus className="mx-auto text-gray-600" size={18} />
+                    )}
                   </td>
                 ))}
               </tr>
@@ -234,19 +250,7 @@ export default function Pricing() {
                 ))}
               </tr>
               <tr className="border-t border-neutral-700">
-                <td className="p-4 font-medium text-gray-300">Interest on Balance</td>
-                {plans.map((p) => (
-                  <td key={p.name} className="p-4 text-center">
-                    {p.features.interest ? (
-                      <span className="text-amber-400 font-semibold">{p.features.interestRate}</span>
-                    ) : (
-                      <Minus className="mx-auto text-gray-600" size={18} />
-                    )}
-                  </td>
-                ))}
-              </tr>
-              <tr className="border-t border-neutral-700">
-                <td className="p-4 font-medium text-gray-300">FX Rate Lock Window</td>
+                <td className="p-4 font-medium text-gray-300">FX Rate Lock</td>
                 {plans.map((p) => (
                   <td key={p.name} className="p-4 text-center text-gray-100">15 min</td>
                 ))}
@@ -267,7 +271,7 @@ export default function Pricing() {
           </table>
         </div>
         <p className="text-center text-xs mt-4 text-gray-500">
-          All pricing shown is for demonstration purposes. Actual rates may vary.
+          All subscription fees are in USD. FX rates apply to transfers (USD → PHP).
         </p>
       </div>
 
