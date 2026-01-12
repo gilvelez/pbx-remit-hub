@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
+import { LiveFXTicker } from "../components/LiveFXRate";
 
 import heroBg from "../assets/landing/hero-bg.png";
 
@@ -50,7 +51,12 @@ export default function Landing() {
         </nav>
 
         {/* HERO BODY */}
-        <div className="relative z-10 mx-auto max-w-5xl px-6 pb-20 pt-16 text-center">
+        <div className="relative z-10 mx-auto max-w-5xl px-6 pb-20 pt-12 text-center">
+          {/* Live FX Ticker - Above the fold */}
+          <div className="flex justify-center mb-8">
+            <LiveFXTicker variant="dark" />
+          </div>
+
           <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl leading-tight tracking-tight text-amber-400 mb-6">
             Philippine Bayani Exchange
           </h1>
@@ -58,7 +64,7 @@ export default function Landing() {
             The all-in-one platform to <span className="text-amber-400 font-semibold">send, save, and earn</span> — for Filipinos at home and abroad.
           </p>
           <p className="text-sm text-gray-400 mb-8">
-            Built in the United States • Designed for cross-border living • Secure financial infrastructure
+            Built in the United States • No fees • Instant delivery to GCash & Maya
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
