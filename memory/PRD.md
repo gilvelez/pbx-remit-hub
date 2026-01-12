@@ -3,14 +3,41 @@
 ## Original Problem Statement
 Build a subscription-based financial platform (PBX) for cross-border money transfers between the U.S. and the Philippines. Major UI/UX overhaul to Remitly-inspired design with mobile-first, clarity-focused interface.
 
-## Target Users
-- **Individuals**: Expats, travelers, families, retirees moving money between countries
-- **Small & Medium Enterprises (SMEs)**: Businesses with international payroll/payouts
-- **Enterprises**: Large volume cross-border payment needs
+## 🔒 HARD RULES (Locked In)
+
+### Currency Rules
+- **Subscriptions = USD** (charged to US/global senders via Stripe)
+- **Transfers = PHP** (FX applies to send amounts)
+- **FX is visible BEFORE signup** (builds trust)
+- **No PHP pricing outside Send Money flow**
+
+### Subscription Plans (USD)
+| Plan | Price | Target |
+|------|-------|--------|
+| Basic | Free | Starting out |
+| Premium | $10/mo | Individuals & families |
+| SME | $50/mo | Small business |
+| Enterprise | Custom | Large organizations |
 
 ---
 
-## Current Architecture (January 2025)
+## Live FX Rate - The Core Value Prop
+
+### Where FX Must Appear (3 Locations)
+1. **Landing Page Hero** - LiveFXTicker above CTAs
+2. **Pricing Page** - LiveFXRate card below header
+3. **App Home** - LiveFXRate as primary card
+
+### LiveFXRate Component Features
+- Auto-refresh every 30 seconds
+- Green dot indicator (stable) / Pulse animation (updating)
+- "15-min rate lock" badge
+- "No fees" indicator
+- "Indicative rate" disclaimer
+
+---
+
+## Architecture
 
 ### Theme Split
 - **Marketing Pages** (Dark theme): `/`, `/pricing`, `/business`, `/how-it-works`, `/roadmap`
@@ -22,13 +49,13 @@ Primary: PBX Navy (#0A2540)
 Background: Off-white (#F8F9FA)
 Accent: Gold (#F6C94B) for highlights
 CTAs: Navy buttons with white text
-Border: Light gray (#E5E7EB)
+Dark theme: neutral-950, amber-400, red-600
 ```
 
 ### Navigation Structure
 **4-Tab Bottom Navigation:**
 1. **Home** - Live FX rate, Send Money CTA, Trust indicators
-2. **Send** - Multi-step transfer flow
+2. **Send** - Multi-step transfer flow (5 steps)
 3. **Activity** - Transfer history
 4. **Manage** - Profile, Payment Methods, Recipients, Security, Legal
 
@@ -38,53 +65,15 @@ Border: Light gray (#E5E7EB)
 
 ### Onboarding Flow (`/welcome`)
 Progressive Remitly-style onboarding:
-1. **Welcome Carousel** - 3 slides explaining PBX benefits
-2. **Corridor Selection** - US → Philippines (more coming soon)
-3. **Signup** - Email/password + Google/Apple OAuth buttons
-4. **Account Type** - Personal or Business
-5. **Phone Verification** - OTP to mobile number
-6. **Complete** - Success screen, redirect to Home
+1. Welcome Carousel → 2. Corridor Selection → 3. Signup → 4. Account Type → 5. Phone OTP → 6. Complete
 
 ### Send Money Flow (`/app/send`)
 5-step transfer process:
 1. **Amount** - USD input → PHP output with live FX rate
-2. **Recipient** - Select existing or add new (GCash, Maya, Bank, Cash Pickup)
-3. **Payment Method** - Bank (Plaid), Debit, Credit (+2.9%), Apple Pay
-4. **Review** - Summary card with Edit options, disclosures
-5. **Confirmation** - Success with ETA, Send again option
-
-### Plaid Integration
-- Appears ONLY in Send Flow → Payment Method → Bank Account option
-- Shows benefits: Security, Speed, One-time setup
-- "Connect Bank" / "Maybe later" options
-
----
-
-## Pages & Components
-
-### Marketing Pages (Dark Theme)
-| Page | Route | Status |
-|------|-------|--------|
-| Landing | `/` | ✅ Dark theme with gold/red |
-| Pricing | `/pricing` | ✅ PHP pricing (₱499, ₱2,499) |
-| Business | `/business` | ✅ B2B focused |
-| How It Works | `/how-it-works` | ✅ 4-step process |
-| Roadmap | `/roadmap` | ✅ Q1-Q4 2025 |
-
-### App Pages (Light Theme)
-| Page | Route | Status |
-|------|-------|--------|
-| Home | `/app/home` | ✅ FX rate, Send CTA |
-| Send | `/app/send` | ✅ 5-step flow |
-| Activity | `/app/activity` | ✅ Transfer history |
-| Manage | `/app/manage` | ✅ Profile/Settings |
-
-### Auth Pages
-| Page | Route | Status |
-|------|-------|--------|
-| Welcome | `/welcome` | ✅ 6-step onboarding |
-| Login | `/login` | ✅ Dark theme |
-| Verify | `/verify` | ✅ OTP entry |
+2. **Recipient** - GCash, Maya, Bank, Cash Pickup
+3. **Payment** - Bank (Plaid), Debit, Credit (+2.9%), Apple Pay
+4. **Review** - Summary card with Edit options
+5. **Confirmation** - Success with ETA
 
 ---
 
@@ -92,113 +81,80 @@ Progressive Remitly-style onboarding:
 ```
 /app/frontend/src/
 ├── components/
-│   ├── AppShell.jsx         # Light theme wrapper + 4-tab nav
+│   ├── AppShell.jsx         # Light theme + 4-tab nav
+│   ├── LiveFXRate.jsx       # Reusable FX display (NEW)
 │   └── ui/                  # Shadcn components
 ├── pages/
-│   ├── Landing.jsx          # Dark theme marketing
-│   ├── Pricing.jsx          # Dark theme, PHP pricing
-│   ├── Business.jsx         # Dark theme, B2B
-│   ├── HowItWorks.jsx
-│   ├── Roadmap.jsx
-│   ├── Login.jsx            # Dark theme auth
-│   ├── Verify.jsx
-│   ├── onboarding/
-│   │   └── Welcome.jsx      # 6-step progressive flow
-│   └── app/
-│       ├── Home.jsx         # Light theme
-│       ├── Send.jsx         # 5-step transfer
-│       ├── Activity.jsx     # History
-│       └── Manage.jsx       # Settings
+│   ├── Landing.jsx          # Dark theme + LiveFXTicker
+│   ├── Pricing.jsx          # USD pricing + LiveFXRate
+│   ├── app/
+│   │   ├── Home.jsx         # LiveFXRate as primary card
+│   │   ├── Send.jsx         # 5-step transfer flow
+│   │   ├── Activity.jsx
+│   │   └── Manage.jsx
+│   └── onboarding/
+│       └── Welcome.jsx      # 6-step progressive flow
 ├── lib/
 │   └── mockApi.js           # Mock API layer
-├── styles/
-│   └── design-system.css    # Global CSS variables
-└── App.jsx                  # Routing with theme split
-```
-
----
-
-## API Layer (MOCKED)
-
-All APIs are mocked for demo. Interface designed for easy real API integration:
-
-```javascript
-// mockApi.js exports
-getQuote(amountUsd)         // Returns rate, amountPhp, quoteId
-lockRate(quoteId)           // Locks rate for 15 min
-createTransfer(data)        // Creates transfer, returns transferId
-linkFundingSource(token)    // Plaid integration stub
-getTransfers()              // History from localStorage
-getRecipients()             // Saved recipients
-saveRecipient(recipient)    // Auto-save on send
+└── styles/
+    └── design-system.css    # CSS variables
 ```
 
 ---
 
 ## Test Results
 
-### Iteration 3 (UI/UX Overhaul)
-- **Status**: ✅ All 13 features passed
-- **Coverage**: Full user journey tested
-- **Report**: `/app/test_reports/iteration_3.json`
+### Iteration 4 (FX Fix + USD Pricing)
+- **Status**: ✅ All 8 features passed
+- **Key Verifications**:
+  - USD pricing on Landing, Pricing pages
+  - Live FX Ticker on Landing hero
+  - Live FX Rate card on Pricing page
+  - Live FX Rate component on App Home
+  - PHP only in Send Money flow
+- **Report**: `/app/test_reports/iteration_4.json`
 
 ---
 
 ## Prioritized Backlog
 
 ### P0 (Critical for Launch)
-- [ ] Wire up real backend API
-- [ ] Implement real FX rate provider
-- [ ] Plaid integration (real)
-- [ ] Stripe/PayMongo for payments
+- [ ] Real FX rate API (OpenExchangeRates, Fixer, etc.)
+- [ ] Plaid integration (real bank linking)
+- [ ] Stripe subscription billing
+- [ ] Backend API for transfers
 
 ### P1 (High Priority)
 - [ ] Real email/OTP verification
 - [ ] KYC/AML integration
 - [ ] Transfer status webhooks
-- [ ] Error handling for edge cases
+- [ ] Rate lock backend (15-min TTL)
 
 ### P2 (Medium Priority)
-- [ ] Mobile responsive polish
-- [ ] Recurring transfers backend
+- [ ] Recurring transfers
 - [ ] Push notifications
 - [ ] Rate alerts
-
-### P3 (Nice to Have)
-- [ ] Mobile app (iOS/Android)
-- [ ] PBX debit card
-- [ ] Virtual card numbers
-
----
-
-## Known Limitations (MOCKED)
-- FX rates simulated (random fluctuation around 56.25)
-- Plaid "Connect Bank" is a UI stub
-- Transfers saved to localStorage only
-- No real email/SMS verification
-- Session uses sessionStorage (no persistence)
 
 ---
 
 ## Change Log
 
-### January 12, 2025 - Major UI/UX Overhaul
-- ✅ Split theme: Dark marketing, Light app
-- ✅ New 4-tab navigation structure
-- ✅ Remitly-style progressive onboarding at /welcome
-- ✅ Streamlined 5-step Send Money flow
-- ✅ Plaid moved to Payment Method step only
-- ✅ Global design system with CSS variables
-- ✅ Mock API layer for future backend integration
+### January 12, 2025 - FX & Pricing Fix
+- ✅ Changed subscription pricing from PHP to USD
+- ✅ Created LiveFXRate reusable component
+- ✅ Added Live FX Ticker to Landing hero
+- ✅ Added Live FX Rate to Pricing page
+- ✅ Updated App Home with LiveFXRate card
+- ✅ Auto-refresh every 30 seconds
 - ✅ All tests passed (100% success rate)
 
-### January 11, 2025 - Feature Update
-- PHP-based pricing (₱499, ₱2,499)
-- 15-min FX rate lock indicator
-- 1% APY interest badge for Premium
-- Dark theme across all pages
+### January 12, 2025 - UI/UX Overhaul
+- Split theme: Dark marketing, Light app
+- New 4-tab navigation
+- Remitly-style progressive onboarding
+- 5-step Send Money flow
+- Plaid only in Payment Method step
 
-### Earlier - Initial Build
-- Core remittance platform
-- PayMongo integration (test mode)
+### Earlier
+- Initial build with PayMongo integration
 - Basic subscription model
