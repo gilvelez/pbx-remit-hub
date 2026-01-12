@@ -1,0 +1,158 @@
+/* PBX Global Design System */
+
+/* 
+ * COLOR SYSTEM (AUTHORITATIVE)
+ * Marketing pages: Dark theme (neutral-950)
+ * App pages: Light theme (defined below)
+ */
+
+:root {
+  /* Primary - PBX Navy */
+  --pbx-navy: #0A2540;
+  --pbx-navy-dark: #061C33;
+  --pbx-navy-light: #1A3A5C;
+  
+  /* Secondary - Light backgrounds */
+  --pbx-bg-primary: #FFFFFF;
+  --pbx-bg-secondary: #F8F9FA;
+  --pbx-bg-tertiary: #F1F3F5;
+  
+  /* Accent - Gold (rates, highlights) */
+  --pbx-gold: #F6C94B;
+  --pbx-gold-dark: #D4A520;
+  
+  /* Accent - Teal (success states) */
+  --pbx-teal: #00B894;
+  --pbx-teal-dark: #00997A;
+  
+  /* Text colors */
+  --pbx-text-primary: #1A1A1A;
+  --pbx-text-secondary: #6B7280;
+  --pbx-text-tertiary: #9CA3AF;
+  
+  /* Borders */
+  --pbx-border: #E5E7EB;
+  --pbx-border-focus: #0A2540;
+  
+  /* Status colors */
+  --pbx-success: #10B981;
+  --pbx-warning: #F59E0B;
+  --pbx-error: #EF4444;
+  --pbx-info: #3B82F6;
+  
+  /* Spacing */
+  --pbx-radius-sm: 8px;
+  --pbx-radius-md: 12px;
+  --pbx-radius-lg: 16px;
+  --pbx-radius-xl: 24px;
+  
+  /* Shadows */
+  --pbx-shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --pbx-shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+  --pbx-shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+}
+
+/* Global button normalization */
+.pbx-btn {
+  height: 48px;
+  border-radius: var(--pbx-radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  cursor: pointer;
+  border: none;
+}
+
+.pbx-btn-primary {
+  background-color: var(--pbx-navy);
+  color: white;
+}
+
+.pbx-btn-primary:hover {
+  background-color: var(--pbx-navy-dark);
+}
+
+.pbx-btn-secondary {
+  background-color: transparent;
+  color: var(--pbx-navy);
+  border: 1.5px solid var(--pbx-border);
+}
+
+.pbx-btn-secondary:hover {
+  background-color: var(--pbx-bg-secondary);
+  border-color: var(--pbx-navy);
+}
+
+.pbx-btn-text {
+  background: none;
+  color: var(--pbx-navy);
+  padding: 0;
+  height: auto;
+}
+
+.pbx-btn-text:hover {
+  text-decoration: underline;
+}
+
+/* Card styles */
+.pbx-card {
+  background: var(--pbx-bg-primary);
+  border: 1px solid var(--pbx-border);
+  border-radius: var(--pbx-radius-lg);
+  padding: 24px;
+}
+
+.pbx-card-elevated {
+  box-shadow: var(--pbx-shadow-md);
+  border: none;
+}
+
+/* Input styles */
+.pbx-input {
+  height: 48px;
+  border-radius: var(--pbx-radius-md);
+  border: 1.5px solid var(--pbx-border);
+  padding: 0 16px;
+  font-size: 15px;
+  width: 100%;
+  transition: border-color 0.2s ease;
+  background: var(--pbx-bg-primary);
+  color: var(--pbx-text-primary);
+}
+
+.pbx-input:focus {
+  outline: none;
+  border-color: var(--pbx-border-focus);
+  box-shadow: 0 0 0 3px rgba(10, 37, 64, 0.1);
+}
+
+.pbx-input::placeholder {
+  color: var(--pbx-text-tertiary);
+}
+
+/* Label styles */
+.pbx-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pbx-text-secondary);
+  margin-bottom: 8px;
+}
+
+/* App Shell Light Theme */
+.app-shell {
+  background-color: var(--pbx-bg-secondary);
+  min-height: 100vh;
+}
+
+/* Hide emergent badge */
+[class*="emergent"], 
+[data-testid*="emergent"],
+.made-with-emergent,
+div[style*="Made with"] {
+  display: none !important;
+}
