@@ -133,7 +133,7 @@ export default function HowItWorks() {
             Join thousands of users who trust PBX for their cross-border transfers.
           </p>
           <Link
-            to="/onboarding/personal"
+            to="/welcome"
             className="inline-block rounded-xl px-8 py-4 font-semibold bg-red-600 hover:bg-red-700 text-white transition"
           >
             Get Started Now

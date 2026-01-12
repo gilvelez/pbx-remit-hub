@@ -35,7 +35,7 @@ export default function Business() {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Link
-              to="/onboarding/business"
+              to="/welcome"
               className="rounded-xl px-8 py-4 font-semibold bg-red-600 hover:bg-red-700 text-white transition"
               data-testid="business-get-started"
             >
@@ -125,7 +125,7 @@ export default function Business() {
                 <li>✓ Priority Support</li>
               </ul>
               <Link
-                to="/onboarding/business"
+                to="/welcome"
                 className="block text-center rounded-xl py-3 font-semibold bg-red-600 hover:bg-red-700 text-white transition"
               >
                 Choose SME
@@ -141,7 +141,7 @@ export default function Business() {
                 <li>✓ Dedicated Account Manager</li>
               </ul>
               <Link
-                to="/onboarding/business"
+                to="/welcome"
                 className="block text-center rounded-xl py-3 font-semibold bg-red-600 hover:bg-red-700 text-white transition"
               >
                 Contact Sales
@@ -159,7 +159,7 @@ export default function Business() {
             Choose an SME plan to self-onboard, or contact us for Enterprise solutions tailored to your needs.
           </p>
           <Link
-            to="/onboarding/business"
+            to="/welcome"
             className="inline-block rounded-xl px-8 py-4 font-semibold bg-red-600 hover:bg-red-700 text-white transition"
           >
             Join PBX Business

@@ -141,26 +141,26 @@ export default function Landing() {
               name="Basic"
               price="Free"
               features={["PBX Wallet", "15-min FX Lock"]}
-              ctaLink="/onboarding/personal"
+              ctaLink="/welcome"
             />
             <PlanCard 
               name="Premium"
               price="₱499/mo"
               features={["Recurring Transfers", "1% APY Interest", "Priority Support"]}
               highlight
-              ctaLink="/onboarding/personal"
+              ctaLink="/welcome"
             />
             <PlanCard 
               name="SME"
               price="₱2,499/mo"
               features={["Up to ₱5M/mo", "Recurring Transfers", "Priority Support"]}
-              ctaLink="/onboarding/business"
+              ctaLink="/welcome"
             />
             <PlanCard 
               name="Enterprise"
               price="Custom"
               features={["Unlimited volume", "Dedicated Manager", "Custom rates"]}
-              ctaLink="/onboarding/business"
+              ctaLink="/welcome"
             />
           </div>
 
@@ -184,7 +184,7 @@ export default function Landing() {
             Join PBX today and take control of your international transfers with speed, savings, and security.
           </p>
           <Link
-            to="/onboarding/personal"
+            to="/welcome"
             className="inline-flex justify-center rounded-2xl bg-red-600 hover:bg-red-700 px-8 py-4 font-bold text-white shadow-lg transition"
           >
             Sign Up Now

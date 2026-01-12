@@ -20,7 +20,7 @@ const plans = [
       monthlyLimit: "₱250,000",
     },
     cta: "Get Started",
-    ctaLink: "/onboarding/personal",
+    ctaLink: "/welcome",
     highlight: false,
   },
   {
@@ -38,7 +38,7 @@ const plans = [
       monthlyLimit: "₱1,250,000",
     },
     cta: "Choose Premium",
-    ctaLink: "/onboarding/personal",
+    ctaLink: "/welcome",
     highlight: true,
     badge: "Popular",
   },
@@ -57,7 +57,7 @@ const plans = [
       monthlyLimit: "₱5,000,000",
     },
     cta: "Choose SME",
-    ctaLink: "/onboarding/business",
+    ctaLink: "/welcome",
     highlight: false,
   },
   {
@@ -75,7 +75,7 @@ const plans = [
       monthlyLimit: "Unlimited",
     },
     cta: "Contact Sales",
-    ctaLink: "/onboarding/business",
+    ctaLink: "/welcome",
     highlight: false,
   },
 ];
