@@ -131,7 +131,7 @@ export default function Landing() {
       <section className="py-16 px-6 bg-neutral-900">
         <div className="max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 mb-6">
-            <span className="text-sm font-semibold text-amber-400">Subscription Plans</span>
+            <span className="text-sm font-semibold text-amber-400">Subscription Plans (USD)</span>
           </div>
 
           <h2 className="text-3xl md:text-4xl font-bold text-gray-100 mb-4">
@@ -141,7 +141,7 @@ export default function Landing() {
             From individuals to enterprises — better rates and more features with every tier.
           </p>
 
-          {/* 4-Tier Grid */}
+          {/* 4-Tier Grid - USD Pricing */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             <PlanCard 
               name="Basic"
@@ -151,15 +151,15 @@ export default function Landing() {
             />
             <PlanCard 
               name="Premium"
-              price="₱499/mo"
-              features={["Recurring Transfers", "1% APY Interest", "Priority Support"]}
+              price="$10/mo"
+              features={["Better FX Rates", "Recurring Transfers", "Priority Support"]}
               highlight
               ctaLink="/welcome"
             />
             <PlanCard 
               name="SME"
-              price="₱2,499/mo"
-              features={["Up to ₱5M/mo", "Recurring Transfers", "Priority Support"]}
+              price="$50/mo"
+              features={["$100k/mo limit", "Recurring Transfers", "Priority Support"]}
               ctaLink="/welcome"
             />
             <PlanCard 
