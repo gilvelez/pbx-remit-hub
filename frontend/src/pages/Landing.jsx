@@ -63,7 +63,7 @@ export default function Landing() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/onboarding/personal"
+              to="/welcome"
               className="inline-flex justify-center rounded-2xl bg-red-600 hover:bg-red-700 px-8 py-4 font-bold text-white shadow-lg transition"
               data-testid="hero-get-started"
             >
