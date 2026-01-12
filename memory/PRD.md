@@ -1,140 +1,160 @@
 # PBX (Philippine Bayani Exchange) - Product Requirements Document
 
 ## Original Problem Statement
-Build a subscription-based financial platform (PBX) for cross-border money transfers between the U.S. and the Philippines. The platform has pivoted from a per-transaction remittance model to a **multi-tiered subscription service model** (B2C and B2B).
+Build a subscription-based financial platform (PBX) for cross-border money transfers between the U.S. and the Philippines. Major UI/UX overhaul to Remitly-inspired design with mobile-first, clarity-focused interface.
 
-## Target Users
-- **Individuals**: Expats, travelers, families, retirees moving money between countries
-- **Small & Medium Enterprises (SMEs)**: Businesses with international payroll/payouts
-- **Enterprises**: Large volume cross-border payment needs
+## 🔒 HARD RULES (Locked In)
 
-## Subscription Tiers
-| Tier | Price | FX Spread | Transfer Fee | Monthly Limit |
-|------|-------|-----------|--------------|---------------|
-| Basic | Free | ~1.5% | $2.00/transfer | $5,000 |
-| Premium | $10/mo | ~0.8% | Free | $25,000 |
-| SME | $50/mo | ~0.5% | Free | $100,000 |
-| Enterprise | Custom | ~0.3% | Free | Unlimited |
+### Currency Rules
+- **Subscriptions = USD** (charged to US/global senders via Stripe)
+- **Transfers = PHP** (FX applies to send amounts)
+- **FX is visible BEFORE signup** (builds trust)
+- **No PHP pricing outside Send Money flow**
 
-## Core Requirements
-
-### Public Pages (Implemented ✅)
-- **Landing Page** (`/`): Hero, FX rate preview, subscription tier cards, "Why PBX" section
-- **Pricing Page** (`/pricing`): Full tier comparison with feature table
-- **How It Works** (`/how-it-works`): 4-step process explanation
-- **Business Page** (`/business`): B2B/SME focused sales page
-- **Roadmap Page** (`/roadmap`): Q1-Q4 2025 product roadmap
-
-### Onboarding Flows (Implemented ✅)
-- **Personal Onboarding** (`/onboarding/personal`): 3-step flow
-  1. Email signup
-  2. KYC verification (name, ID)
-  3. Plan selection (Basic/Premium)
-  
-- **Business Onboarding** (`/onboarding/business`): 4-step flow
-  1. Work email
-  2. Plan selection (SME/Enterprise)
-  3. Company information
-  4. FX preferences
-
-### Protected App Pages (Implemented ✅)
-- **Dashboard** (`/app/dashboard`): Wallet balance, recent activity, upgrade CTA, FX simulator
-- **Send Money** (`/app/send`): Transfer flow (existing)
-- **Wallet** (`/app/wallet`): Balance management (existing)
-
-### Components (Implemented ✅)
-- **FX Simulator**: Interactive rate calculator with tier-based rates
-- **Navigation**: Updated with Dashboard, Pricing, Business links
-
-## Tech Stack
-- **Frontend**: React 19, React Router, Tailwind CSS
-- **Backend**: Currently MOCKED (no backend)
-- **Session**: SessionStorage-based (mocked)
-
-## Design Theme
-- **Filipino Premium Theme**: Gold (#F6C94B), Navy (#0A2540), Dark backgrounds
-- **Fonts**: Georgia (headings), System sans-serif (body)
-- **Style**: Premium, high-trust financial aesthetic
+### Subscription Plans (USD)
+| Plan | Price | Target |
+|------|-------|--------|
+| Basic | Free | Starting out |
+| Premium | $10/mo | Individuals & families |
+| SME | $50/mo | Small business |
+| Enterprise | Custom | Large organizations |
 
 ---
 
-## What's Been Implemented (December 2025)
+## Live FX Rate - The Core Value Prop
 
-### Session 1: Initial Build
-- Core remittance platform with mocked Plaid
-- PayMongo integration (test mode)
-- Basic UI with SendMoney, Wallet, Login flows
+### Where FX Must Appear (3 Locations)
+1. **Landing Page Hero** - LiveFXTicker above CTAs
+2. **Pricing Page** - LiveFXRate card below header
+3. **App Home** - LiveFXRate as primary card
 
-### Session 2: UI Overhaul
-- Premium Filipino theme applied across all pages
-- Pixel-perfect landing page redesign
-- Compliance text and disclaimers added
+### LiveFXRate Component Features
+- Auto-refresh every 30 seconds
+- Green dot indicator (stable) / Pulse animation (updating)
+- "15-min rate lock" badge
+- "No fees" indicator
+- "Indicative rate" disclaimer
 
-### Session 3 (Current): Subscription Model Pivot
-- ✅ Created Pricing page with 4-tier comparison
-- ✅ Created HowItWorks page with 4-step process
-- ✅ Created Business page for B2B users
-- ✅ Created Roadmap page with Q1-Q4 2025 timeline
-- ✅ Created OnboardingPersonal (3-step flow)
-- ✅ Created OnboardingBusiness (4-step flow)
-- ✅ Created Dashboard with FX simulator
-- ✅ Created FXSimulator component with tier-based rates
-- ✅ Updated Landing page with subscription tier cards
-- ✅ Updated App.jsx routing for all new pages
-- ✅ All tests passed (100% success rate)
+---
+
+## Architecture
+
+### Theme Split
+- **Marketing Pages** (Dark theme): `/`, `/pricing`, `/business`, `/how-it-works`, `/roadmap`
+- **App Pages** (Light theme): `/app/*` routes with Remitly-style UI
+
+### Global Design System
+```css
+Primary: PBX Navy (#0A2540)
+Background: Off-white (#F8F9FA)
+Accent: Gold (#F6C94B) for highlights
+CTAs: Navy buttons with white text
+Dark theme: neutral-950, amber-400, red-600
+```
+
+### Navigation Structure
+**4-Tab Bottom Navigation:**
+1. **Home** - Live FX rate, Send Money CTA, Trust indicators
+2. **Send** - Multi-step transfer flow (5 steps)
+3. **Activity** - Transfer history
+4. **Manage** - Profile, Payment Methods, Recipients, Security, Legal
+
+---
+
+## User Flows
+
+### Onboarding Flow (`/welcome`)
+Progressive Remitly-style onboarding:
+1. Welcome Carousel → 2. Corridor Selection → 3. Signup → 4. Account Type → 5. Phone OTP → 6. Complete
+
+### Send Money Flow (`/app/send`)
+5-step transfer process:
+1. **Amount** - USD input → PHP output with live FX rate
+2. **Recipient** - GCash, Maya, Bank, Cash Pickup
+3. **Payment** - Bank (Plaid), Debit, Credit (+2.9%), Apple Pay
+4. **Review** - Summary card with Edit options
+5. **Confirmation** - Success with ETA
+
+---
+
+## File Structure
+```
+/app/frontend/src/
+├── components/
+│   ├── AppShell.jsx         # Light theme + 4-tab nav
+│   ├── LiveFXRate.jsx       # Reusable FX display (NEW)
+│   └── ui/                  # Shadcn components
+├── pages/
+│   ├── Landing.jsx          # Dark theme + LiveFXTicker
+│   ├── Pricing.jsx          # USD pricing + LiveFXRate
+│   ├── app/
+│   │   ├── Home.jsx         # LiveFXRate as primary card
+│   │   ├── Send.jsx         # 5-step transfer flow
+│   │   ├── Activity.jsx
+│   │   └── Manage.jsx
+│   └── onboarding/
+│       └── Welcome.jsx      # 6-step progressive flow
+├── lib/
+│   └── mockApi.js           # Mock API layer
+└── styles/
+    └── design-system.css    # CSS variables
+```
+
+---
+
+## Test Results
+
+### Iteration 4 (FX Fix + USD Pricing)
+- **Status**: ✅ All 8 features passed
+- **Key Verifications**:
+  - USD pricing on Landing, Pricing pages
+  - Live FX Ticker on Landing hero
+  - Live FX Rate card on Pricing page
+  - Live FX Rate component on App Home
+  - PHP only in Send Money flow
+- **Report**: `/app/test_reports/iteration_4.json`
 
 ---
 
 ## Prioritized Backlog
 
 ### P0 (Critical for Launch)
-- [ ] Wire up real backend API integration
-- [ ] Implement production authentication (JWT or OAuth)
-- [ ] Connect to real FX rate provider
-- [ ] Implement payment processing for subscriptions (Stripe)
+- [ ] Real FX rate API (OpenExchangeRates, Fixer, etc.)
+- [ ] Plaid integration (real bank linking)
+- [ ] Stripe subscription billing
+- [ ] Backend API for transfers
 
 ### P1 (High Priority)
-- [ ] Circle Integration for fund custody
-- [ ] PayMongo Webhooks for transfer status
-- [ ] Email verification in onboarding
-- [ ] Real KYC/AML integration
+- [ ] Real email/OTP verification
+- [ ] KYC/AML integration
+- [ ] Transfer status webhooks
+- [ ] Rate lock backend (15-min TTL)
 
 ### P2 (Medium Priority)
-- [ ] Mobile responsive polish
-- [ ] Recurring transfers feature
-- [ ] Multi-currency wallet
-- [ ] API documentation for business tier
-
-### P3 (Nice to Have)
-- [ ] Mobile app (iOS/Android)
-- [ ] PBX debit card
-- [ ] Virtual card numbers
-- [ ] Yield on idle balances
+- [ ] Recurring transfers
+- [ ] Push notifications
+- [ ] Rate alerts
 
 ---
 
-## Known Limitations (MOCKED)
-- All FX rates are hardcoded simulation
-- Onboarding uses setTimeout, no real API calls
-- Session management is sessionStorage only
-- No real payment processing
-- No email verification
+## Change Log
 
-## File Structure
-```
-/app/frontend/src/
-├── pages/
-│   ├── Landing.jsx       # Main landing page
-│   ├── Pricing.jsx       # Pricing comparison
-│   ├── HowItWorks.jsx    # How it works
-│   ├── Business.jsx      # B2B page
-│   ├── Roadmap.jsx       # Product roadmap
-│   ├── Dashboard.jsx     # User dashboard
-│   ├── OnboardingPersonal.jsx
-│   ├── OnboardingBusiness.jsx
-│   └── ...
-├── components/
-│   ├── FXSimulator.jsx   # FX calculator
-│   └── ui/               # Shadcn components
-└── App.jsx               # Main routing
-```
+### January 12, 2025 - FX & Pricing Fix
+- ✅ Changed subscription pricing from PHP to USD
+- ✅ Created LiveFXRate reusable component
+- ✅ Added Live FX Ticker to Landing hero
+- ✅ Added Live FX Rate to Pricing page
+- ✅ Updated App Home with LiveFXRate card
+- ✅ Auto-refresh every 30 seconds
+- ✅ All tests passed (100% success rate)
+
+### January 12, 2025 - UI/UX Overhaul
+- Split theme: Dark marketing, Light app
+- New 4-tab navigation
+- Remitly-style progressive onboarding
+- 5-step Send Money flow
+- Plaid only in Payment Method step
+
+### Earlier
+- Initial build with PayMongo integration
+- Basic subscription model

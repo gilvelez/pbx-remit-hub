@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useSession } from '../contexts/SessionContext';
-
-// Theme colors
-const theme = {
-  navy: '#0A2540',
-  navyDark: '#061C33',
-  gold: '#F6C94B',
-  goldDark: '#D4A520',
-  red: '#C1121F',
-  offWhite: '#FAFAF7',
-};
+import { Button } from '../components/ui/button';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -26,84 +17,57 @@ export default function Login() {
   };
 
   return (
-    <div 
-      className="min-h-screen flex items-center justify-center p-4"
-      style={{ 
-        backgroundColor: theme.offWhite,
-        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4A520' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-      }}
-    >
+    <div className="min-h-screen flex items-center justify-center p-4 bg-neutral-950">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-3">
-            <div className="h-12 w-12 rounded-2xl bg-[#f6c94b]/20 border border-[#f6c94b]/40 flex items-center justify-center">
-              <span className="font-extrabold text-lg" style={{ color: theme.navy }}>PBX</span>
+            <div className="h-12 w-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center">
+              <span className="font-extrabold text-lg text-amber-400">PBX</span>
             </div>
           </Link>
         </div>
 
-        <div 
-          className="rounded-3xl p-8 shadow-xl"
-          style={{ 
-            backgroundColor: 'white',
-            border: '1px solid rgba(10, 37, 64, 0.1)',
-          }}
-        >
+        <div className="rounded-3xl p-8 bg-neutral-900 border border-neutral-800 shadow-xl">
           <div className="mb-6 text-center">
-            <h1 className="text-3xl font-bold mb-2" style={{ color: theme.navy, fontFamily: 'Georgia, serif' }}>
+            <h1 className="text-3xl font-bold text-amber-400 mb-2" style={{ fontFamily: 'Georgia, serif' }}>
               Welcome to PBX
             </h1>
-            <p className="text-sm" style={{ color: '#64748b' }}>Philippine Bayani Exchange</p>
+            <p className="text-sm text-gray-400">Philippine Bayani Exchange</p>
           </div>
 
           <form onSubmit={handleLogin}>
             <div className="mb-5">
-              <label className="mb-2 block text-xs font-semibold" style={{ color: theme.navy }}>
+              <label className="mb-2 block text-xs font-semibold text-gray-300">
                 Email Address
               </label>
               <input
                 type="email"
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition"
-                style={{ 
-                  backgroundColor: theme.offWhite,
-                  border: '1px solid #e2e8f0',
-                  color: theme.navy,
-                }}
-                onFocus={(e) => e.target.style.borderColor = theme.gold}
-                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+                className="w-full rounded-xl px-4 py-3 text-sm outline-none transition bg-neutral-800 border border-neutral-700 text-gray-100 focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
                 placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                data-testid="login-email-input"
               />
             </div>
 
-            <button
+            <Button
               type="submit"
-              className="w-full rounded-2xl px-4 py-3.5 text-sm font-bold transition shadow-lg hover:brightness-105"
-              style={{ 
-                backgroundColor: theme.gold,
-                color: theme.navyDark,
-              }}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold rounded-2xl py-3.5"
+              data-testid="login-submit-btn"
             >
               Login
-            </button>
+            </Button>
           </form>
 
           <div className="mt-5 text-center">
-            <span 
-              className="inline-block px-3 py-1.5 rounded-full text-xs font-semibold"
-              style={{ 
-                backgroundColor: `${theme.gold}20`,
-                color: theme.goldDark,
-              }}
-            >
+            <span className="inline-block px-3 py-1.5 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-400">
               Demo Mode (Sandbox)
             </span>
           </div>
 
-          <p className="mt-3 text-center text-xs" style={{ color: '#94a3b8' }}>
+          <p className="mt-3 text-center text-xs text-gray-500">
             Any email works for sandbox testing
           </p>
         </div>
@@ -112,8 +76,7 @@ export default function Login() {
         <div className="mt-6 text-center">
           <Link 
             to="/"
-            className="text-sm font-medium hover:underline"
-            style={{ color: theme.navy }}
+            className="text-sm font-medium text-gray-400 hover:text-amber-400 transition"
           >
             ← Back to Home
           </Link>
