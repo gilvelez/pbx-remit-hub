@@ -39,7 +39,7 @@ export default function Landing() {
                 Business
               </Link>
               <Link
-                to="/onboarding/personal"
+                to="/welcome"
                 className="rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 font-bold text-white shadow transition"
                 data-testid="nav-get-started"
               >
