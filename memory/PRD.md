@@ -1,161 +1,204 @@
 # PBX (Philippine Bayani Exchange) - Product Requirements Document
 
 ## Original Problem Statement
-Build a subscription-based financial platform (PBX) for cross-border money transfers between the U.S. and the Philippines. The platform pivoted from a per-transaction remittance model to a **multi-tiered subscription service model** (B2C and B2B).
+Build a subscription-based financial platform (PBX) for cross-border money transfers between the U.S. and the Philippines. Major UI/UX overhaul to Remitly-inspired design with mobile-first, clarity-focused interface.
 
 ## Target Users
 - **Individuals**: Expats, travelers, families, retirees moving money between countries
 - **Small & Medium Enterprises (SMEs)**: Businesses with international payroll/payouts
 - **Enterprises**: Large volume cross-border payment needs
 
-## Subscription Tiers (Updated January 2025)
-| Tier | Price | FX Spread | Transfer Fee | Monthly Limit | Interest |
-|------|-------|-----------|--------------|---------------|----------|
-| Basic | Free | ~1.5% | ₱100/transfer | ₱250,000 | — |
-| Premium | ₱499/mo | ~0.8% | Free | ₱1,250,000 | 1% APY |
-| SME | ₱2,499/mo | ~0.5% | Free | ₱5,000,000 | — |
-| Enterprise | Custom | ~0.3% | Free | Unlimited | — |
+---
 
-## Core Features (January 2025 Update)
+## Current Architecture (January 2025)
 
-### New Features Added
-1. **Recurring Transfers** - Schedule automatic weekly/monthly payments (Premium, SME, Enterprise)
-2. **PBX Wallet with Interest** - 1% APY on balances for Premium users only
-3. **15-Minute FX Rate Lock** - Guaranteed exchange rates for 15 minutes after quote
-4. **PHP-based Pricing** - All subscription prices in Philippine Pesos
+### Theme Split
+- **Marketing Pages** (Dark theme): `/`, `/pricing`, `/business`, `/how-it-works`, `/roadmap`
+- **App Pages** (Light theme): `/app/*` routes with Remitly-style UI
 
-### Design Theme
-- **Dark Theme**: `bg-neutral-950` (almost black) backgrounds
-- **Gold Headers**: `text-amber-400` for headings and accents
-- **Red CTAs**: `bg-red-600` for primary action buttons
-- **Fonts**: Georgia for headings, System sans-serif for body
+### Global Design System
+```css
+Primary: PBX Navy (#0A2540)
+Background: Off-white (#F8F9FA)
+Accent: Gold (#F6C94B) for highlights
+CTAs: Navy buttons with white text
+Border: Light gray (#E5E7EB)
+```
 
-## Pages & Components
-
-### Public Pages (All Implemented ✅)
-| Page | Route | Description |
-|------|-------|-------------|
-| Landing | `/` | Hero, features (Recurring, Wallet, FX Lock), pricing preview |
-| Pricing | `/pricing` | Full 4-tier comparison with feature table |
-| How It Works | `/how-it-works` | 4-step process with FX lock explanation |
-| Business | `/business` | B2B/SME focused sales page |
-| Roadmap | `/roadmap` | Q1-Q4 2025 product timeline |
-| Login | `/login` | Dark theme login form |
-| Verify | `/verify` | 6-digit code verification |
-
-### Onboarding Flows (All Implemented ✅)
-| Flow | Route | Steps |
-|------|-------|-------|
-| Personal | `/onboarding/personal` | Email → KYC → Plan Selection (Basic/Premium) |
-| Business | `/onboarding/business` | Email → Plan → Company → FX Preferences |
-
-### Protected App Pages (All Implemented ✅)
-| Page | Route | Description |
-|------|-------|-------------|
-| Dashboard | `/app/dashboard` | Wallet balance (PHP), yield indicator, FX lock timer |
-| Send Money | `/app/send` | Transfer flow (existing) |
-| Wallet | `/app/wallet` | Balance management (existing) |
-
-### Components
-- **FXQuoteSimulator** - Interactive rate calculator with 15-min countdown timer
-- **SubscriptionTier cards** - Plan selection with feature checkmarks
-
-## Tech Stack
-- **Frontend**: React 19, React Router, Tailwind CSS, shadcn/ui
-- **Backend**: Currently MOCKED (no backend)
-- **Session**: SessionStorage-based (mocked)
+### Navigation Structure
+**4-Tab Bottom Navigation:**
+1. **Home** - Live FX rate, Send Money CTA, Trust indicators
+2. **Send** - Multi-step transfer flow
+3. **Activity** - Transfer history
+4. **Manage** - Profile, Payment Methods, Recipients, Security, Legal
 
 ---
 
-## What's Been Implemented
+## User Flows
 
-### Session 1: Initial Build
-- Core remittance platform with mocked Plaid
-- PayMongo integration (test mode)
-- Basic UI with SendMoney, Wallet, Login flows
+### Onboarding Flow (`/welcome`)
+Progressive Remitly-style onboarding:
+1. **Welcome Carousel** - 3 slides explaining PBX benefits
+2. **Corridor Selection** - US → Philippines (more coming soon)
+3. **Signup** - Email/password + Google/Apple OAuth buttons
+4. **Account Type** - Personal or Business
+5. **Phone Verification** - OTP to mobile number
+6. **Complete** - Success screen, redirect to Home
 
-### Session 2: UI Overhaul
-- Premium Filipino theme applied across all pages
-- Pixel-perfect landing page redesign
-- Compliance text and disclaimers added
+### Send Money Flow (`/app/send`)
+5-step transfer process:
+1. **Amount** - USD input → PHP output with live FX rate
+2. **Recipient** - Select existing or add new (GCash, Maya, Bank, Cash Pickup)
+3. **Payment Method** - Bank (Plaid), Debit, Credit (+2.9%), Apple Pay
+4. **Review** - Summary card with Edit options, disclosures
+5. **Confirmation** - Success with ETA, Send again option
 
-### Session 3: Subscription Model Pivot
-- Created all subscription pages (Pricing, Dashboard, Onboarding)
-- Added routing for all new pages
-- FX Simulator component with tier-based rates
+### Plaid Integration
+- Appears ONLY in Send Flow → Payment Method → Bank Account option
+- Shows benefits: Security, Speed, One-time setup
+- "Connect Bank" / "Maybe later" options
 
-### Session 4 (January 2025): Feature Update + Dark Theme
-- ✅ New dark theme (`bg-neutral-950`) with gold headers and red CTAs
-- ✅ PHP-based pricing (₱499, ₱2,499 per month)
-- ✅ **15-minute FX Rate Lock** with countdown timer in FXQuoteSimulator
-- ✅ **1% APY Interest indicator** for Premium users in Dashboard
-- ✅ **Recurring Transfers** feature indicators throughout app
-- ✅ Updated all pages to consistent dark theme (Login, Verify included)
-- ✅ Feature comparison table on Pricing page
-- ✅ All tests passed (100% success rate)
+---
+
+## Pages & Components
+
+### Marketing Pages (Dark Theme)
+| Page | Route | Status |
+|------|-------|--------|
+| Landing | `/` | ✅ Dark theme with gold/red |
+| Pricing | `/pricing` | ✅ PHP pricing (₱499, ₱2,499) |
+| Business | `/business` | ✅ B2B focused |
+| How It Works | `/how-it-works` | ✅ 4-step process |
+| Roadmap | `/roadmap` | ✅ Q1-Q4 2025 |
+
+### App Pages (Light Theme)
+| Page | Route | Status |
+|------|-------|--------|
+| Home | `/app/home` | ✅ FX rate, Send CTA |
+| Send | `/app/send` | ✅ 5-step flow |
+| Activity | `/app/activity` | ✅ Transfer history |
+| Manage | `/app/manage` | ✅ Profile/Settings |
+
+### Auth Pages
+| Page | Route | Status |
+|------|-------|--------|
+| Welcome | `/welcome` | ✅ 6-step onboarding |
+| Login | `/login` | ✅ Dark theme |
+| Verify | `/verify` | ✅ OTP entry |
+
+---
+
+## File Structure
+```
+/app/frontend/src/
+├── components/
+│   ├── AppShell.jsx         # Light theme wrapper + 4-tab nav
+│   └── ui/                  # Shadcn components
+├── pages/
+│   ├── Landing.jsx          # Dark theme marketing
+│   ├── Pricing.jsx          # Dark theme, PHP pricing
+│   ├── Business.jsx         # Dark theme, B2B
+│   ├── HowItWorks.jsx
+│   ├── Roadmap.jsx
+│   ├── Login.jsx            # Dark theme auth
+│   ├── Verify.jsx
+│   ├── onboarding/
+│   │   └── Welcome.jsx      # 6-step progressive flow
+│   └── app/
+│       ├── Home.jsx         # Light theme
+│       ├── Send.jsx         # 5-step transfer
+│       ├── Activity.jsx     # History
+│       └── Manage.jsx       # Settings
+├── lib/
+│   └── mockApi.js           # Mock API layer
+├── styles/
+│   └── design-system.css    # Global CSS variables
+└── App.jsx                  # Routing with theme split
+```
+
+---
+
+## API Layer (MOCKED)
+
+All APIs are mocked for demo. Interface designed for easy real API integration:
+
+```javascript
+// mockApi.js exports
+getQuote(amountUsd)         // Returns rate, amountPhp, quoteId
+lockRate(quoteId)           // Locks rate for 15 min
+createTransfer(data)        // Creates transfer, returns transferId
+linkFundingSource(token)    // Plaid integration stub
+getTransfers()              // History from localStorage
+getRecipients()             // Saved recipients
+saveRecipient(recipient)    // Auto-save on send
+```
+
+---
+
+## Test Results
+
+### Iteration 3 (UI/UX Overhaul)
+- **Status**: ✅ All 13 features passed
+- **Coverage**: Full user journey tested
+- **Report**: `/app/test_reports/iteration_3.json`
 
 ---
 
 ## Prioritized Backlog
 
 ### P0 (Critical for Launch)
-- [ ] Wire up real backend API integration
-- [ ] Implement production authentication (JWT or OAuth)
-- [ ] Connect to real FX rate provider
-- [ ] Implement Stripe/PayMongo for PHP subscription payments
+- [ ] Wire up real backend API
+- [ ] Implement real FX rate provider
+- [ ] Plaid integration (real)
+- [ ] Stripe/PayMongo for payments
 
 ### P1 (High Priority)
-- [ ] Circle Integration for fund custody
-- [ ] Real recurring transfer scheduling backend
-- [ ] Email verification in onboarding
-- [ ] Real KYC/AML integration
+- [ ] Real email/OTP verification
+- [ ] KYC/AML integration
+- [ ] Transfer status webhooks
+- [ ] Error handling for edge cases
 
 ### P2 (Medium Priority)
 - [ ] Mobile responsive polish
-- [ ] Interest calculation engine (1% APY)
-- [ ] Multi-currency wallet
-- [ ] API documentation for business tier
+- [ ] Recurring transfers backend
+- [ ] Push notifications
+- [ ] Rate alerts
 
 ### P3 (Nice to Have)
 - [ ] Mobile app (iOS/Android)
 - [ ] PBX debit card
 - [ ] Virtual card numbers
-- [ ] Yield on idle balances
 
 ---
 
 ## Known Limitations (MOCKED)
-- All FX rates are hardcoded simulation
-- 15-min rate lock is visual only (no backend lock)
-- Interest calculation is frontend simulation
-- Onboarding uses setTimeout, no real API calls
-- Session management is sessionStorage only
-- No real payment processing
-- No email verification
-
-## File Structure
-```
-/app/frontend/src/
-├── pages/
-│   ├── Landing.jsx       # Dark theme landing page
-│   ├── Pricing.jsx       # PHP pricing with feature table
-│   ├── HowItWorks.jsx    # 4-step process
-│   ├── Business.jsx      # B2B page
-│   ├── Roadmap.jsx       # Q1-Q4 2025 timeline
-│   ├── Dashboard.jsx     # Wallet, yield, FX timer
-│   ├── OnboardingPersonal.jsx  # 3-step personal flow
-│   ├── OnboardingBusiness.jsx  # 4-step business flow
-│   ├── Login.jsx         # Dark theme login
-│   ├── Verify.jsx        # Dark theme verify
-│   └── SendMoney.jsx     # Transfer flow
-├── components/
-│   ├── FXQuoteSimulator.jsx   # 15-min rate lock
-│   └── ui/               # Shadcn components
-└── App.jsx               # Main routing
-```
+- FX rates simulated (random fluctuation around 56.25)
+- Plaid "Connect Bank" is a UI stub
+- Transfers saved to localStorage only
+- No real email/SMS verification
+- Session uses sessionStorage (no persistence)
 
 ---
 
-## Test Reports
-- `/app/test_reports/iteration_1.json` - Initial subscription model tests
-- `/app/test_reports/iteration_2.json` - Feature update tests (all passed)
+## Change Log
+
+### January 12, 2025 - Major UI/UX Overhaul
+- ✅ Split theme: Dark marketing, Light app
+- ✅ New 4-tab navigation structure
+- ✅ Remitly-style progressive onboarding at /welcome
+- ✅ Streamlined 5-step Send Money flow
+- ✅ Plaid moved to Payment Method step only
+- ✅ Global design system with CSS variables
+- ✅ Mock API layer for future backend integration
+- ✅ All tests passed (100% success rate)
+
+### January 11, 2025 - Feature Update
+- PHP-based pricing (₱499, ₱2,499)
+- 15-min FX rate lock indicator
+- 1% APY interest badge for Premium
+- Dark theme across all pages
+
+### Earlier - Initial Build
+- Core remittance platform
+- PayMongo integration (test mode)
+- Basic subscription model
