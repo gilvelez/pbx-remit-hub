@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SessionProvider, useSession } from "./contexts/SessionContext.jsx";
+import { injectThemeVariables } from "./lib/theme";
 
-// Marketing Pages (Dark Theme)
+// Layouts
+import AppShell from "./components/AppShell.jsx";
+import PublicShell from "./components/PublicShell.jsx";
+
+// Marketing Pages (Dark Theme - wrapped in PublicShell)
 import { Landing } from "./pages/Landing.jsx";
 import Pricing from "./pages/Pricing.jsx";
 import Business from "./pages/Business.jsx";
@@ -15,9 +20,11 @@ import Verify from "./pages/Verify.jsx";
 
 // New Onboarding (Remitly-style)
 import Welcome from "./pages/onboarding/Welcome.jsx";
+import PhoneOTP from "./pages/onboarding/PhoneOTP.jsx";
+import ConnectBank from "./pages/onboarding/ConnectBank.jsx";
+import AddRecipient from "./pages/onboarding/AddRecipient.jsx";
 
-// App Pages (Light Theme)
-import AppShell from "./components/AppShell.jsx";
+// App Pages (Light Theme - wrapped in AppShell)
 import Home from "./pages/app/Home.jsx";
 import Send from "./pages/app/Send.jsx";
 import Activity from "./pages/app/Activity.jsx";
@@ -33,6 +40,11 @@ import Security from "./pages/Security.jsx";
 import "./styles/design-system.css";
 
 export default function App() {
+  // Initialize theme CSS variables on mount
+  useEffect(() => {
+    injectThemeVariables();
+  }, []);
+
   return (
     <BrowserRouter>
       <SessionProvider>
@@ -46,38 +58,45 @@ function AppRoutes() {
   return (
     <Routes>
       {/* ========================================
-          MARKETING PAGES (Dark Theme)
-          Keep these pages with dark premium theme
+          MARKETING PAGES (Dark Theme with PublicShell)
+          Uses unified Navy + Gold theme tokens
          ======================================== */}
       <Route path="/" element={<Landing />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/business" element={<Business />} />
-      <Route path="/how-it-works" element={<HowItWorks />} />
-      <Route path="/roadmap" element={<Roadmap />} />
+      <Route path="/pricing" element={<PublicShell><Pricing /></PublicShell>} />
+      <Route path="/business" element={<PublicShell><Business /></PublicShell>} />
+      <Route path="/how-it-works" element={<PublicShell><HowItWorks /></PublicShell>} />
+      <Route path="/roadmap" element={<PublicShell><Roadmap /></PublicShell>} />
 
       {/* ========================================
-          AUTH & ONBOARDING (Light Theme)
+          AUTH & ONBOARDING (Navy theme background)
           New Remitly-style progressive onboarding
          ======================================== */}
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
+      
+      {/* Progressive Onboarding Flow */}
       <Route path="/welcome" element={<Welcome />} />
+      <Route path="/onboarding/phone" element={<PhoneOTP />} />
+      <Route path="/onboarding/bank" element={<ConnectBank />} />
+      <Route path="/onboarding/recipient" element={<AddRecipient />} />
       
       {/* Redirect old onboarding routes to new welcome flow */}
-      <Route path="/onboarding/*" element={<Navigate to="/welcome" replace />} />
+      <Route path="/onboarding/personal" element={<Navigate to="/welcome" replace />} />
+      <Route path="/onboarding/business" element={<Navigate to="/welcome" replace />} />
       <Route path="/get-started" element={<Navigate to="/welcome" replace />} />
 
       {/* ========================================
-          LEGAL PAGES
+          LEGAL PAGES (Dark Theme with PublicShell)
          ======================================== */}
-      <Route path="/privacy" element={<Privacy />} />
-      <Route path="/data-retention" element={<DataRetention />} />
-      <Route path="/terms" element={<Terms />} />
-      <Route path="/security" element={<Security />} />
+      <Route path="/privacy" element={<PublicShell><Privacy /></PublicShell>} />
+      <Route path="/data-retention" element={<PublicShell><DataRetention /></PublicShell>} />
+      <Route path="/terms" element={<PublicShell><Terms /></PublicShell>} />
+      <Route path="/security" element={<PublicShell><Security /></PublicShell>} />
 
       {/* ========================================
-          APP PAGES (Light Theme with AppShell)
+          APP PAGES (AppShell enforced for /app/*)
           Protected routes with 4-tab navigation
+          Navy shell, off-white cards for readability
          ======================================== */}
       <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
         <Route index element={<Navigate to="/app/home" replace />} />
