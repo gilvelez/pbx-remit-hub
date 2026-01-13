@@ -221,7 +221,7 @@ export default function AddRecipient() {
             {recipient.deliveryMethod === 'cash' && (
               <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl">
                 <p className="text-sm text-amber-800">
-                  For cash pickup, we only need the recipient's name. They'll pick up the money at any partner location with a valid ID.
+                  For cash pickup, we only need the recipient&apos;s name. They&apos;ll pick up the money at any partner location with a valid ID.
                 </p>
               </div>
             )}
