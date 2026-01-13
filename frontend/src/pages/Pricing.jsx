@@ -1,10 +1,17 @@
+/**
+ * Pricing - Subscription pricing page
+ * Wrapped in PublicShell for consistent nav/footer
+ * ALL PRICES IN USD (not PHP) - P1 requirement
+ */
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Check, X, Minus } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "../components/ui/card";
 import { Button } from "../components/ui/button";
+import { tw } from "../lib/theme";
 import LiveFXRate from "../components/LiveFXRate";
 
+// USD PRICING - P1 REQUIREMENT
 const plans = [
   {
     name: "Basic",
@@ -81,61 +88,44 @@ export default function Pricing() {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-gray-100">
-      {/* Header */}
-      <nav className="border-b border-neutral-800">
-        <div className="mx-auto max-w-7xl px-6 py-4 flex justify-between items-center">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-10 w-10 rounded-2xl flex items-center justify-center bg-amber-500/20 border border-amber-500/40">
-              <span className="font-extrabold text-sm text-amber-400">PBX</span>
-            </div>
-            <span className="font-bold text-lg text-amber-400">PBX</span>
-          </Link>
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            <Link to="/how-it-works" className="text-gray-300 hover:text-amber-400 transition">How It Works</Link>
-            <Link to="/business" className="text-gray-300 hover:text-amber-400 transition">Business</Link>
-            <Link to="/login" className="rounded-xl px-5 py-2 font-semibold bg-red-600 hover:bg-red-700 text-white transition">Login</Link>
-          </div>
-        </div>
-      </nav>
-
+    <div className="min-h-screen">
       {/* Hero */}
-      <div className="text-center py-12 px-6">
-        <h1 className="text-4xl md:text-5xl font-bold text-amber-400 mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="text-center py-12 px-6 bg-[#0A2540]">
+        <h1 className={`text-4xl md:text-5xl font-bold ${tw.textGold} mb-4`} style={{ fontFamily: 'Georgia, serif' }}>
           Choose Your Plan
         </h1>
-        <p className="text-lg max-w-2xl mx-auto text-gray-300 mb-6">
+        <p className={`text-lg max-w-2xl mx-auto ${tw.textOnDarkMuted} mb-6`}>
           Find the perfect plan for your needs — from individuals to enterprises.
         </p>
         
         {/* Live FX Rate - Contextual reinforcement */}
         <div className="flex flex-col items-center gap-3">
-          <LiveFXRate variant="dark" showLockInfo={true} showDisclaimer={false} className="max-w-sm" />
-          <p className="text-sm text-gray-400">
+          <LiveFXRate showLockInfo={true} showDisclaimer={false} className="max-w-sm" />
+          <p className={`text-sm ${tw.textOnDarkMuted}`}>
             Premium members get better locked rates on every transfer
           </p>
         </div>
       </div>
 
       {/* Plan Cards */}
-      <div className="max-w-7xl mx-auto px-6 pb-12">
+      <div className="max-w-7xl mx-auto px-6 py-12 bg-neutral-900">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan) => (
             <Card
               key={plan.name}
-              className={`relative flex flex-col border bg-neutral-900 text-gray-100 ${
+              className={`relative flex flex-col border bg-neutral-800 text-gray-100 ${
                 plan.highlight
-                  ? "border-amber-500 shadow-lg shadow-amber-500/20"
-                  : "border-neutral-800"
+                  ? "border-[#F6C94B] shadow-lg shadow-[#F6C94B]/20"
+                  : "border-neutral-700"
               }`}
             >
               {plan.badge && (
-                <div className="absolute top-0 right-0 bg-amber-500 text-neutral-900 text-xs font-bold px-3 py-1 rounded-bl-lg">
+                <div className="absolute top-0 right-0 bg-[#F6C94B] text-[#0A2540] text-xs font-bold px-3 py-1 rounded-bl-lg">
                   {plan.badge}
                 </div>
               )}
               <CardHeader>
-                <CardTitle className="text-xl font-semibold text-amber-400">{plan.name}</CardTitle>
+                <CardTitle className={`text-xl font-semibold ${tw.textGold}`}>{plan.name}</CardTitle>
                 <CardDescription className="text-gray-400">{plan.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex-1">
@@ -172,7 +162,7 @@ export default function Pricing() {
                     </span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-4 h-4 text-xs font-bold text-amber-400">15m</span>
+                    <span className={`w-4 h-4 text-xs font-bold ${tw.textGold}`}>15m</span>
                     <span>FX Rate Lock</span>
                   </li>
                   <li className="flex items-center gap-2">
@@ -184,7 +174,7 @@ export default function Pricing() {
               <CardFooter className="pt-4">
                 <Button
                   onClick={() => navigate(plan.ctaLink)}
-                  className="w-full bg-red-600 hover:bg-red-700 text-white font-semibold"
+                  className={`w-full ${plan.highlight ? 'bg-red-600 hover:bg-red-700' : 'bg-[#F6C94B] hover:bg-[#D4A520] text-[#0A2540]'} font-semibold`}
                   data-testid={`pricing-cta-${plan.name.toLowerCase()}`}
                 >
                   {plan.cta}
@@ -196,15 +186,15 @@ export default function Pricing() {
       </div>
 
       {/* Feature Comparison Table */}
-      <div className="max-w-6xl mx-auto px-6 pb-16">
-        <h2 className="text-2xl font-bold text-center text-amber-400 mb-8">Feature Comparison</h2>
+      <div className="max-w-6xl mx-auto px-6 py-16 bg-neutral-950">
+        <h2 className={`text-2xl font-bold text-center ${tw.textGold} mb-8`}>Feature Comparison</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-sm bg-neutral-900 border border-neutral-700 rounded-xl overflow-hidden">
             <thead className="bg-neutral-800 text-gray-100">
               <tr>
                 <th className="text-left p-4 font-semibold">Feature</th>
                 {plans.map((p) => (
-                  <th key={p.name} className="p-4 font-semibold text-center text-amber-400">{p.name}</th>
+                  <th key={p.name} className={`p-4 font-semibold text-center ${tw.textGold}`}>{p.name}</th>
                 ))}
               </tr>
             </thead>
@@ -274,15 +264,6 @@ export default function Pricing() {
           All subscription fees are in USD. FX rates apply to transfers (USD → PHP).
         </p>
       </div>
-
-      {/* Footer */}
-      <footer className="py-8 border-t border-neutral-800">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-xs text-gray-500">
-            © {new Date().getFullYear()} Philippine Bayani Exchange (PBX). Built in the United States.
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

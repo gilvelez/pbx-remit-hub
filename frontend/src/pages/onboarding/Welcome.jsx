@@ -1,28 +1,28 @@
+/**
+ * Welcome - First step in progressive Remitly-style onboarding
+ * Flow: Welcome → Corridor → Signup → (Phone OTP → Connect Bank → Add Recipient)
+ */
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
+import { tw } from "../../lib/theme";
 
 const STEPS = {
   WELCOME: 'welcome',
   CORRIDOR: 'corridor',
   SIGNUP: 'signup',
   ACCOUNT_TYPE: 'account_type',
-  PHONE_VERIFY: 'phone_verify',
-  COMPLETE: 'complete',
 };
 
 export default function Welcome() {
   const { login, setSession } = useSession();
   const navigate = useNavigate();
   const [step, setStep] = useState(STEPS.WELCOME);
-  const [loading, setLoading] = useState(false);
   
   // Form data
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [accountType, setAccountType] = useState('personal');
-  const [phone, setPhone] = useState('');
-  const [otp, setOtp] = useState('');
 
   const handleSignup = (e) => {
     e.preventDefault();
@@ -33,42 +33,24 @@ export default function Welcome() {
 
   const handleAccountType = () => {
     setSession(prev => ({ ...prev, accountType }));
-    setStep(STEPS.PHONE_VERIFY);
-  };
-
-  const handlePhoneVerify = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      setSession(prev => ({ 
-        ...prev, 
-        exists: true, 
-        verified: true,
-        user: { email, phone, accountType }
-      }));
-      setStep(STEPS.COMPLETE);
-      setLoading(false);
-    }, 1000);
-  };
-
-  const handleComplete = () => {
-    navigate('/app/home');
+    // Next step: Phone OTP (separate page)
+    navigate('/onboarding/phone');
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA]">
+    <div className={`min-h-screen ${tw.shellBg}`}>
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
+      <header className={`${tw.shellBgSolid} border-b ${tw.borderOnDark}`}>
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-[#0A2540] flex items-center justify-center">
-              <span className="text-white font-bold text-xs">PBX</span>
+            <div className="h-8 w-8 rounded-lg bg-[#F6C94B]/20 border border-[#F6C94B]/40 flex items-center justify-center">
+              <span className={`${tw.textGold} font-bold text-xs`}>PBX</span>
             </div>
           </Link>
-          {step !== STEPS.WELCOME && step !== STEPS.COMPLETE && (
+          {step !== STEPS.WELCOME && (
             <button
               onClick={() => navigate('/')}
-              className="text-sm text-gray-500"
+              className={`text-sm ${tw.textOnDarkMuted}`}
             >
               Cancel
             </button>
@@ -76,47 +58,51 @@ export default function Welcome() {
         </div>
       </header>
 
+      {/* Progress indicator (only after welcome) */}
+      {step !== STEPS.WELCOME && (
+        <div className="max-w-lg mx-auto px-4 py-4">
+          <div className="flex gap-2">
+            <div className={`flex-1 h-1 rounded-full ${step === STEPS.CORRIDOR || step === STEPS.SIGNUP || step === STEPS.ACCOUNT_TYPE ? 'bg-[#F6C94B]' : 'bg-white/20'}`} />
+            <div className={`flex-1 h-1 rounded-full ${step === STEPS.SIGNUP || step === STEPS.ACCOUNT_TYPE ? 'bg-[#F6C94B]' : 'bg-white/20'}`} />
+            <div className="flex-1 h-1 rounded-full bg-white/20" />
+            <div className="flex-1 h-1 rounded-full bg-white/20" />
+          </div>
+          <p className={`text-xs ${tw.textOnDarkMuted} mt-2`}>Step 1 of 4</p>
+        </div>
+      )}
+
       {/* Content */}
-      <main className="max-w-lg mx-auto px-4 py-8">
+      <main className="max-w-lg mx-auto px-4 py-6">
         {step === STEPS.WELCOME && (
           <WelcomeStep onContinue={() => setStep(STEPS.CORRIDOR)} />
         )}
 
         {step === STEPS.CORRIDOR && (
-          <CorridorStep onContinue={() => setStep(STEPS.SIGNUP)} />
+          <div className={`${tw.cardBg} rounded-2xl p-6 shadow-lg`}>
+            <CorridorStep onContinue={() => setStep(STEPS.SIGNUP)} />
+          </div>
         )}
 
         {step === STEPS.SIGNUP && (
-          <SignupStep
-            email={email}
-            setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
-            onSubmit={handleSignup}
-          />
+          <div className={`${tw.cardBg} rounded-2xl p-6 shadow-lg`}>
+            <SignupStep
+              email={email}
+              setEmail={setEmail}
+              password={password}
+              setPassword={setPassword}
+              onSubmit={handleSignup}
+            />
+          </div>
         )}
 
         {step === STEPS.ACCOUNT_TYPE && (
-          <AccountTypeStep
-            accountType={accountType}
-            setAccountType={setAccountType}
-            onContinue={handleAccountType}
-          />
-        )}
-
-        {step === STEPS.PHONE_VERIFY && (
-          <PhoneVerifyStep
-            phone={phone}
-            setPhone={setPhone}
-            otp={otp}
-            setOtp={setOtp}
-            loading={loading}
-            onSubmit={handlePhoneVerify}
-          />
-        )}
-
-        {step === STEPS.COMPLETE && (
-          <CompleteStep onContinue={handleComplete} />
+          <div className={`${tw.cardBg} rounded-2xl p-6 shadow-lg`}>
+            <AccountTypeStep
+              accountType={accountType}
+              setAccountType={setAccountType}
+              onContinue={handleAccountType}
+            />
+          </div>
         )}
       </main>
     </div>
@@ -130,7 +116,7 @@ function WelcomeStep({ onContinue }) {
   const slides = [
     {
       icon: (
-        <svg className="w-16 h-16 text-[#0A2540]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-16 h-16 text-[#F6C94B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
@@ -139,7 +125,7 @@ function WelcomeStep({ onContinue }) {
     },
     {
       icon: (
-        <svg className="w-16 h-16 text-[#0A2540]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-16 h-16 text-[#F6C94B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
       ),
@@ -148,7 +134,7 @@ function WelcomeStep({ onContinue }) {
     },
     {
       icon: (
-        <svg className="w-16 h-16 text-[#0A2540]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-16 h-16 text-[#F6C94B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
         </svg>
       ),
@@ -164,10 +150,10 @@ function WelcomeStep({ onContinue }) {
         <div className="flex justify-center mb-6">
           {slides[slide].icon}
         </div>
-        <h1 className="text-2xl font-bold text-[#1A1A1A] mb-3">
+        <h1 className={`text-2xl font-bold ${tw.textOnDark} mb-3`}>
           {slides[slide].title}
         </h1>
-        <p className="text-gray-500 max-w-xs mx-auto">
+        <p className={`${tw.textOnDarkMuted} max-w-xs mx-auto`}>
           {slides[slide].subtitle}
         </p>
       </div>
@@ -178,8 +164,8 @@ function WelcomeStep({ onContinue }) {
           <button
             key={i}
             onClick={() => setSlide(i)}
-            className={`w-2 h-2 rounded-full transition ${
-              i === slide ? 'bg-[#0A2540] w-6' : 'bg-gray-300'
+            className={`h-2 rounded-full transition ${
+              i === slide ? 'bg-[#F6C94B] w-6' : 'bg-white/30 w-2'
             }`}
           />
         ))}
@@ -189,14 +175,14 @@ function WelcomeStep({ onContinue }) {
       <div className="space-y-3">
         <button
           onClick={onContinue}
-          className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition"
+          className={`w-full ${tw.btnPrimary} rounded-xl h-12 transition`}
           data-testid="welcome-get-started"
         >
           Get Started
         </button>
         <Link
           to="/login"
-          className="block w-full text-center text-[#0A2540] font-medium py-3"
+          className={`block w-full text-center ${tw.textOnDarkMuted} font-medium py-3`}
         >
           Already have an account? Log in
         </Link>
@@ -209,12 +195,13 @@ function WelcomeStep({ onContinue }) {
 function CorridorStep({ onContinue }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">Where are you sending?</h1>
-      <p className="text-gray-500 mb-6">Select your transfer corridor</p>
+      <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>Where are you sending?</h1>
+      <p className={`${tw.textOnLightMuted} mb-6`}>Select your transfer corridor</p>
 
       <button
         onClick={onContinue}
-        className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-[#0A2540] mb-4"
+        className="w-full flex items-center gap-4 p-4 bg-white rounded-xl border-2 border-[#0A2540] mb-4 hover:bg-gray-50 transition"
+        data-testid="corridor-us-ph"
       >
         <div className="flex items-center gap-2">
           <span className="text-2xl">🇺🇸</span>
@@ -232,7 +219,7 @@ function CorridorStep({ onContinue }) {
         </div>
       </button>
 
-      <div className="text-center text-sm text-gray-500 mt-8">
+      <div className={`text-center text-sm ${tw.textOnLightMuted} mt-8`}>
         More corridors coming soon
       </div>
     </div>
@@ -243,12 +230,12 @@ function CorridorStep({ onContinue }) {
 function SignupStep({ email, setEmail, password, setPassword, onSubmit }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">Create your account</h1>
-      <p className="text-gray-500 mb-6">Enter your email to get started</p>
+      <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>Create your account</h1>
+      <p className={`${tw.textOnLightMuted} mb-6`}>Enter your email to get started</p>
 
       <form onSubmit={onSubmit}>
         <div className="mb-4">
-          <label className="text-sm font-medium text-gray-600 mb-2 block">Email</label>
+          <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>Email</label>
           <input
             type="email"
             value={email}
@@ -261,7 +248,7 @@ function SignupStep({ email, setEmail, password, setPassword, onSubmit }) {
         </div>
 
         <div className="mb-6">
-          <label className="text-sm font-medium text-gray-600 mb-2 block">Password</label>
+          <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>Password</label>
           <input
             type="password"
             value={password}
@@ -274,7 +261,7 @@ function SignupStep({ email, setEmail, password, setPassword, onSubmit }) {
 
         <button
           type="submit"
-          className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition mb-4"
+          className={`w-full ${tw.btnNavy} rounded-xl h-12 transition mb-4`}
           data-testid="signup-submit"
         >
           Continue
@@ -287,7 +274,7 @@ function SignupStep({ email, setEmail, password, setPassword, onSubmit }) {
           <div className="w-full border-t border-gray-200" />
         </div>
         <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-[#F8F9FA] text-gray-500">or continue with</span>
+          <span className="px-4 bg-white text-gray-500">or continue with</span>
         </div>
       </div>
 
@@ -309,7 +296,7 @@ function SignupStep({ email, setEmail, password, setPassword, onSubmit }) {
         </button>
       </div>
 
-      <p className="text-xs text-gray-500 text-center mt-6">
+      <p className={`text-xs ${tw.textOnLightMuted} text-center mt-6`}>
         By continuing, you agree to our <a href="/terms" className="text-[#0A2540] underline">Terms</a> and <a href="/privacy" className="text-[#0A2540] underline">Privacy Policy</a>
       </p>
     </div>
@@ -320,8 +307,8 @@ function SignupStep({ email, setEmail, password, setPassword, onSubmit }) {
 function AccountTypeStep({ accountType, setAccountType, onContinue }) {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">What type of account?</h1>
-      <p className="text-gray-500 mb-6">Choose the account that best fits your needs</p>
+      <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>What type of account?</h1>
+      <p className={`${tw.textOnLightMuted} mb-6`}>Choose the account that best fits your needs</p>
 
       <div className="space-y-3 mb-6">
         <button
@@ -329,6 +316,7 @@ function AccountTypeStep({ accountType, setAccountType, onContinue }) {
           className={`w-full flex items-center gap-4 p-4 bg-white rounded-xl border-2 transition ${
             accountType === 'personal' ? 'border-[#0A2540]' : 'border-gray-200'
           }`}
+          data-testid="account-personal"
         >
           <div className="w-12 h-12 rounded-full bg-[#0A2540]/10 flex items-center justify-center">
             <svg className="w-6 h-6 text-[#0A2540]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,6 +341,7 @@ function AccountTypeStep({ accountType, setAccountType, onContinue }) {
           className={`w-full flex items-center gap-4 p-4 bg-white rounded-xl border-2 transition ${
             accountType === 'business' ? 'border-[#0A2540]' : 'border-gray-200'
           }`}
+          data-testid="account-business"
         >
           <div className="w-12 h-12 rounded-full bg-[#0A2540]/10 flex items-center justify-center">
             <svg className="w-6 h-6 text-[#0A2540]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,124 +364,10 @@ function AccountTypeStep({ accountType, setAccountType, onContinue }) {
 
       <button
         onClick={onContinue}
-        className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition"
+        className={`w-full ${tw.btnNavy} rounded-xl h-12 transition`}
         data-testid="account-type-continue"
       >
         Continue
-      </button>
-    </div>
-  );
-}
-
-// Phone Verification Step
-function PhoneVerifyStep({ phone, setPhone, otp, setOtp, loading, onSubmit }) {
-  const [showOtp, setShowOtp] = useState(false);
-
-  const handleSendOtp = (e) => {
-    e.preventDefault();
-    if (!phone) return;
-    setShowOtp(true);
-  };
-
-  return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">
-        {showOtp ? 'Enter verification code' : 'Verify your phone'}
-      </h1>
-      <p className="text-gray-500 mb-6">
-        {showOtp 
-          ? `We sent a code to +1 ${phone}`
-          : 'We\'ll send you a verification code'
-        }
-      </p>
-
-      {!showOtp ? (
-        <form onSubmit={handleSendOtp}>
-          <div className="mb-6">
-            <label className="text-sm font-medium text-gray-600 mb-2 block">Phone number</label>
-            <div className="flex gap-2">
-              <div className="h-12 px-3 flex items-center bg-gray-50 border border-gray-200 rounded-xl text-gray-600">
-                +1
-              </div>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="flex-1 h-12 px-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
-                placeholder="(555) 123-4567"
-                required
-                data-testid="phone-input"
-              />
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition"
-          >
-            Send Code
-          </button>
-        </form>
-      ) : (
-        <form onSubmit={onSubmit}>
-          <div className="mb-6">
-            <input
-              type="text"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full h-14 px-4 text-center text-2xl font-mono tracking-widest border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
-              placeholder="000000"
-              maxLength={6}
-              required
-              data-testid="otp-input"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading || otp.length !== 6}
-            className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition disabled:opacity-50"
-            data-testid="verify-otp-btn"
-          >
-            {loading ? 'Verifying...' : 'Verify'}
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setShowOtp(false)}
-            className="w-full text-gray-600 font-medium py-3 mt-2"
-          >
-            Use different number
-          </button>
-
-          <p className="text-xs text-gray-500 text-center mt-4">
-            Demo: Enter any 6-digit code
-          </p>
-        </form>
-      )}
-    </div>
-  );
-}
-
-// Complete Step
-function CompleteStep({ onContinue }) {
-  return (
-    <div className="text-center py-8">
-      <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-        <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-        </svg>
-      </div>
-
-      <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">You're all set!</h1>
-      <p className="text-gray-500 mb-8">Your account is ready. Start sending money to the Philippines.</p>
-
-      <button
-        onClick={onContinue}
-        className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition"
-        data-testid="complete-continue"
-      >
-        Go to Home
       </button>
     </div>
   );

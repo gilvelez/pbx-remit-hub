@@ -1,137 +1,153 @@
 <analysis>**original_problem_statement:**
-The user wants to build a Philippine Bayani Exchange (PBX) MVP. The project has undergone several pivots:
-1.  Initial build of a remittance platform with mocked Plaid and real PayMongo integration.
-2.  Numerous UI and copy updates for compliance and marketing, culminating in a premium, Filipino-themed landing page and a consistent theme across the demo app screens (, , ).
-3.  A final, major pivot to a new subscription-based business model. The user provided a detailed PDF () outlining the requirements for this new direction.
+The user wants to build a Philippine Bayani Exchange (PBX) application. The project has undergone multiple major pivots. The latest, and authoritative, set of instructions is to rebuild the application with a Remitly-style UI/UX.
 
-The current and most important goal is to implement the new frontend based on the subscription model described in the PDF. This involves creating new pages for pricing, onboarding, a new dashboard, and an FX simulator, and redesigning the landing page to reflect the new plans (Basic, Premium, SME, Enterprise).
+**PRODUCT REQUIREMENTS (Based on latest user instructions):**
+1.  **Unified Theme:** A single, consistent Filipino Navy + Gold theme must be used across the entire application (marketing pages and the app itself). The previous light/dark theme split is deprecated. The app shell should be navy/dark, while content cards can be light/off-white for readability.
+2.  **Onboarding Flow (Remitly-style):** A new progressive onboarding flow must be implemented. The old onboarding pages are to be removed. The new flow is: Welcome screen -> Profile Creation (Email/Password + Mocked OAuth) -> Phone OTP Verification -> Connect Bank (Plaid) -> Add First Recipient -> Land on App Home.
+3.  **App Structure:** The main application (post-login) must have a fixed 4-tab navigation: , , , .
+4.  **Real-time FX API:** The UI must be connected to a real backend function () for exchange rates. This includes polling for live updates and implementing a 15-minute rate-lock timer in the  flow. Mocked/static rates are no longer acceptable.
+5.  **Plaid Integration:** The Plaid bank connection flow must be moved to be an early step in the new onboarding process, immediately after phone verification.
+6.  **Subscription Pricing:** All subscription plan prices (, ) must be in USD (e.g., 0/mo), not PHP.
+7.  **Recipient Setup:** A dedicated step must be created to add recipients and their delivery methods (e.g., GCash, Maya, Bank Deposit, Cash Pickup).
 
 **User's preferred language**: English
 
 **what currently exists?**
-The application is a React-based frontend. The codebase contains a fully styled (premium, Filipino-themed) landing page and themed application screens (, , ) from the *previous* remittance model. However, the agent has just begun the pivot to the new subscription model. It has created several new, but currently empty, files for the pages and components required by the new business model (e.g., , , , ). The routing in  has not yet been updated to include these new pages.
+The application is in a state of major refactoring. The agent has begun implementing the latest user requirements by creating foundational files for the new structure. This includes a  for the unified theme, an  component, and an  library to connect to the backend. The Netlify function  was updated with a development fallback. However, the new theme and logic have not been fully integrated, and the application currently has a mix of old (deprecated) and new (scaffolded) code, leading to visual and functional inconsistencies.
 
 **Last working item**:
--   **Last item agent was working:** The agent was at the very beginning of a major frontend overhaul based on a user-provided PDF. The goal is to shift the application from a remittance model to a subscription-based business model. The agent analyzed the PDF, planned the file structure, and executed a parallel tool call to create the initial set of empty files for the new pages and components.
+-   **Last item agent was working:** The agent was laying the groundwork for the major Remitly-style rebuild. It focused on creating and updating the core files required for the new unified theme and for connecting to a real FX API. Specifically, it created , updated , created , and modified the  Netlify function.
 -   **Status:** IN PROGRESS
 -   **Agent Testing Done:** N
--   **Which testing method agent to use?** Frontend testing agent. This is a complete rebuild of the application's purpose and UI, which will require comprehensive end-to-end testing of all new pages, components, and user flows once the implementation is complete.
+-   **Which testing method agent to use?** Frontend testing agent. This is a complete application overhaul that will require comprehensive end-to-end testing of the new theme, onboarding flow, and send money process once the implementation is complete.
 -   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
--   There are no outstanding bugs. The focus is entirely on the new feature implementation.
+This is a large, planned refactoring effort. The work is broken down into a priority task list below instead of individual issues.
 
 **In progress Task List**:
--   **Task 1: Implement New Subscription Model Frontend (P0)**
-    -   **Description:** This is the primary, overarching task. The agent needs to populate the newly created files with React code to build the new subscription-based UI as specified in the user's PDF document.
-    -   **Where to resume:** The agent needs to start writing code for the following components and pages, which are currently just empty shells:
-        1.  
-        2.  
-        3.  
-        4.  
-        5.  
-        6.  
-        7.  
-        8.  
-        9.  Update  to reflect the new model.
-        10. Update  to wire up all the new routes.
-    -   **What will be achieved with this?** This will create the foundational frontend for the new PBX subscription-based business model, ready for user review and further backend integration.
+-   **Task 1: Unify Application Theme (P0)**
+    -   **Description:** Apply the new unified Navy + Gold theme across the entire application, eliminating the previous light/dark mode split.
+    -   **Where to resume:** Integrate the new  into the main  router to wrap all pages. Ensure all components and pages correctly inherit styles from . Fix any hardcoded styles, such as the white header in , to conform to the new theme.
+    -   **What will be achieved with this?** A visually consistent user experience across the entire platform, which is a critical first step in the rebuild.
     -   **Status:** IN PROGRESS
     -   **Should Test frontend/backend/both after fix?** Frontend
-    -   **Blocked on something:** No
+
+-   **Task 2: Implement USD Subscription Pricing (P1)**
+    -   **Description:** Correct all subscription pricing to be displayed in USD instead of PHP.
+    -   **Where to resume:** Perform a search-and-replace in the codebase. Update files like  and  to change  to  and  to .
+    -   **What will be achieved with this?** Aligns the product's pricing with the business requirements for US-based senders.
+    -   **Status:** NOT STARTED
+    -   **Should Test frontend/backend/both after fix?** Frontend
+
+-   **Task 3: Wire Up Real FX API (P1)**
+    -   **Description:** Replace all mocked FX data with live data from the Netlify function.
+    -   **Where to resume:** Update all components that display an FX rate (e.g., , , ) to use the new  instead of . Implement polling every 10-15 seconds and the 15-minute rate-lock countdown timer in the send flow.
+    -   **What will be achieved with this?** Provides users with a core product feature: a live, trustworthy exchange rate.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Frontend
+
+-   **Task 4: Rebuild Onboarding Flow (P1)**
+    -   **Description:** Implement the new Remitly-style progressive onboarding flow.
+    -   **Where to resume:** Create the required new pages: , , and . Wire them up in  in the correct sequence after . Remove routes and links to the old, deprecated onboarding pages (, ).
+    -   **What will be achieved with this?** A streamlined, modern user acquisition funnel that aligns with industry best practices.
+    -   **Status:** NOT STARTED
+    -   **Should Test frontend/backend/both after fix?** Frontend
 
 **Upcoming and Future Tasks**
 -   **Upcoming Tasks:**
-    -   **(P1) Wire up Circle Integration:** This was a priority before the pivot. It will likely be needed for the backend of the new subscription model to handle custody of funds.
-    -   **(P1) Implement PayMongo Webhooks:** Also a previous priority, this will be necessary to get status updates on real fund transfers for the new model.
+    -   **(P1) Move Plaid to Onboarding:** Implement the  page using the existing  and  function, ensuring it fits into the new onboarding sequence.
+    -   **(P1) Implement Recipient Setup:** Build the  page, allowing users to select delivery methods (GCash, Bank, Cash Pickup) and save recipient details locally.
+    -   **(P2) Enhance UI with Business Logic:** Update the UI to visually communicate the value of premium tiers (e.g., better FX, longer rate lock).
 -   **Future Tasks:**
-    -   **(P2) Code Cleanup:** The old remittance-specific pages (, ) and Netlify functions will become obsolete and should be removed once the new model is fully implemented and verified.
-    -   **(P2) Implement Production Authentication:** The current mock session management needs to be replaced with a secure, production-grade authentication provider suitable for a subscription service.
+    -   **(P2) Implement Recurring Transfers UI:** Add UI for scheduling automatic transfers.
+    -   **(P2) Full OAuth Integration:** Replace mock OAuth buttons with a real implementation.
+    -   **(P3) Full Backend Integration:** Connect all frontend flows to production-ready backend services.
+    -   **(P3) Code Cleanup:** Permanently delete all unused files and components from previous pivots.
 
 **Completed work in this session**
--   **Landing Page Fixes:**
-    -   Finalized compliance text on the landing page (rate disclaimer, footer wording).
-    -   Replaced the interactive demo card with a static Pricing Preview panel.
-    -   Fixed the How PBX Works button to scroll smoothly to the correct section.
--   **Full Theming & Redesign:**
-    -   Implemented a pixel-perfect landing page redesign based on a user-provided mockup, including creating and slicing image assets.
-    -   Applied the new premium Filipino theme (colors, fonts, components) consistently across all existing app screens (, , ) to create a cohesive user experience.
-    -   Fixed UI inconsistencies where form inputs on the  page were not adhering to the new light theme.
--   **Content & Branding Overhaul:**
-    -   Updated all marketing copy on the landing page to be inclusive, U.S.-centric, and aligned with a new global positioning, removing all Filipino-exclusive language.
-    -   Removed specific partner names (e.g., PayMongo) from the frontend UI, replacing them with partner-neutral language.
-    -   Updated the pricing section to a clear 4-tier demo model as requested.
--   **Platform Compliance:**
-    -   Successfully hid the Made with Emergent badge from the UI using global CSS.
+-   **Initial Subscription Model UI:** Built a complete frontend for a subscription-based model with a dark + red theme, including new pages for Pricing, Onboarding, and a Dashboard. (This is now deprecated).
+-   **Remitly-style UI Scaffolding:** Created the foundational file structure for the latest pivot, including new pages (, , , , ), a new , and a . (This is being built upon).
+-   **Critical FX and Pricing Fixes:** Created a reusable  component, integrated it into key pages, and updated subscription pricing to USD based on user feedback.
+-   **Theme & API Groundwork:** Began the latest refactor by creating , , and updating the  Netlify function to prepare for the unified theme and real API integration.
 
 **Earlier issues found/mentioned but not fixed**
--   None.
+-   None. The current overhaul supersedes all previous minor issues.
 
 **Known issue recurrence from previous fork**
--   None observed in this session. The previous issue with Netlify dev vs. deployed environments was not a factor in the recent UI-focused tasks.
+-   None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
 -   **Frontend:** React, , Tailwind CSS.
--   **Backend:** Serverless via Netlify Functions (Node.js) for the old model. The new model is currently frontend-only.
--   **Architecture Pivot:** The project is undergoing a fundamental shift from a per-transaction remittance model to a multi-tiered subscription service model (B2C and B2B).
+-   **Backend:** Serverless via Netlify Functions (Node.js).
+-   **Architecture Pivot:** The application is in the middle of a significant, user-directed pivot to a Remitly-style UI/UX, which involves unifying the theme, implementing a new onboarding flow, and connecting to live backend services for core features.
 
 **key DB schema**
 -   No database is used.
 
 **changes in tech stack**
--   No change in technology, but a complete change in the application's business logic and feature set.
+-   No change in the underlying technologies, but a significant shift in application logic from being fully mocked to connecting to live serverless functions for critical features like FX rates.
 
 **All files of reference**
--   **/app/frontend/src/pages/**: All the new (currently empty) page files (, , etc.) that need to be implemented.
--   **/app/frontend/src/components/FXSimulator.jsx**: The new (empty) component to be built.
--   **/app/frontend/src/App.jsx**: Needs to be updated with routes for all the new pages.
--   **/app/frontend/src/pages/Landing.jsx**: Needs to be updated to reflect the new subscription model.
+-   **/app/memory/PRD.md**: Contains the latest, most authoritative instructions from the user.
+-   **/app/frontend/src/styles/design-system.css**: The source of truth for the new unified theme.
+-   **/app/frontend/src/components/AppShell.jsx**: The wrapper component for applying the unified theme.
+-   **/app/frontend/src/lib/fxApi.js**: The client for fetching real FX rates from the backend.
+-   **/app/netlify/functions/get-fx-quote.js**: The serverless function that provides exchange rates.
+-   **/app/netlify/functions/create-link-token.js**: The serverless function for Plaid integration.
 
 **Areas that need refactoring**:
--   The entire application is being refactored to align with the new business model. Old pages like  will need to be deprecated or completely re-imagined within the context of the new .
+-   The entire application is undergoing a planned refactor. The immediate priority is to apply the  across all routes in  and remove routing to all deprecated pages (, , etc.).
 
 **key api endpoints**
--   The Netlify function endpoints () are part of the old remittance model and are not relevant to the current frontend implementation task.
+-   : To get real-time exchange rates.
+-   : To initialize the Plaid Link flow.
 
 **Critical Info for New Agent**
--   **PIVOT:** The project has completely pivoted. You are no longer building a simple remittance app. You are now building the frontend for a **subscription-based financial platform** with four tiers (Basic, Premium, SME, Enterprise).
--   **FOLLOW THE PDF:** The user provided a PDF with detailed instructions for the new business model. This is your source of truth. All new components (, , , ) must be built according to its specifications.
--   **MOCKED LOGIC:** All frontend logic for the new features (e.g., in the ) should be mocked for now. The focus is on building a client-ready, visually complete frontend.
--   **DEPRECATED CODE:** Be aware that much of the existing code in  (like ) and  relates to the old model. Do not get confused. Focus on building the new pages and components.
+-   **AUTHORITATIVE INSTRUCTIONS:** The user's latest set of instructions (from chat message #187 onward) is the absolute source of truth. You are rebuilding the app to be Remitly-style. **Ignore all previous conflicting plans** about dark themes or PHP pricing.
+-   **NO MORE CONFIRMATIONS:** The user has explicitly instructed to stop asking for confirmation and to proceed directly with implementation based on the latest plan. Follow the prioritized task list.
+-   **IMPLEMENTATION ORDER IS CRITICAL:** The user provided a strict order of operations: 1. Unify theme, 2. Fix USD pricing, 3. Wire real FX API, 4. Fix onboarding, 5. Move Plaid, 6. Add recipient setup. Follow this sequence.
+-   **REAL APIS ARE THE GOAL:** The focus is on moving away from mocks. The frontend must connect to the Netlify functions for FX and Plaid. The FX feed must poll for live data and show a countdown timer when a rate is locked.
 
 **documents and test reports created in this job**
--   /app/PBX_MONEY_FLOW.md
+-   /app/memory/PRD.md
+-   /app/test_reports/iteration_1.json
+-   /app/test_reports/iteration_2.json
+-   /app/test_reports/iteration_3.json
+-   /app/test_reports/iteration_4.json
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User (LATEST):** Confirmed the agent should proceed with the full frontend implementation for the new subscription-based business model.
-2.  **Agent:** Analyzed the user's PDF and asked for confirmation to proceed with the full implementation, listing all the new pages and components to be built.
-3.  **User:** Uploaded a PDF detailing a major pivot to a new subscription-based business model for PBX.
-4.  **Agent:** Confirmed the 4-tier pricing update was complete and ready for deployment.
-5.  **User:** Requested an update to the pricing section to show four clear, demo-only pricing tiers with specific example dollar amounts.
-6.  **Agent:** Provided instructions on how to fix a GitHub integration issue.
-7.  **User:** Stated that a GitHub push was failing and asked the agent to reconnect the integration.
-8.  **Agent:** Confirmed that the light theme input fix was complete.
-9.  **User:** Requested a fix for form inputs on the Send Money page that were still rendering with a dark background.
-10. **Agent:** Confirmed removal of the PayMongo reference from the UI.
+1.  **LATEST:** User provided the final, non-negotiable instructions for the rebuild: Unify the theme, use USD pricing, wire the real FX API, implement a new OTP-based onboarding flow, move Plaid to onboarding, and add a recipient setup step. **Crucially, the user instructed the agent to stop asking for confirmation and just implement.**
+2.  User specified that Plaid should use the existing Netlify function and handle missing sandbox credentials gracefully. The FX API should also have a fallback. Mocked OAuth buttons are acceptable for now.
+3.  User provided another set of detailed instructions for fixes and feature implementations, reiterating the need for a unified theme, USD pricing, real FX quotes, and a new onboarding flow with Plaid.
+4.  User confirmed the critical fixes for USD pricing and the Live FX Ticker were correct and ready.
+5.  User identified two critical issues: subscription pricing was in PHP (must be USD) and the real-time FX ticker was missing from key pages. Provided explicit instructions to fix both.
+6.  User approved the major rebuild to a Remitly-style app, confirming the new progressive onboarding flow and the decision to keep marketing pages dark while making the app light-themed. (This was later superseded by the unified theme decision).
+7.  User provided detailed instructions for a major pivot to a Remitly-inspired UX, specifying a light-themed app, 4-tab navigation, and a new onboarding flow.
+8.  User confirmed the dark + red theme and PHP pricing. (This instruction is now DEPRECATED).
+9.  User provided the initial requirements for the subscription model, including pricing tiers and page priorities. (Many of these details are now DEPRECATED).
+10. Agent had previously finished a full implementation of a subscription model frontend based on a user-provided PDF. (This entire implementation is now DEPRECATED).
 
 **Project Health Check:**
--   **Broken:** None.
--   **Mocked:** The entire application logic is mocked. The new subscription model implementation will also be a mocked frontend.
+-   **Broken:** The application is in the middle of a major, planned refactoring. Routing, theming, and functionality are inconsistent as old code is being replaced by new scaffolding. It is not in a usable state.
+-   **Mocked:** Most application logic remains mocked, including authentication and the  flow. However, the immediate task is to replace the mocked FX rate with a call to a live (or dev-fallback) API.
 
 **3rd Party Integrations**
--   **Plaid, OpenExchangeRates, PayMongo:** These exist in the old codebase but are **not** part of the current task. The new implementation is a frontend-only build.
+-   **Plaid:** An existing integration that needs to be moved into the new onboarding flow. Uses the  Netlify function.
+-   **OpenExchangeRates (or similar):** The intended provider for the  function. The connection needs to be implemented.
+-   **Google/Apple OAuth:** UI-only mock buttons exist. No backend implementation.
 
 **Testing status**
--   **Testing agent used after significant changes:** NO
+-   **Testing agent used after significant changes:** YES (on previous, now-deprecated versions of the app)
 -   **Troubleshoot agent used after agent stuck in loop:** NO
 -   **Test files created:** None
--   **Known regressions:** None
+-   **Known regressions:** The entire application is a planned regression, as it is being rebuilt from the ground up.
 
 **Credentials to test flow:**
--   N/A. The new implementation is not yet built. The previous mock login flow used any email and a 6-digit code.
+-   N/A. Authentication is mocked. Any credentials should allow access for testing purposes.
 
 **What agent forgot to execute**
--   Nothing was forgotten. The agent was correctly following the user's instructions and had just started the major new task of implementing the subscription model frontend by creating the necessary files before the session ended.</analysis>
+-   The agent did not forget to execute any tasks. It was systematically following the user's latest instructions to begin a major refactoring when the session ended. The next step is to continue with the user's prioritized task list, starting with unifying the application theme.</analysis>
