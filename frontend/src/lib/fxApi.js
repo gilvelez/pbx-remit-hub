@@ -8,7 +8,7 @@ const FX_ENDPOINT = '/.netlify/functions/get-fx-quote';
 const POLL_INTERVAL = 10000; // 10 seconds
 const RATE_LOCK_DURATION = 15 * 60; // 15 minutes in seconds
 
-// Fallback rate for dev/demo
+// Fallback rate for dev/demo (when Netlify function unavailable)
 const DEV_BASE_RATE = 56.25;
 const getDevRate = () => DEV_BASE_RATE + (Math.random() - 0.5) * 0.3;
 
@@ -20,33 +20,38 @@ export async function getFxQuote(amountUsd = 100) {
     const response = await fetch(`${FX_ENDPOINT}?amount_usd=${amountUsd}`);
     
     if (!response.ok) {
-      throw new Error('FX API not available');
+      throw new Error(`FX API error: ${response.status}`);
     }
     
     const data = await response.json();
     
+    // Handle Netlify function response format
     return {
-      rate: data.rate,
-      amountUsd: amountUsd,
-      amountPhp: data.amount_php || amountUsd * data.rate,
+      rate: data.rate || data.pbx_rate,
+      midMarket: data.mid_market,
+      amountUsd: data.amount_usd || amountUsd,
+      amountPhp: data.amount_php || amountUsd * (data.rate || data.pbx_rate),
+      spreadPercent: data.spread_percent,
       source: data.source || 'live',
-      isLive: true,
-      timestamp: new Date(),
+      isLive: data.source !== 'dev',
+      timestamp: new Date(data.timestamp * 1000),
       quoteId: `quote_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
     };
   } catch (error) {
-    console.warn('FX API fallback to dev rates:', error.message);
+    console.warn('FX API fallback to local dev rates:', error.message);
     
-    // Return dev fallback
+    // Return local dev fallback
     const devRate = getDevRate();
     return {
       rate: Math.round(devRate * 100) / 100,
+      midMarket: null,
       amountUsd: amountUsd,
       amountPhp: Math.round(amountUsd * devRate * 100) / 100,
-      source: 'dev',
+      spreadPercent: null,
+      source: 'local-dev',
       isLive: false,
       timestamp: new Date(),
-      quoteId: `dev_${Date.now()}`,
+      quoteId: `local_${Date.now()}`,
     };
   }
 }
@@ -87,31 +92,28 @@ export function formatLockTime(seconds) {
 }
 
 /**
- * FX Polling hook helper
+ * Get source label for display
  */
-export function createFxPoller(onUpdate, intervalMs = POLL_INTERVAL) {
-  let timer = null;
-  let amountUsd = 100;
-  
-  const poll = async () => {
-    const quote = await getFxQuote(amountUsd);
-    onUpdate(quote);
-  };
-  
-  return {
-    start: (initialAmount = 100) => {
-      amountUsd = initialAmount;
-      poll(); // Initial fetch
-      timer = setInterval(poll, intervalMs);
-    },
-    stop: () => {
-      if (timer) clearInterval(timer);
-      timer = null;
-    },
-    setAmount: (newAmount) => {
-      amountUsd = newAmount;
-    },
-  };
+export function getSourceLabel(source) {
+  switch (source) {
+    case 'openexchangerates':
+      return 'Live';
+    case 'exchangerate.host':
+      return 'Live';
+    case 'dev':
+      return 'Dev feed';
+    case 'local-dev':
+      return 'Dev feed';
+    default:
+      return source || 'Live';
+  }
+}
+
+/**
+ * Check if source is live
+ */
+export function isLiveSource(source) {
+  return source === 'openexchangerates' || source === 'exchangerate.host';
 }
 
 // Export constants
