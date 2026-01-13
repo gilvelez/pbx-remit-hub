@@ -1,19 +1,31 @@
-import React, { useState, useEffect } from "react";
+/**
+ * Send - 5-step transfer flow
+ * Uses real FX API with rate lock timer
+ * Pre-populates with saved recipient from onboarding (P1 requirement)
+ */
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSession } from "../../contexts/SessionContext";
+import { tw, fxSourceLabels } from "../../lib/theme";
 import { 
-  getQuote, 
-  lockRate, 
+  getFxQuote, 
+  lockRate as lockFxRate, 
+  getSourceLabel, 
+  isLiveSource,
+  formatLockTime,
+  FX_POLL_INTERVAL 
+} from "../../lib/fxApi";
+import { 
   createTransfer, 
   saveTransfer,
   saveRecipient,
   getRecipients,
-  getPaymentMethods,
   DELIVERY_METHODS, 
   PH_BANKS, 
   PAYMENT_METHODS 
 } from "../../lib/mockApi";
+import { FXLockTimer } from "../../components/LiveFXRate";
 
-// Step components
 const STEPS = {
   AMOUNT: 'amount',
   RECIPIENT: 'recipient',
@@ -24,36 +36,77 @@ const STEPS = {
 
 export default function Send() {
   const navigate = useNavigate();
+  const { session } = useSession();
   const [step, setStep] = useState(STEPS.AMOUNT);
   const [loading, setLoading] = useState(false);
   
   // Transfer data
   const [amountUsd, setAmountUsd] = useState('');
   const [quote, setQuote] = useState(null);
+  const [lockedQuote, setLockedQuote] = useState(null);
   const [recipient, setRecipient] = useState(null);
   const [deliveryMethod, setDeliveryMethod] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState(null);
   const [savedRecipients, setSavedRecipients] = useState([]);
   const [transfer, setTransfer] = useState(null);
 
-  // Load saved recipients
+  // Load saved recipients and pre-populate from onboarding
   useEffect(() => {
-    getRecipients().then(setSavedRecipients);
-  }, []);
+    const loadData = async () => {
+      const recipients = await getRecipients();
+      setSavedRecipients(recipients);
+      
+      // P1 REQUIREMENT: Pre-populate from onboarding if available
+      if (session?.defaultRecipient) {
+        setRecipient(session.defaultRecipient);
+        const method = DELIVERY_METHODS.find(d => d.id === session.defaultDeliveryMethod);
+        if (method) setDeliveryMethod(method);
+      }
+    };
+    loadData();
+  }, [session]);
 
-  // Get quote when amount changes
+  // Fetch live FX quote when amount changes (with debounce)
   useEffect(() => {
-    if (amountUsd && parseFloat(amountUsd) > 0) {
+    if (amountUsd && parseFloat(amountUsd) > 0 && !lockedQuote) {
       const timer = setTimeout(async () => {
-        const q = await getQuote(parseFloat(amountUsd));
+        const q = await getFxQuote(parseFloat(amountUsd));
         setQuote(q);
       }, 300);
       return () => clearTimeout(timer);
+    }
+  }, [amountUsd, lockedQuote]);
+
+  // Poll for live rates while on amount step (if not locked)
+  useEffect(() => {
+    if (step === STEPS.AMOUNT && !lockedQuote && amountUsd && parseFloat(amountUsd) > 0) {
+      const interval = setInterval(async () => {
+        const q = await getFxQuote(parseFloat(amountUsd));
+        setQuote(q);
+      }, FX_POLL_INTERVAL);
+      return () => clearInterval(interval);
+    }
+  }, [step, lockedQuote, amountUsd]);
+
+  const handleLockRate = useCallback(() => {
+    if (quote) {
+      const locked = lockFxRate(quote);
+      setLockedQuote(locked);
+    }
+  }, [quote]);
+
+  const handleRateLockExpire = useCallback(() => {
+    // Rate expired, fetch new quote
+    setLockedQuote(null);
+    if (amountUsd && parseFloat(amountUsd) > 0) {
+      getFxQuote(parseFloat(amountUsd)).then(setQuote);
     }
   }, [amountUsd]);
 
   const handleContinueAmount = () => {
     if (!amountUsd || parseFloat(amountUsd) < 1) return;
+    // Lock rate when moving to next step
+    handleLockRate();
     setStep(STEPS.RECIPIENT);
   };
 
@@ -71,15 +124,14 @@ export default function Send() {
   const handleSendMoney = async () => {
     setLoading(true);
     try {
-      // Lock the rate
-      await lockRate(quote.quoteId);
+      const activeQuote = lockedQuote || quote;
       
       // Create transfer
       const result = await createTransfer({
         recipient,
         amountUsd: parseFloat(amountUsd),
-        amountPhp: quote.amountPhp,
-        rate: quote.rate,
+        amountPhp: activeQuote.amountPhp,
+        rate: activeQuote.rate,
         paymentMethod: paymentMethod.id,
         deliveryMethod: deliveryMethod.id,
       });
@@ -107,11 +159,13 @@ export default function Send() {
     }
   };
 
+  const activeQuote = lockedQuote || quote;
+
   return (
     <div className="min-h-[calc(100vh-8rem)]">
       {/* Progress Header */}
       {step !== STEPS.CONFIRMATION && (
-        <div className="bg-white border-b border-gray-100 px-4 py-3 sticky top-14 z-30">
+        <div className={`${tw.cardBg} border-b ${tw.borderOnLight} px-4 py-3 sticky top-14 z-30`}>
           <div className="flex items-center gap-3">
             <button onClick={goBack} className="p-1 -ml-1">
               <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -133,6 +187,18 @@ export default function Send() {
               </div>
             </div>
           </div>
+          
+          {/* Rate lock timer (if locked) */}
+          {lockedQuote && step !== STEPS.AMOUNT && (
+            <div className="mt-3 px-3 py-2 bg-[#0A2540]/5 rounded-lg">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-gray-600">Rate locked</span>
+                <span className="font-semibold text-[#0A2540]">
+                  ₱{lockedQuote.rate?.toFixed(2)} • {formatLockTime(Math.floor((new Date(lockedQuote.expiresAt) - new Date()) / 1000))}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -142,6 +208,7 @@ export default function Send() {
           amountUsd={amountUsd}
           setAmountUsd={setAmountUsd}
           quote={quote}
+          lockedQuote={lockedQuote}
           onContinue={handleContinueAmount}
         />
       )}
@@ -149,8 +216,7 @@ export default function Send() {
       {step === STEPS.RECIPIENT && (
         <RecipientStep
           savedRecipients={savedRecipients}
-          deliveryMethod={deliveryMethod}
-          setDeliveryMethod={setDeliveryMethod}
+          preSelectedRecipient={recipient}
           onSelect={handleSelectRecipient}
         />
       )}
@@ -164,13 +230,15 @@ export default function Send() {
       {step === STEPS.REVIEW && (
         <ReviewStep
           amountUsd={amountUsd}
-          quote={quote}
+          quote={activeQuote}
+          lockedQuote={lockedQuote}
           recipient={recipient}
           deliveryMethod={deliveryMethod}
           paymentMethod={paymentMethod}
           loading={loading}
           onSend={handleSendMoney}
           setStep={setStep}
+          onRateLockExpire={handleRateLockExpire}
         />
       )}
 
@@ -182,6 +250,7 @@ export default function Send() {
             setAmountUsd('');
             setRecipient(null);
             setPaymentMethod(null);
+            setLockedQuote(null);
             setTransfer(null);
           }}
           onGoHome={() => navigate('/app/home')}
@@ -191,16 +260,22 @@ export default function Send() {
   );
 }
 
-// Amount Entry Step
-function AmountStep({ amountUsd, setAmountUsd, quote, onContinue }) {
+// Amount Entry Step with live FX
+function AmountStep({ amountUsd, setAmountUsd, quote, lockedQuote, onContinue }) {
+  const sourceLabel = quote?.source 
+    ? (fxSourceLabels[quote.source] || getSourceLabel(quote.source))
+    : 'Loading';
+  const isLive = quote ? isLiveSource(quote.source) : false;
+  const isDev = quote?.source === 'dev' || quote?.source === 'local-dev';
+
   return (
     <div className="px-4 py-6">
-      <h1 className="text-xl font-bold text-[#1A1A1A] mb-6">How much do you want to send?</h1>
+      <h1 className={`text-xl font-bold ${tw.textOnLight} mb-6`}>How much do you want to send?</h1>
       
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 mb-4">
+      <div className={`${tw.cardBg} rounded-2xl p-5 shadow-sm border ${tw.borderOnLight} mb-4`}>
         {/* You Send */}
         <div className="mb-6">
-          <label className="text-sm font-medium text-gray-500 mb-2 block">You send</label>
+          <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>You send</label>
           <div className="flex items-center gap-3">
             <div className="flex-1 relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl text-gray-400">$</span>
@@ -220,15 +295,23 @@ function AmountStep({ amountUsd, setAmountUsd, quote, onContinue }) {
           </div>
         </div>
 
-        {/* Divider with rate */}
+        {/* Divider with rate - REQUIRED: Always show source label */}
         <div className="flex items-center gap-3 my-4">
           <div className="flex-1 h-px bg-gray-200" />
           <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-full">
+            {/* Status indicator */}
+            <div className={`w-2 h-2 rounded-full ${isLive ? 'bg-green-500' : 'bg-yellow-500'}`} />
             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
             </svg>
             <span className="text-sm text-gray-600">
-              1 USD = ₱{quote?.rate?.toFixed(2) || '56.25'}
+              1 USD = ₱{quote?.rate?.toFixed(2) || '—'}
+            </span>
+            {/* REQUIRED: Source label badge */}
+            <span className={`text-xs px-1.5 py-0.5 rounded ${
+              isLive ? 'bg-green-100 text-green-700' : isDev ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-600'
+            }`}>
+              {sourceLabel}
             </span>
           </div>
           <div className="flex-1 h-px bg-gray-200" />
@@ -236,9 +319,9 @@ function AmountStep({ amountUsd, setAmountUsd, quote, onContinue }) {
 
         {/* They Receive */}
         <div>
-          <label className="text-sm font-medium text-gray-500 mb-2 block">They receive</label>
+          <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>They receive</label>
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-14 px-4 flex items-center bg-gray-50 border border-gray-200 rounded-xl">
+            <div className={`flex-1 h-14 px-4 flex items-center ${tw.cardBgDark} border ${tw.borderOnLight} rounded-xl`}>
               <span className="text-2xl font-semibold text-[#0A2540]">
                 ₱{quote?.amountPhp?.toLocaleString(undefined, { minimumFractionDigits: 2 }) || '0.00'}
               </span>
@@ -256,13 +339,13 @@ function AmountStep({ amountUsd, setAmountUsd, quote, onContinue }) {
         <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
-        <span>No fees • Instant delivery available</span>
+        <span>No fees • Instant delivery available • 15-min rate lock</span>
       </div>
 
       <button
         onClick={onContinue}
         disabled={!amountUsd || parseFloat(amountUsd) < 1}
-        className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#061C33] transition"
+        className={`w-full ${tw.btnNavy} rounded-xl h-12 disabled:opacity-50 disabled:cursor-not-allowed transition`}
         data-testid="send-continue-btn"
       >
         Continue
@@ -272,7 +355,7 @@ function AmountStep({ amountUsd, setAmountUsd, quote, onContinue }) {
 }
 
 // Recipient Selection Step
-function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onSelect }) {
+function RecipientStep({ savedRecipients, preSelectedRecipient, onSelect }) {
   const [showAddNew, setShowAddNew] = useState(false);
   const [newRecipient, setNewRecipient] = useState({
     fullName: '',
@@ -282,15 +365,18 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
     accountNumber: '',
   });
 
+  // If we have a pre-selected recipient from onboarding, show it highlighted
+  const hasPreSelected = preSelectedRecipient && savedRecipients.some(r => r.id === preSelectedRecipient.id);
+
   if (showAddNew) {
     return (
       <div className="px-4 py-6">
-        <h1 className="text-xl font-bold text-[#1A1A1A] mb-6">Add new recipient</h1>
+        <h1 className={`text-xl font-bold ${tw.textOnLight} mb-6`}>Add new recipient</h1>
 
         <div className="space-y-4">
           {/* Delivery Method */}
           <div>
-            <label className="text-sm font-medium text-gray-500 mb-2 block">How will they receive?</label>
+            <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>How will they receive?</label>
             <div className="grid grid-cols-2 gap-2">
               {DELIVERY_METHODS.map((method) => (
                 <button
@@ -312,7 +398,7 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
 
           {/* Full Name */}
           <div>
-            <label className="text-sm font-medium text-gray-500 mb-2 block">Full name</label>
+            <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>Full name</label>
             <input
               type="text"
               value={newRecipient.fullName}
@@ -326,7 +412,7 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
           {/* Phone (for GCash/Maya) */}
           {['gcash', 'maya'].includes(newRecipient.deliveryMethod) && (
             <div>
-              <label className="text-sm font-medium text-gray-500 mb-2 block">Mobile number</label>
+              <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>Mobile number</label>
               <div className="flex gap-2">
                 <div className="h-12 px-3 flex items-center bg-gray-50 border border-gray-200 rounded-xl text-gray-600">
                   +63
@@ -343,11 +429,11 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
             </div>
           )}
 
-          {/* Bank details (for Bank Deposit) */}
+          {/* Bank details */}
           {newRecipient.deliveryMethod === 'bank' && (
             <>
               <div>
-                <label className="text-sm font-medium text-gray-500 mb-2 block">Bank</label>
+                <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>Bank</label>
                 <select
                   value={newRecipient.bank}
                   onChange={(e) => setNewRecipient({ ...newRecipient, bank: e.target.value })}
@@ -361,7 +447,7 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium text-gray-500 mb-2 block">Account number</label>
+                <label className={`text-sm font-medium ${tw.textOnLightMuted} mb-2 block`}>Account number</label>
                 <input
                   type="text"
                   value={newRecipient.accountNumber}
@@ -378,11 +464,10 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
         <div className="mt-6 space-y-3">
           <button
             onClick={() => {
-              const method = DELIVERY_METHODS.find(d => d.id === newRecipient.deliveryMethod);
               onSelect({ ...newRecipient, deliveryMethod: newRecipient.deliveryMethod });
             }}
             disabled={!newRecipient.fullName || (!newRecipient.phone && !newRecipient.accountNumber)}
-            className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#061C33] transition"
+            className={`w-full ${tw.btnNavy} rounded-xl h-12 disabled:opacity-50 disabled:cursor-not-allowed transition`}
           >
             Continue
           </button>
@@ -399,12 +484,12 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
 
   return (
     <div className="px-4 py-6">
-      <h1 className="text-xl font-bold text-[#1A1A1A] mb-6">Who are you sending to?</h1>
+      <h1 className={`text-xl font-bold ${tw.textOnLight} mb-6`}>Who are you sending to?</h1>
 
       {/* Add New */}
       <button
         onClick={() => setShowAddNew(true)}
-        className="w-full flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-[#0A2540] transition mb-4"
+        className={`w-full flex items-center gap-3 p-4 ${tw.cardBg} rounded-xl border ${tw.borderOnLight} hover:border-[#0A2540] transition mb-4`}
         data-testid="add-recipient-btn"
       >
         <div className="w-10 h-10 rounded-full bg-[#0A2540]/10 flex items-center justify-center">
@@ -421,28 +506,38 @@ function RecipientStep({ savedRecipients, deliveryMethod, setDeliveryMethod, onS
       {/* Saved Recipients */}
       {savedRecipients.length > 0 && (
         <>
-          <div className="text-sm font-medium text-gray-500 mb-3">SAVED RECIPIENTS</div>
+          <div className={`text-sm font-medium ${tw.textOnLightMuted} mb-3`}>SAVED RECIPIENTS</div>
           <div className="space-y-2">
-            {savedRecipients.map((r) => (
-              <button
-                key={r.id}
-                onClick={() => onSelect(r)}
-                className="w-full flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-[#0A2540] transition"
-              >
-                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg">
-                  {r.fullName?.[0]?.toUpperCase() || '?'}
-                </div>
-                <div className="text-left flex-1">
-                  <div className="font-medium text-[#1A1A1A]">{r.fullName}</div>
-                  <div className="text-sm text-gray-500">
-                    {DELIVERY_METHODS.find(d => d.id === r.deliveryMethod)?.name} • {r.phone || r.accountNumber}
+            {savedRecipients.map((r) => {
+              const isPreSelected = preSelectedRecipient?.id === r.id;
+              return (
+                <button
+                  key={r.id}
+                  onClick={() => onSelect(r)}
+                  className={`w-full flex items-center gap-3 p-4 ${tw.cardBg} rounded-xl border transition ${
+                    isPreSelected ? 'border-[#0A2540] border-2' : `${tw.borderOnLight} hover:border-[#0A2540]`
+                  }`}
+                >
+                  <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-lg">
+                    {r.fullName?.[0]?.toUpperCase() || '?'}
                   </div>
-                </div>
-                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            ))}
+                  <div className="text-left flex-1">
+                    <div className={`font-medium ${tw.textOnLight}`}>{r.fullName}</div>
+                    <div className="text-sm text-gray-500">
+                      {DELIVERY_METHODS.find(d => d.id === r.deliveryMethod)?.name} • {r.phone || r.accountNumber}
+                    </div>
+                  </div>
+                  {isPreSelected && (
+                    <span className="text-xs bg-[#0A2540]/10 text-[#0A2540] px-2 py-1 rounded-full font-medium">
+                      Recent
+                    </span>
+                  )}
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              );
+            })}
           </div>
         </>
       )}
@@ -457,10 +552,10 @@ function PaymentStep({ onSelect }) {
   if (showPlaid) {
     return (
       <div className="px-4 py-6">
-        <h1 className="text-xl font-bold text-[#1A1A1A] mb-2">Connect your bank</h1>
-        <p className="text-gray-500 mb-6">Link your bank for faster, cheaper transfers</p>
+        <h1 className={`text-xl font-bold ${tw.textOnLight} mb-2`}>Connect your bank</h1>
+        <p className={`${tw.textOnLightMuted} mb-6`}>Link your bank for faster, cheaper transfers</p>
 
-        <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-6">
+        <div className={`${tw.cardBg} rounded-2xl p-5 border ${tw.borderOnLight} mb-6`}>
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
@@ -484,7 +579,7 @@ function PaymentStep({ onSelect }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <span className="text-sm">One-time setup</span>
+              <span className="text-sm">$0 fees</span>
             </div>
           </div>
         </div>
@@ -492,7 +587,7 @@ function PaymentStep({ onSelect }) {
         <div className="space-y-3">
           <button
             onClick={() => onSelect(PAYMENT_METHODS.find(p => p.id === 'bank'))}
-            className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition"
+            className={`w-full ${tw.btnNavy} rounded-xl h-12 transition`}
             data-testid="plaid-connect-btn"
           >
             Connect Bank
@@ -510,7 +605,7 @@ function PaymentStep({ onSelect }) {
 
   return (
     <div className="px-4 py-6">
-      <h1 className="text-xl font-bold text-[#1A1A1A] mb-6">How will you pay?</h1>
+      <h1 className={`text-xl font-bold ${tw.textOnLight} mb-6`}>How will you pay?</h1>
 
       <div className="space-y-3">
         {PAYMENT_METHODS.map((method) => (
@@ -523,7 +618,7 @@ function PaymentStep({ onSelect }) {
                 onSelect(method);
               }
             }}
-            className="w-full flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-200 hover:border-[#0A2540] transition"
+            className={`w-full flex items-center gap-3 p-4 ${tw.cardBg} rounded-xl border ${tw.borderOnLight} hover:border-[#0A2540] transition`}
             data-testid={`payment-${method.id}`}
           >
             <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
@@ -534,7 +629,7 @@ function PaymentStep({ onSelect }) {
             </div>
             <div className="text-left flex-1">
               <div className="flex items-center gap-2">
-                <span className="font-medium text-[#1A1A1A]">{method.name}</span>
+                <span className={`font-medium ${tw.textOnLight}`}>{method.name}</span>
                 {method.badge && (
                   <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs font-medium rounded-full">
                     {method.badge}
@@ -553,11 +648,11 @@ function PaymentStep({ onSelect }) {
   );
 }
 
-// Review Step
-function ReviewStep({ amountUsd, quote, recipient, deliveryMethod, paymentMethod, loading, onSend, setStep }) {
+// Review Step with rate lock timer
+function ReviewStep({ amountUsd, quote, lockedQuote, recipient, deliveryMethod, paymentMethod, loading, onSend, setStep, onRateLockExpire }) {
   const [expandedSection, setExpandedSection] = useState(null);
-
   const method = DELIVERY_METHODS.find(d => d.id === recipient?.deliveryMethod) || deliveryMethod;
+  const activeQuote = lockedQuote || quote;
 
   return (
     <div className="px-4 py-6">
@@ -565,7 +660,7 @@ function ReviewStep({ amountUsd, quote, recipient, deliveryMethod, paymentMethod
       <div className="bg-[#0A2540] text-white rounded-2xl p-5 mb-6">
         <div className="text-sm text-white/70 mb-1">Recipient receives</div>
         <div className="text-3xl font-bold mb-3">
-          ₱{quote?.amountPhp?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          ₱{activeQuote?.amountPhp?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
         </div>
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center gap-1">
@@ -575,18 +670,28 @@ function ReviewStep({ amountUsd, quote, recipient, deliveryMethod, paymentMethod
             <span>{method?.eta || 'Instant'}</span>
           </div>
           <div className="flex items-center gap-1">
-            <span>Rate: ₱{quote?.rate?.toFixed(2)}</span>
+            <span>Rate: ₱{activeQuote?.rate?.toFixed(2)}</span>
           </div>
           <div className="flex items-center gap-1 text-green-300">
             <span>No fees</span>
           </div>
         </div>
+        
+        {/* Rate lock timer */}
+        {lockedQuote && (
+          <div className="mt-4 pt-4 border-t border-white/20">
+            <FXLockTimer 
+              expiresAt={lockedQuote.expiresAt} 
+              onExpire={onRateLockExpire}
+            />
+          </div>
+        )}
       </div>
 
       {/* Collapsible Sections */}
       <div className="space-y-3">
         {/* Recipient */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className={`${tw.cardBg} rounded-xl border ${tw.borderOnLight} overflow-hidden`}>
           <button
             onClick={() => setExpandedSection(expandedSection === 'recipient' ? null : 'recipient')}
             className="w-full flex items-center justify-between p-4"
@@ -621,7 +726,7 @@ function ReviewStep({ amountUsd, quote, recipient, deliveryMethod, paymentMethod
         </div>
 
         {/* Payment Method */}
-        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className={`${tw.cardBg} rounded-xl border ${tw.borderOnLight} overflow-hidden`}>
           <button
             onClick={() => setExpandedSection(expandedSection === 'payment' ? null : 'payment')}
             className="w-full flex items-center justify-between p-4"
@@ -657,7 +762,7 @@ function ReviewStep({ amountUsd, quote, recipient, deliveryMethod, paymentMethod
         <button
           onClick={onSend}
           disabled={loading}
-          className="w-full bg-[#0A2540] text-white rounded-xl h-14 font-semibold text-lg disabled:opacity-50 hover:bg-[#061C33] transition"
+          className={`w-full ${tw.btnNavy} rounded-xl h-14 text-lg disabled:opacity-50 transition`}
           data-testid="send-confirm-btn"
         >
           {loading ? (
@@ -669,7 +774,7 @@ function ReviewStep({ amountUsd, quote, recipient, deliveryMethod, paymentMethod
               Processing...
             </span>
           ) : (
-            `Send ₱${quote?.amountPhp?.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+            `Send ₱${activeQuote?.amountPhp?.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
           )}
         </button>
       </div>
@@ -688,13 +793,13 @@ function ConfirmationStep({ transfer, onSendAnother, onGoHome }) {
         </svg>
       </div>
 
-      <h1 className="text-2xl font-bold text-[#1A1A1A] mb-2">Transfer sent!</h1>
-      <p className="text-gray-500 mb-6">
+      <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>Transfer sent!</h1>
+      <p className={`${tw.textOnLightMuted} mb-6`}>
         Your money is on its way to {transfer?.recipient?.fullName}
       </p>
 
       {/* Transfer Summary */}
-      <div className="bg-white rounded-2xl p-5 border border-gray-200 mb-6 text-left">
+      <div className={`${tw.cardBg} rounded-2xl p-5 border ${tw.borderOnLight} mb-6 text-left`}>
         <div className="flex items-center justify-between mb-4">
           <span className="text-gray-500">Amount</span>
           <span className="font-semibold">₱{transfer?.amountPhp?.toLocaleString()}</span>
@@ -718,7 +823,7 @@ function ConfirmationStep({ transfer, onSendAnother, onGoHome }) {
       <div className="space-y-3">
         <button
           onClick={onSendAnother}
-          className="w-full bg-[#0A2540] text-white rounded-xl h-12 font-semibold hover:bg-[#061C33] transition"
+          className={`w-full ${tw.btnNavy} rounded-xl h-12 transition`}
           data-testid="send-another-btn"
         >
           Send again
