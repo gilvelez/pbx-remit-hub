@@ -753,7 +753,7 @@ function ReviewStep({ amountUsd, quote, lockedQuote, recipient, deliveryMethod, 
         <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500 space-y-2">
           <p>• PBX earns revenue from the FX spread between currencies</p>
           <p>• Do you know your recipient? Transfers are final once completed</p>
-          <p>• You may cancel within 30 minutes if funds haven't been delivered</p>
+          <p>• You may cancel within 30 minutes if funds haven&apos;t been delivered</p>
         </div>
       </div>
 
