@@ -30,6 +30,15 @@ import Send from "./pages/app/Send.jsx";
 import Activity from "./pages/app/Activity.jsx";
 import Manage from "./pages/app/Manage.jsx";
 
+// Recipient Dashboard (Navy + Gold theme)
+import RecipientShell from "./components/RecipientShell.jsx";
+import RecipientDashboard from "./pages/recipient/Dashboard.jsx";
+import RecipientWallets from "./pages/recipient/Wallets.jsx";
+import RecipientConvert from "./pages/recipient/Convert.jsx";
+import RecipientBills from "./pages/recipient/Bills.jsx";
+import RecipientTransfers from "./pages/recipient/Transfers.jsx";
+import RecipientStatements from "./pages/recipient/Statements.jsx";
+
 // Legal Pages
 import Privacy from "./pages/Privacy.jsx";
 import DataRetention from "./pages/DataRetention.jsx";
