@@ -117,6 +117,23 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/app/home" replace />} />
       </Route>
 
+      {/* ========================================
+          RECIPIENT DASHBOARD (RecipientShell for /recipient/*)
+          Protected routes for Philippine-based recipients
+          USD/PHP wallets, FX conversion, bills, transfers
+         ======================================== */}
+      <Route path="/recipient" element={<ProtectedRoute><RecipientShell /></ProtectedRoute>}>
+        <Route index element={<Navigate to="/recipient/dashboard" replace />} />
+        <Route path="dashboard" element={<RecipientDashboard />} />
+        <Route path="wallets" element={<RecipientWallets />} />
+        <Route path="convert" element={<RecipientConvert />} />
+        <Route path="bills" element={<RecipientBills />} />
+        <Route path="transfers" element={<RecipientTransfers />} />
+        <Route path="statements" element={<RecipientStatements />} />
+        {/* Catch-all for unknown recipient routes */}
+        <Route path="*" element={<Navigate to="/recipient/dashboard" replace />} />
+      </Route>
+
       {/* Catch-all redirect */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
