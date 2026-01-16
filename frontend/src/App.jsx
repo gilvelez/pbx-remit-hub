@@ -1,10 +1,11 @@
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { SessionProvider, useSession } from "./contexts/SessionContext.jsx";
 import { injectThemeVariables } from "./lib/theme";
 
 // Layouts
-import AppShell from "./components/AppShell.jsx";
+import SenderShell from "./components/SenderShell.jsx";
+import RecipientShell from "./components/RecipientShell.jsx";
 import PublicShell from "./components/PublicShell.jsx";
 
 // Marketing Pages (Dark Theme - wrapped in PublicShell)
@@ -18,20 +19,19 @@ import Roadmap from "./pages/Roadmap.jsx";
 import Login from "./pages/Login.jsx";
 import Verify from "./pages/Verify.jsx";
 
-// New Onboarding (Remitly-style)
+// Onboarding (with role selection)
 import Welcome from "./pages/onboarding/Welcome.jsx";
 import PhoneOTP from "./pages/onboarding/PhoneOTP.jsx";
 import ConnectBank from "./pages/onboarding/ConnectBank.jsx";
 import AddRecipient from "./pages/onboarding/AddRecipient.jsx";
 
-// App Pages (Light Theme - wrapped in AppShell)
+// Sender Pages (for employers/businesses)
 import Home from "./pages/app/Home.jsx";
 import Send from "./pages/app/Send.jsx";
 import Activity from "./pages/app/Activity.jsx";
 import Manage from "./pages/app/Manage.jsx";
 
-// Recipient Dashboard (Navy + Gold theme)
-import RecipientShell from "./components/RecipientShell.jsx";
+// Recipient Pages (for end users receiving payments)
 import RecipientDashboard from "./pages/recipient/Dashboard.jsx";
 import RecipientWallets from "./pages/recipient/Wallets.jsx";
 import RecipientConvert from "./pages/recipient/Convert.jsx";
@@ -77,22 +77,25 @@ function AppRoutes() {
       <Route path="/roadmap" element={<PublicShell><Roadmap /></PublicShell>} />
 
       {/* ========================================
-          AUTH & ONBOARDING (Navy theme background)
-          New Remitly-style progressive onboarding
+          AUTH & ONBOARDING
+          Role selection determines UX path
          ======================================== */}
       <Route path="/login" element={<Login />} />
       <Route path="/verify" element={<Verify />} />
       
-      {/* Progressive Onboarding Flow */}
+      {/* Progressive Onboarding Flow with Role Selection */}
       <Route path="/welcome" element={<Welcome />} />
       <Route path="/onboarding/phone" element={<PhoneOTP />} />
       <Route path="/onboarding/bank" element={<ConnectBank />} />
       <Route path="/onboarding/recipient" element={<AddRecipient />} />
       
-      {/* Redirect old onboarding routes to new welcome flow */}
+      {/* Redirect old routes */}
       <Route path="/onboarding/personal" element={<Navigate to="/welcome" replace />} />
       <Route path="/onboarding/business" element={<Navigate to="/welcome" replace />} />
       <Route path="/get-started" element={<Navigate to="/welcome" replace />} />
+      
+      {/* Redirect old /app/* to /sender/* */}
+      <Route path="/app/*" element={<Navigate to="/sender/dashboard" replace />} />
 
       {/* ========================================
           LEGAL PAGES (Dark Theme with PublicShell)
@@ -103,26 +106,28 @@ function AppRoutes() {
       <Route path="/security" element={<PublicShell><Security /></PublicShell>} />
 
       {/* ========================================
-          APP PAGES (AppShell enforced for /app/*)
-          Protected routes with 4-tab navigation
-          Navy shell, off-white cards for readability
+          SENDER ROUTES (/sender/*)
+          For employers, businesses, and payers
+          Shows: Dashboard, Send, Recipients, Activity, Settings
+          NEVER shows: Wallets, FX locks, Bills, GCash/Maya
          ======================================== */}
-      <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
-        <Route index element={<Navigate to="/app/home" replace />} />
-        <Route path="home" element={<Home />} />
+      <Route path="/sender" element={<SenderProtectedRoute><SenderShell /></SenderProtectedRoute>}>
+        <Route index element={<Navigate to="/sender/dashboard" replace />} />
+        <Route path="dashboard" element={<Home />} />
         <Route path="send" element={<Send />} />
+        <Route path="recipients" element={<Manage />} />
         <Route path="activity" element={<Activity />} />
-        <Route path="manage" element={<Manage />} />
-        {/* Catch-all for unknown app routes */}
-        <Route path="*" element={<Navigate to="/app/home" replace />} />
+        <Route path="settings" element={<Manage />} />
+        <Route path="*" element={<Navigate to="/sender/dashboard" replace />} />
       </Route>
 
       {/* ========================================
-          RECIPIENT DASHBOARD (RecipientShell for /recipient/*)
-          Protected routes for Philippine-based recipients
-          USD/PHP wallets, FX conversion, bills, transfers
+          RECIPIENT ROUTES (/recipient/*)
+          For end users receiving USD payments
+          Shows: Dashboard, Wallets, Convert, Bills, Transfers, Statements
+          NEVER shows: Batch payouts, Recipient management, Payroll tools
          ======================================== */}
-      <Route path="/recipient" element={<ProtectedRoute><RecipientShell /></ProtectedRoute>}>
+      <Route path="/recipient" element={<RecipientProtectedRoute><RecipientShell /></RecipientProtectedRoute>}>
         <Route index element={<Navigate to="/recipient/dashboard" replace />} />
         <Route path="dashboard" element={<RecipientDashboard />} />
         <Route path="wallets" element={<RecipientWallets />} />
@@ -130,7 +135,6 @@ function AppRoutes() {
         <Route path="bills" element={<RecipientBills />} />
         <Route path="transfers" element={<RecipientTransfers />} />
         <Route path="statements" element={<RecipientStatements />} />
-        {/* Catch-all for unknown recipient routes */}
         <Route path="*" element={<Navigate to="/recipient/dashboard" replace />} />
       </Route>
 
@@ -140,13 +144,18 @@ function AppRoutes() {
   );
 }
 
-// Protected Route - requires session and verification
-function ProtectedRoute({ children }) {
+/**
+ * SenderProtectedRoute - Access control for sender routes
+ * Only allows users with role='sender' (or no role set for backwards compat)
+ * Blocks recipient users from accessing sender routes
+ */
+function SenderProtectedRoute({ children }) {
   const { session } = useSession();
+  const location = useLocation();
   
   // Not logged in → redirect to welcome
   if (!session.exists) {
-    return <Navigate to="/welcome" replace />;
+    return <Navigate to="/welcome" replace state={{ from: location }} />;
   }
   
   // Not verified → redirect to verify
@@ -154,5 +163,39 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/verify" replace />;
   }
   
+  // Recipient users CANNOT access sender routes
+  if (session.role === 'recipient') {
+    return <Navigate to="/recipient/dashboard" replace />;
+  }
+  
+  // Allow sender users or users without role set (backwards compat)
+  return children;
+}
+
+/**
+ * RecipientProtectedRoute - Access control for recipient routes
+ * Only allows users with role='recipient'
+ * Blocks sender users from accessing recipient routes
+ */
+function RecipientProtectedRoute({ children }) {
+  const { session } = useSession();
+  const location = useLocation();
+  
+  // Not logged in → redirect to welcome
+  if (!session.exists) {
+    return <Navigate to="/welcome" replace state={{ from: location }} />;
+  }
+  
+  // Not verified → redirect to verify
+  if (!session.verified) {
+    return <Navigate to="/verify" replace />;
+  }
+  
+  // Sender users CANNOT access recipient routes
+  if (session.role === 'sender' || (!session.role && session.exists)) {
+    return <Navigate to="/sender/dashboard" replace />;
+  }
+  
+  // Allow recipient users only
   return children;
 }
