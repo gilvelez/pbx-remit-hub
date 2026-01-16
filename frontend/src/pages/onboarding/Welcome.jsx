@@ -1,6 +1,7 @@
 /**
- * Welcome - First step in progressive Remitly-style onboarding
- * Flow: Welcome → Corridor → Signup → (Phone OTP → Connect Bank → Add Recipient)
+ * Welcome - First step in onboarding
+ * CRITICAL: Role selection determines entire UX path
+ * Flow: Welcome → Role Selection → Corridor → Signup → (Phone OTP → Connect Bank → Add Recipient)
  */
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
@@ -9,6 +10,7 @@ import { tw } from "../../lib/theme";
 
 const STEPS = {
   WELCOME: 'welcome',
+  ROLE: 'role',           // NEW: Role selection step
   CORRIDOR: 'corridor',
   SIGNUP: 'signup',
   ACCOUNT_TYPE: 'account_type',
@@ -22,6 +24,7 @@ export default function Welcome() {
   // Form data
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState(null);  // 'sender' or 'recipient'
   const [accountType, setAccountType] = useState('personal');
 
   const handleSignup = (e) => {
@@ -31,10 +34,28 @@ export default function Welcome() {
     setStep(STEPS.ACCOUNT_TYPE);
   };
 
+  const handleRoleSelection = (selectedRole) => {
+    setRole(selectedRole);
+    // Save role to session immediately
+    setSession(prev => ({ ...prev, role: selectedRole }));
+    setStep(STEPS.CORRIDOR);
+  };
+
   const handleAccountType = () => {
-    setSession(prev => ({ ...prev, accountType }));
+    setSession(prev => ({ ...prev, accountType, role }));
     // Next step: Phone OTP (separate page)
     navigate('/onboarding/phone');
+  };
+
+  // Calculate progress based on current step
+  const getProgressStep = () => {
+    switch (step) {
+      case STEPS.ROLE: return 1;
+      case STEPS.CORRIDOR: return 2;
+      case STEPS.SIGNUP: return 3;
+      case STEPS.ACCOUNT_TYPE: return 4;
+      default: return 0;
+    }
   };
 
   return (
@@ -62,24 +83,32 @@ export default function Welcome() {
       {step !== STEPS.WELCOME && (
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex gap-2">
-            <div className={`flex-1 h-1 rounded-full ${step === STEPS.CORRIDOR || step === STEPS.SIGNUP || step === STEPS.ACCOUNT_TYPE ? 'bg-[#F6C94B]' : 'bg-white/20'}`} />
-            <div className={`flex-1 h-1 rounded-full ${step === STEPS.SIGNUP || step === STEPS.ACCOUNT_TYPE ? 'bg-[#F6C94B]' : 'bg-white/20'}`} />
-            <div className="flex-1 h-1 rounded-full bg-white/20" />
-            <div className="flex-1 h-1 rounded-full bg-white/20" />
+            {[1, 2, 3, 4].map((i) => (
+              <div 
+                key={i}
+                className={`flex-1 h-1 rounded-full ${getProgressStep() >= i ? 'bg-[#F6C94B]' : 'bg-white/20'}`} 
+              />
+            ))}
           </div>
-          <p className={`text-xs ${tw.textOnDarkMuted} mt-2`}>Step 1 of 4</p>
+          <p className={`text-xs ${tw.textOnDarkMuted} mt-2`}>Step {getProgressStep()} of 4</p>
         </div>
       )}
 
       {/* Content */}
       <main className="max-w-lg mx-auto px-4 py-6">
         {step === STEPS.WELCOME && (
-          <WelcomeStep onContinue={() => setStep(STEPS.CORRIDOR)} />
+          <WelcomeStep onContinue={() => setStep(STEPS.ROLE)} />
+        )}
+
+        {step === STEPS.ROLE && (
+          <div className={`${tw.cardBg} rounded-2xl p-6 shadow-lg`}>
+            <RoleSelectionStep onSelect={handleRoleSelection} />
+          </div>
         )}
 
         {step === STEPS.CORRIDOR && (
           <div className={`${tw.cardBg} rounded-2xl p-6 shadow-lg`}>
-            <CorridorStep onContinue={() => setStep(STEPS.SIGNUP)} />
+            <CorridorStep role={role} onContinue={() => setStep(STEPS.SIGNUP)} />
           </div>
         )}
 
@@ -98,6 +127,7 @@ export default function Welcome() {
         {step === STEPS.ACCOUNT_TYPE && (
           <div className={`${tw.cardBg} rounded-2xl p-6 shadow-lg`}>
             <AccountTypeStep
+              role={role}
               accountType={accountType}
               setAccountType={setAccountType}
               onContinue={handleAccountType}
@@ -105,6 +135,13 @@ export default function Welcome() {
           </div>
         )}
       </main>
+
+      {/* Compliance Footer */}
+      <footer className="max-w-lg mx-auto px-4 py-6">
+        <p className="text-xs text-center text-white/40">
+          PBX is a technology platform facilitating payment routing and settlement through licensed third-party financial institutions. PBX does not hold customer deposits or provide banking or remittance services.
+        </p>
+      </footer>
     </div>
   );
 }
@@ -120,8 +157,8 @@ function WelcomeStep({ onContinue }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      title: "Send money instantly",
-      subtitle: "Transfer to the Philippines in seconds with GCash, Maya, or bank deposit"
+      title: "Send & receive payments",
+      subtitle: "Fast, secure transfers between the US and Philippines"
     },
     {
       icon: (
@@ -130,7 +167,7 @@ function WelcomeStep({ onContinue }) {
         </svg>
       ),
       title: "Safe & secure",
-      subtitle: "Bank-level encryption protects your money and personal information"
+      subtitle: "Bank-level encryption protects your money and data"
     },
     {
       icon: (
@@ -139,7 +176,7 @@ function WelcomeStep({ onContinue }) {
         </svg>
       ),
       title: "Great rates, no fees",
-      subtitle: "Get competitive exchange rates with zero transfer fees"
+      subtitle: "Competitive exchange rates with transparent pricing"
     }
   ];
 
@@ -191,11 +228,79 @@ function WelcomeStep({ onContinue }) {
   );
 }
 
-// Corridor Selection Step
-function CorridorStep({ onContinue }) {
+// NEW: Role Selection Step - MANDATORY
+function RoleSelectionStep({ onSelect }) {
   return (
     <div>
-      <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>Where are you sending?</h1>
+      <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>How will you use PBX?</h1>
+      <p className={`${tw.textOnLightMuted} mb-6`}>This determines your dashboard and available features</p>
+
+      <div className="space-y-4">
+        {/* Sender Option */}
+        <button
+          onClick={() => onSelect('sender')}
+          className="w-full flex items-start gap-4 p-5 bg-white rounded-xl border-2 border-gray-200 hover:border-[#0A2540] transition text-left group"
+          data-testid="role-sender"
+        >
+          <div className="w-14 h-14 rounded-full bg-[#0A2540]/10 flex items-center justify-center flex-shrink-0">
+            <svg className="w-7 h-7 text-[#0A2540]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-[#0A2540] text-lg mb-1">I am sending payments</div>
+            <div className="text-sm text-gray-500">
+              Employer, business, or payer sending funds to recipients in the Philippines
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="text-xs bg-gray-100 px-2 py-1 rounded">Batch payouts</span>
+              <span className="text-xs bg-gray-100 px-2 py-1 rounded">Recipient management</span>
+              <span className="text-xs bg-gray-100 px-2 py-1 rounded">Reports</span>
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-gray-400 group-hover:text-[#0A2540] flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        {/* Recipient Option */}
+        <button
+          onClick={() => onSelect('recipient')}
+          className="w-full flex items-start gap-4 p-5 bg-white rounded-xl border-2 border-gray-200 hover:border-[#0A2540] transition text-left group"
+          data-testid="role-recipient"
+        >
+          <div className="w-14 h-14 rounded-full bg-[#C9A24D]/10 flex items-center justify-center flex-shrink-0">
+            <svg className="w-7 h-7 text-[#C9A24D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+            </svg>
+          </div>
+          <div className="flex-1">
+            <div className="font-semibold text-[#0A2540] text-lg mb-1">I am receiving payments</div>
+            <div className="text-sm text-gray-500">
+              Recipient or end user receiving USD income from employers or platforms
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="text-xs bg-[#C9A24D]/10 text-[#C9A24D] px-2 py-1 rounded">USD wallet</span>
+              <span className="text-xs bg-[#C9A24D]/10 text-[#C9A24D] px-2 py-1 rounded">FX conversion</span>
+              <span className="text-xs bg-[#C9A24D]/10 text-[#C9A24D] px-2 py-1 rounded">Pay bills</span>
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-gray-400 group-hover:text-[#0A2540] flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Corridor Selection Step
+function CorridorStep({ role, onContinue }) {
+  return (
+    <div>
+      <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>
+        {role === 'sender' ? 'Where are you sending?' : 'Where are you receiving from?'}
+      </h1>
       <p className={`${tw.textOnLightMuted} mb-6`}>Select your transfer corridor</p>
 
       <button
@@ -205,11 +310,13 @@ function CorridorStep({ onContinue }) {
       >
         <div className="flex items-center gap-2">
           <span className="text-2xl">🇺🇸</span>
-          <span className="text-gray-400">→</span>
+          <span className="text-gray-400">{role === 'sender' ? '→' : '←'}</span>
           <span className="text-2xl">🇵🇭</span>
         </div>
         <div className="text-left flex-1">
-          <div className="font-semibold text-[#1A1A1A]">United States → Philippines</div>
+          <div className="font-semibold text-[#1A1A1A]">
+            {role === 'sender' ? 'United States → Philippines' : 'United States → Philippines'}
+          </div>
           <div className="text-sm text-gray-500">USD to PHP</div>
         </div>
         <div className="w-6 h-6 rounded-full bg-[#0A2540] flex items-center justify-center">
@@ -304,7 +411,58 @@ function SignupStep({ email, setEmail, password, setPassword, onSubmit }) {
 }
 
 // Account Type Step
-function AccountTypeStep({ accountType, setAccountType, onContinue }) {
+function AccountTypeStep({ role, accountType, setAccountType, onContinue }) {
+  // For recipients, skip this step or show different options
+  if (role === 'recipient') {
+    return (
+      <div>
+        <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>Almost there!</h1>
+        <p className={`${tw.textOnLightMuted} mb-6`}>
+          Your recipient account is being set up. You&apos;ll be able to receive USD and convert to PHP.
+        </p>
+
+        <div className="bg-[#C9A24D]/10 border border-[#C9A24D]/20 rounded-xl p-4 mb-6">
+          <h3 className="font-medium text-[#0A2540] mb-2">What you can do:</h3>
+          <ul className="space-y-2 text-sm text-gray-600">
+            <li className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#C9A24D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Hold USD in your wallet
+            </li>
+            <li className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#C9A24D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Convert USD to PHP at great rates
+            </li>
+            <li className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#C9A24D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Pay bills directly from your balance
+            </li>
+            <li className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#C9A24D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Transfer to GCash, Maya, or bank
+            </li>
+          </ul>
+        </div>
+
+        <button
+          onClick={onContinue}
+          className={`w-full ${tw.btnNavy} rounded-xl h-12 transition`}
+          data-testid="account-type-continue"
+        >
+          Continue
+        </button>
+      </div>
+    );
+  }
+
+  // For senders, show business/personal selection
   return (
     <div>
       <h1 className={`text-2xl font-bold ${tw.textOnLight} mb-2`}>What type of account?</h1>
