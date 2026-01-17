@@ -217,6 +217,16 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 17, 2025 - OpenExchangeRates FX API & Phone Country Code
+- ✅ Integrated OpenExchangeRates API for live USD/PHP rates
+- ✅ Fallback to mock rate (56.25) when API unavailable
+- ✅ FX source tracked in responses and ledger ("live" or "mock")
+- ✅ Added country code selector to phone input
+- ✅ Philippines (+63) and US (+1) pinned at top of dropdown
+- ✅ Role-based default: Recipients → +63, Senders → +1
+- ✅ Search functionality in country dropdown
+- ✅ E.164 format stored in session (countryCode + phone)
+
 ### January 17, 2025 - Fund Wallet (Simulation) Feature
 - ✅ Added POST /api/recipient/wallet/fund endpoint
 - ✅ Credits USD wallet with max $5,000 per request
