@@ -222,6 +222,90 @@ async def get_wallet(request: Request):
         raise HTTPException(status_code=500, detail="Failed to get wallet")
 
 
+# === Test Funding (Simulation Only) ===
+class FundWalletRequest(BaseModel):
+    amount: float = Field(..., gt=0, le=5000, description="Amount to fund (max $5,000)")
+
+
+@router.post("/wallet/fund")
+async def fund_wallet_simulation(request: Request, data: FundWalletRequest):
+    """
+    [DEV/DEMO ONLY] Simulate funding the USD wallet.
+    
+    This is for testing purposes only - no real money is involved.
+    Funds are credited to the USD wallet and recorded in the ledger
+    with type "simulated_credit".
+    
+    Max funding per request: $5,000
+    """
+    user_id = get_user_id_from_headers(request)
+    
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No session token provided")
+    
+    if data.amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be positive")
+    
+    if data.amount > 5000:
+        raise HTTPException(status_code=400, detail="Maximum funding amount is $5,000 per request")
+    
+    try:
+        db = get_database()
+        wallets = db.wallets
+        
+        # Ensure wallet exists
+        await get_or_create_wallet(db, user_id)
+        
+        now = utc_now()
+        
+        # Credit USD wallet
+        result = await wallets.update_one(
+            {"user_id": user_id},
+            {
+                "$inc": {"usd_balance": data.amount},
+                "$set": {"updated_at": now}
+            }
+        )
+        
+        if result.modified_count == 0:
+            raise HTTPException(status_code=500, detail="Failed to credit wallet")
+        
+        # Record in ledger with clear simulation flag
+        txn_id = await record_transaction(
+            db, user_id,
+            txn_type="simulated_credit",
+            category="Test Funding",
+            description=f"Demo credit - ${data.amount:.2f} USD (simulation only)",
+            currency="USD",
+            amount=data.amount,  # Positive for incoming
+            metadata={
+                "is_simulation": True,
+                "note": "DEV/DEMO ONLY - Not real funds"
+            }
+        )
+        
+        # Get updated wallet
+        wallet = await wallets.find_one({"user_id": user_id}, {"_id": 0})
+        
+        logger.info(f"[SIMULATION] Wallet funded: user_id={user_id}, amount=${data.amount}")
+        
+        return {
+            "success": True,
+            "transaction_id": txn_id,
+            "amount": data.amount,
+            "currency": "USD",
+            "new_balance": wallet["usd_balance"],
+            "is_simulation": True,
+            "message": "Test funding completed (simulation only - no real money)"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error funding wallet: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fund wallet")
+
+
 # === FX Conversion Endpoints ===
 @router.get("/convert")
 async def get_fx_quote(amount_usd: float = 100):
