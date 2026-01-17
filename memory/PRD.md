@@ -217,6 +217,13 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 17, 2025 - Netlify Deploy Fix (MongoDB Graceful Fallback)
+- ✅ Added `mongodb` to root package.json dependencies
+- ✅ Generated package-lock.json for Netlify build
+- ✅ Updated all recipient Netlify functions to gracefully handle missing MONGODB_URI
+- ✅ Functions return mock data when DB unavailable (DB_MODE=mock vs live in logs)
+- ✅ No breaking changes to sender flow
+
 ### January 17, 2025 - OpenExchangeRates FX API & Phone Country Code
 - ✅ Integrated OpenExchangeRates API for live USD/PHP rates
 - ✅ Fallback to mock rate (56.25) when API unavailable
