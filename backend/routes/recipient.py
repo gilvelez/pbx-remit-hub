@@ -13,17 +13,24 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
 import random
 import logging
+import os
+import httpx
 
 from database.connection import get_database
 
 router = APIRouter(prefix="/api/recipient", tags=["recipient"])
 logger = logging.getLogger(__name__)
 
+# === FX Configuration ===
+OPENEXCHANGERATES_API_KEY = os.environ.get("OPENEXCHANGERATES_API_KEY", "")
+OPENEXCHANGERATES_BASE_URL = "https://openexchangerates.org/api"
+FX_API_TIMEOUT = 10.0  # seconds
+
 # === Constants ===
 PBX_SPREAD_BPS = 50  # 0.50% spread
 BANK_SPREAD_BPS = 250  # 2.5% typical bank spread
 RATE_LOCK_DURATION_SECONDS = 15 * 60  # 15 minutes
-BASE_FX_RATE = 56.25  # Base USD/PHP rate (mock - would come from external API)
+MOCK_FX_RATE = 56.25  # Fallback USD/PHP rate when API unavailable
 
 # === Static Reference Data ===
 BILLERS = [
