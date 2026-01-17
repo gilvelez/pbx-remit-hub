@@ -43,7 +43,7 @@ export default function MagicLinkHandler() {
         }
 
         if (!response.ok) {
-          throw new Error(data.detail || "Verification failed");
+          throw new Error(data.detail || "Invalid or expired link");
         }
 
         // Set session in localStorage
