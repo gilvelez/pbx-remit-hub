@@ -102,6 +102,12 @@ export default function Home() {
         <h3 className={`font-medium ${tw.textOnLight} mb-4`}>Why choose PBX?</h3>
         <div className="space-y-3">
           <TrustItem 
+            icon={<svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+            bgColor="bg-green-100"
+            title="PBX-to-PBX: Instant & Free"
+            subtitle="Send to PBX users with zero fees"
+          />
+          <TrustItem 
             icon={<svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
             bgColor="bg-green-100"
             title="No hidden fees"
@@ -118,12 +124,6 @@ export default function Home() {
             bgColor="bg-amber-100"
             title="15-min rate lock"
             subtitle="Lock your rate, no surprises"
-          />
-          <TrustItem 
-            icon={<svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>}
-            bgColor="bg-purple-100"
-            title="Bank-level security"
-            subtitle="Your money is protected"
           />
         </div>
       </div>
