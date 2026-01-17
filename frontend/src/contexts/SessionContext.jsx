@@ -109,28 +109,10 @@ export function SessionProvider({ children }) {
     auditLog('SESSION_LOGOUT');
   };
 
-  // Update user role (also saves to backend)
+  // Update user role (backend persistence handled by useEffect when token is available)
   const setRole = async (role) => {
-    setSession((prev) => ({ ...prev, role }));
+    setSession((prev) => ({ ...prev, role, _rolePersisted: false }));
     auditLog('ROLE_SET', { role });
-    
-    // Persist to backend if we have a session token
-    if (session.token) {
-      try {
-        const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-        await fetch(`${backendUrl}/api/users/role`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Session-Token': session.token,
-          },
-          body: JSON.stringify({ role }),
-        });
-      } catch (err) {
-        console.error('Failed to save role to backend:', err);
-        // Continue anyway - role is saved in localStorage
-      }
-    }
   };
 
   return (
