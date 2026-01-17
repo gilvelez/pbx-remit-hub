@@ -5,7 +5,18 @@ Build a dual-UX financial platform (PBX) for cross-border money transfers betwee
 - **Senders** (Employers/Businesses): Manage payroll, batch payments, recipient management
 - **Recipients** (End Users): Receive USD, convert to PHP, pay bills, transfer funds
 
+**Core Feature: PBX Closed-Loop Transfers** - The primary UX is PBX-to-PBX instant, free USD transfers. This is the default option when sending money.
+
 ## 🔒 HARD RULES (Locked In)
+
+### PBX-to-PBX Closed-Loop Transfers (P0)
+- **Default Option**: PBX-to-PBX is the RECOMMENDED send option
+- **Instant & Free**: Zero fees, instant delivery
+- **USD Only**: Internal transfers are in USD
+- **Transfer Limits**: $5,000/transaction, $25,000/day per sender
+- **User Lookup**: By email OR phone (exact match, case-insensitive for email)
+- **Atomic Ledger**: Two entries per transfer (sender out, recipient in)
+- **Self-Transfer Prevention**: Cannot send to yourself
 
 ### Dual-UX Architecture
 - **Role Selection**: Mandatory question during onboarding determines UX path
