@@ -265,13 +265,13 @@ Dark theme: neutral-950, amber-400, red-600
   - Delivery tracking
   - Rate limiting (2-3 min window)
   - Graceful degradation without API keys
-- [x] **Enhanced Add Recipient (P0)** ✅
-  - PBX Wallet as default delivery method with "Recommended" badge
-  - PBX Friends tab with user search (name/@username/phone/email)
-  - Manual Details tab with all delivery methods
-  - Invite via SMS/Email for non-PBX users
-  - Dynamic form fields based on delivery method
-  - Venmo/Cash App/Zelle-like UX
+- [x] **Social Network Features (P0)** ✅
+  - People tab with Friends/Requests sections
+  - Friend requests (add/accept/decline/block/unfriend)
+  - User search by name/@username/phone/email
+  - 1:1 Chat threads (iMessage-style)
+  - In-chat PBX payments with payment bubbles
+  - Navigation: Home, Send, People, Activity, Settings
 
 ### P1 (High Priority)
 - [ ] Plaid integration for sender flow
