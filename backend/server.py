@@ -37,6 +37,7 @@ from routes.plaid import router as plaid_router
 from routes.recipient import router as recipient_router
 from routes.users import router as users_router
 from routes.internal_transfers import router as internal_router
+from routes.auth import router as auth_router
 
 # Import utilities
 from utils.user_helper import get_user_id, get_user_id_from_request
