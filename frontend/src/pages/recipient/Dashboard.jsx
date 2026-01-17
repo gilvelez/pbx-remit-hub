@@ -1,30 +1,34 @@
 /**
  * Recipient Dashboard - One-glance financial control
- * Shows USD/PHP balances, live FX rate, recent activity
+ * Shows USD/PHP balances, live FX rate, recent activity, incoming PBX transfers
  */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getWalletBalances, getFxQuote, getStatements } from "../../lib/recipientApi";
+import { getIncomingTransfers } from "../../lib/internalApi";
 
 export default function RecipientDashboard() {
   const navigate = useNavigate();
   const [wallet, setWallet] = useState(null);
   const [fxQuote, setFxQuote] = useState(null);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [incomingTransfers, setIncomingTransfers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Fetch data on mount
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [walletData, fxData, statementsData] = await Promise.all([
+        const [walletData, fxData, statementsData, incomingData] = await Promise.all([
           getWalletBalances(),
           getFxQuote(100),
           getStatements({ limit: 5 }),
+          getIncomingTransfers(5).catch(() => ({ transfers: [] })),
         ]);
         setWallet(walletData);
         setFxQuote(fxData);
         setRecentActivity(statementsData.transactions || []);
+        setIncomingTransfers(incomingData.transfers || []);
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
       } finally {
