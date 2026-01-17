@@ -39,6 +39,7 @@ import RecipientConvert from "./pages/recipient/Convert.jsx";
 import RecipientBills from "./pages/recipient/Bills.jsx";
 import RecipientTransfers from "./pages/recipient/Transfers.jsx";
 import RecipientStatements from "./pages/recipient/Statements.jsx";
+import NotificationSettings from "./pages/recipient/NotificationSettings.jsx";
 
 // Legal Pages
 import Privacy from "./pages/Privacy.jsx";
