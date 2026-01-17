@@ -272,6 +272,16 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 17, 2025 - Enhanced Add Recipient with PBX-to-PBX (P0 COMPLETE)
+- ✅ Added "PBX Wallet (Instant)" as first delivery method with "Recommended" badge
+- ✅ Created Venmo/Cash App-style "PBX Friends" and "Manual Details" tabs
+- ✅ Implemented PBX user search (name/@username/phone/email)
+- ✅ Added invite flow for non-PBX users (SMS/Email)
+- ✅ Dynamic form fields: PBX Wallet needs phone/email, GCash/Maya needs phone, Bank needs account
+- ✅ Info text: "Fastest option — funds stay in PBX and can be used anytime"
+- ✅ User search endpoint: `/api/users/search?q=...`
+- ✅ Tests: 13/13 backend, 100% frontend UI verified
+
 ### January 17, 2025 - Email + SMS Notification System (P0 COMPLETE)
 - ✅ Implemented `/api/notifications/preferences` - User SMS/Email preferences
 - ✅ Implemented `/api/notifications/status` - Provider status (Resend/Twilio)
