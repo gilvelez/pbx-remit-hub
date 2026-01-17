@@ -316,7 +316,7 @@ def build_email_pbx_to_pbx_recipient(
 '''
     
     return {
-        "subject": f"You received money on PBX",
+        "subject": "You received money on PBX",
         "html": html
     }
 
