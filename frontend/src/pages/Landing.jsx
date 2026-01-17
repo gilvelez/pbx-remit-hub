@@ -63,6 +63,13 @@ export default function Landing() {
           <p className="text-xl md:text-2xl text-gray-200 mb-4 max-w-3xl mx-auto">
             The all-in-one platform to <span className="text-amber-400 font-semibold">send, save, and earn</span> — for Filipinos at home and abroad.
           </p>
+          
+          {/* PBX-to-PBX Highlight */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border border-green-500/40 mb-4">
+            <span className="text-green-400">⚡</span>
+            <span className="text-sm font-semibold text-green-300">Send to PBX users instantly — free, no fees</span>
+          </div>
+          
           <p className="text-sm text-gray-400 mb-8">
             Built in the United States • No fees • Instant delivery to GCash & Maya
           </p>
