@@ -170,7 +170,7 @@ async def lookup_pbx_user(request: Request, data: UserLookupRequest):
 
 
 @router.post("/transfer")
-async def create_internal_transfer(request: Request, data: InternalTransferRequest):
+async def create_internal_transfer(request: Request, background_tasks: BackgroundTasks, data: InternalTransferRequest):
     """
     Execute an instant PBX-to-PBX internal transfer.
     
@@ -180,6 +180,7 @@ async def create_internal_transfer(request: Request, data: InternalTransferReque
     - Max $5,000 per transaction
     - Max $25,000 per day per sender
     - Creates ledger entries for both sender and recipient
+    - Sends email + SMS notifications to recipient
     """
     sender_id = get_user_id_from_headers(request)
     if not sender_id:
