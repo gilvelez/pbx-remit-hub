@@ -9,13 +9,34 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 
 ## 🔒 HARD RULES (Locked In)
 
+### Account Types - Phase 1 (P0 - COMPLETE ✅ Jan 2026)
+- **Personal Account (People)**: @username, display name, avatar, friends system, social chat
+- **Business Account**: Business name, @businesshandle, square logo, category, "Business" badge
+- **One Login, Multi-Profile**: User → Profiles (personal + business) like Instagram account switching
+- **Profile Switcher**: Top-right dropdown to switch between personal/business profiles
+- **Friendships are Personal-only**: Businesses do NOT have friends, only transactional chats
+
+### 6-Tab Navigation (P0 - COMPLETE ✅ Jan 2026)
+- **Home**: Balance summary (USD + PHP), quick actions (Send PBX, Send External), recent activity, recent chats
+- **Send**: External transfers (GCash, Maya, Bank, Cash Pickup)
+- **People**: Personal friends only - search, requests, friends list
+- **Businesses**: Business discovery, search, categories, recently paid businesses
+- **Activity**: Transaction history
+- **Settings**: Profile management, notification preferences, add business profile
+
 ### Social Network Features (P0 - COMPLETE)
 - **People Tab**: Friends list, search by @username/name/phone/email
 - **Friend Requests**: Add/Accept/Decline/Block/Unfriend like Instagram
 - **Chat Threads**: 1:1 iMessage-style chat for each friend
 - **In-Chat Payments**: Send PBX inside chat, appears as payment bubbles
-- **Navigation**: Home, Send, People, Activity, Settings
 - **No "Add Recipient"**: Users add friends, not recipients
+
+### Business Features (P0 - COMPLETE ✅ Jan 2026)
+- **Businesses Tab**: Separate from People, for business discovery
+- **Business Search**: By business name or @businesshandle
+- **Business Categories**: Retail, Food & Dining, Services, Health, Entertainment, etc.
+- **Business Chat**: Person↔Business, Business↔Business (no friendship required)
+- **Pay Business**: In-chat payments to businesses
 
 ### PBX-to-PBX Closed-Loop Transfers (P0)
 - **Default Option**: PBX-to-PBX is the RECOMMENDED send option
