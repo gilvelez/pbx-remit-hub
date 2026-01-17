@@ -4,7 +4,7 @@
  */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getWalletBalances, getFxQuote, allocateSubWallet } from "../../lib/recipientApi";
+import { getWalletBalances, getFxQuote, allocateSubWallet, fundWalletSimulation } from "../../lib/recipientApi";
 
 export default function Wallets() {
   const navigate = useNavigate();
@@ -13,6 +13,13 @@ export default function Wallets() {
   const [loading, setLoading] = useState(true);
   const [allocateModal, setAllocateModal] = useState(null);
   const [allocateAmount, setAllocateAmount] = useState('');
+  
+  // Test funding state
+  const [showFundModal, setShowFundModal] = useState(false);
+  const [fundAmount, setFundAmount] = useState('');
+  const [fundLoading, setFundLoading] = useState(false);
+  const [fundError, setFundError] = useState('');
+  const [fundSuccess, setFundSuccess] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
