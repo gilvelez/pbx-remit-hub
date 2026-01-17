@@ -58,8 +58,9 @@ export default function AddRecipient() {
     
     setTimeout(() => {
       setLoading(false);
-      // Navigate to App Home - Send will have saved recipient ready
-      navigate('/app/home');
+      // Navigate based on user role
+      const targetRoute = session?.role === 'recipient' ? '/recipient/dashboard' : '/sender/dashboard';
+      navigate(targetRoute);
     }, 500);
   };
 
@@ -71,7 +72,9 @@ export default function AddRecipient() {
       verified: true,
       onboardingComplete: true,
     }));
-    navigate('/app/home');
+    // Navigate based on user role
+    const targetRoute = session?.role === 'recipient' ? '/recipient/dashboard' : '/sender/dashboard';
+    navigate(targetRoute);
   };
 
   return (
