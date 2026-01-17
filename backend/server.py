@@ -574,6 +574,7 @@ app.include_router(users_router)
 app.include_router(internal_router)
 app.include_router(auth_router)
 app.include_router(notification_router)
+app.include_router(social_router)
 
 # CORS middleware - only allow specific origins when using credentials
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
