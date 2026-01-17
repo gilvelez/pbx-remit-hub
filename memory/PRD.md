@@ -144,6 +144,19 @@ Dark theme: neutral-950, amber-400, red-600
 | `/api/internal/incoming` | GET | Get incoming PBX transfers for current user |
 | `/api/internal/invite` | POST | Generate invite message for non-PBX user |
 
+### Social Features (P0 - COMPLETE)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/social/friends/request` | POST | Send friend request |
+| `/api/social/friends/action` | POST | Accept/decline/block/unfriend |
+| `/api/social/friends/list` | GET | Get friends, incoming/outgoing requests |
+| `/api/social/friends/status/:userId` | GET | Get friendship status |
+| `/api/social/conversations` | GET | Get all conversations |
+| `/api/social/conversations/:userId` | GET | Get/create conversation with user |
+| `/api/social/messages/:conversationId` | GET | Get messages |
+| `/api/social/messages/send` | POST | Send text message |
+| `/api/social/payments/send-in-chat` | POST | Send PBX payment in chat |
+
 ### Notification System (P0 - COMPLETE)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
