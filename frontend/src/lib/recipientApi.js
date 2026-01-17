@@ -34,6 +34,19 @@ export async function getWalletBalances() {
   return res.json();
 }
 
+export async function fundWalletSimulation(amount) {
+  const res = await fetch(`${API_BASE}/api/recipient/wallet/fund`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ amount }),
+  });
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({}));
+    throw new Error(error.detail || 'Failed to fund wallet');
+  }
+  return res.json();
+}
+
 export async function allocateSubWallet(subWallet, amount) {
   const res = await fetch(`${API_BASE}/api/recipient/wallet`, {
     method: 'POST',
