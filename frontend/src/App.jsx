@@ -33,6 +33,7 @@ import Activity from "./pages/app/Activity.jsx";
 import Manage from "./pages/app/Manage.jsx";
 import People from "./pages/sender/People.jsx";
 import Chat from "./pages/sender/Chat.jsx";
+import Businesses from "./pages/sender/Businesses.jsx";
 
 // Recipient Pages (for end users receiving payments)
 import RecipientDashboard from "./pages/recipient/Dashboard.jsx";
@@ -117,7 +118,7 @@ function AppRoutes() {
       {/* ========================================
           SENDER ROUTES (/sender/*)
           For employers, businesses, and payers
-          Shows: Home, Send, People, Activity, Settings
+          Shows: Home, Send, People, Businesses, Activity, Settings
           Social features: Friends, Chat, In-Chat Payments
          ======================================== */}
       <Route path="/sender" element={<SenderProtectedRoute><SenderShell /></SenderProtectedRoute>}>
@@ -125,6 +126,7 @@ function AppRoutes() {
         <Route path="dashboard" element={<Home />} />
         <Route path="send" element={<Send />} />
         <Route path="people" element={<People />} />
+        <Route path="businesses" element={<Businesses />} />
         <Route path="chat/:userId" element={<Chat />} />
         <Route path="activity" element={<Activity />} />
         <Route path="settings" element={<Manage />} />

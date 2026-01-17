@@ -40,6 +40,8 @@ from routes.internal_transfers import router as internal_router
 from routes.auth import router as auth_router
 from routes.notification_prefs import router as notification_router
 from routes.social import router as social_router
+from routes.profiles import router as profiles_router
+from routes.businesses import router as businesses_router
 
 # Import utilities
 from utils.user_helper import get_user_id, get_user_id_from_request
@@ -575,6 +577,8 @@ app.include_router(internal_router)
 app.include_router(auth_router)
 app.include_router(notification_router)
 app.include_router(social_router)
+app.include_router(profiles_router)
+app.include_router(businesses_router)
 
 # CORS middleware - only allow specific origins when using credentials
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')

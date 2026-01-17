@@ -112,7 +112,7 @@ async def set_user_role(request: Request, data: SetRoleRequest):
             set_fields["email"] = normalized_email
         
         # Upsert user with role and email
-        result = await users_collection.update_one(
+        await users_collection.update_one(
             {"user_id": user_id},
             {
                 "$set": set_fields,
@@ -207,7 +207,7 @@ async def update_user(request: Request):
         if "role" in body and body["role"] in ['sender', 'recipient']:
             update_fields["role"] = body["role"]
         
-        result = await users_collection.update_one(
+        await users_collection.update_one(
             {"user_id": user_id},
             {
                 "$set": update_fields,

@@ -9,13 +9,34 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 
 ## 🔒 HARD RULES (Locked In)
 
+### Account Types - Phase 1 (P0 - COMPLETE ✅ Jan 2026)
+- **Personal Account (People)**: @username, display name, avatar, friends system, social chat
+- **Business Account**: Business name, @businesshandle, square logo, category, "Business" badge
+- **One Login, Multi-Profile**: User → Profiles (personal + business) like Instagram account switching
+- **Profile Switcher**: Top-right dropdown to switch between personal/business profiles
+- **Friendships are Personal-only**: Businesses do NOT have friends, only transactional chats
+
+### 6-Tab Navigation (P0 - COMPLETE ✅ Jan 2026)
+- **Home**: Balance summary (USD + PHP), quick actions (Send PBX, Send External), recent activity, recent chats
+- **Send**: External transfers (GCash, Maya, Bank, Cash Pickup)
+- **People**: Personal friends only - search, requests, friends list
+- **Businesses**: Business discovery, search, categories, recently paid businesses
+- **Activity**: Transaction history
+- **Settings**: Profile management, notification preferences, add business profile
+
 ### Social Network Features (P0 - COMPLETE)
 - **People Tab**: Friends list, search by @username/name/phone/email
 - **Friend Requests**: Add/Accept/Decline/Block/Unfriend like Instagram
 - **Chat Threads**: 1:1 iMessage-style chat for each friend
 - **In-Chat Payments**: Send PBX inside chat, appears as payment bubbles
-- **Navigation**: Home, Send, People, Activity, Settings
 - **No "Add Recipient"**: Users add friends, not recipients
+
+### Business Features (P0 - COMPLETE ✅ Jan 2026)
+- **Businesses Tab**: Separate from People, for business discovery
+- **Business Search**: By business name or @businesshandle
+- **Business Categories**: Retail, Food & Dining, Services, Health, Entertainment, etc.
+- **Business Chat**: Person↔Business, Business↔Business (no friendship required)
+- **Pay Business**: In-chat payments to businesses
 
 ### PBX-to-PBX Closed-Loop Transfers (P0)
 - **Default Option**: PBX-to-PBX is the RECOMMENDED send option
@@ -84,10 +105,11 @@ Dark theme: neutral-950, amber-400, red-600
 ```
 
 ### Key Components
-- `SenderShell.jsx` - Navigation for sender app
+- `SenderShell.jsx` - 6-tab navigation for sender app
 - `RecipientShell.jsx` - Navigation for recipient app
 - `SenderProtectedRoute` - Access control for sender routes
 - `RecipientProtectedRoute` - Access control for recipient routes
+- `ProfileSwitcher.jsx` - Instagram-style account switcher (NEW - Jan 2026)
 
 ---
 
@@ -96,6 +118,9 @@ Dark theme: neutral-950, amber-400, red-600
 /app/
 ├── backend/
 │   ├── routes/
+│   │   ├── profiles.py     # Profile management (personal, business) - NEW
+│   │   ├── businesses.py   # Business discovery, chat, payments - NEW
+│   │   ├── social.py       # Friends, conversations, messages
 │   │   ├── recipient.py    # Recipient wallet, FX, bills, transfers APIs
 │   │   ├── users.py        # User role persistence APIs
 │   │   └── plaid.py        # Plaid bank linking
@@ -105,12 +130,21 @@ Dark theme: neutral-950, amber-400, red-600
 ├── frontend/
 │   └── src/
 │       ├── components/
-│       │   ├── SenderShell.jsx
+│       │   ├── SenderShell.jsx    # 6-tab navigation
+│       │   ├── ProfileSwitcher.jsx # Account switcher - NEW
 │       │   ├── RecipientShell.jsx
 │       │   └── PublicShell.jsx
 │       ├── contexts/
-│       │   └── SessionContext.jsx  # Session + role management
+│       │   └── SessionContext.jsx  # Session + role + profiles management
+│       ├── lib/
+│       │   ├── profilesApi.js      # Profile API client - NEW
+│       │   ├── businessesApi.js    # Businesses API client - NEW
+│       │   └── socialApi.js        # Social API client
 │       ├── pages/
+│       │   ├── sender/
+│       │   │   ├── People.jsx      # Friends management (personal-only)
+│       │   │   ├── Businesses.jsx  # Business discovery - NEW
+│       │   │   └── Chat.jsx        # 1:1 chat
 │       │   ├── onboarding/
 │       │   │   └── Welcome.jsx     # Role selection flow
 │       │   ├── recipient/          # Recipient-only pages
@@ -120,7 +154,7 @@ Dark theme: neutral-950, amber-400, red-600
 │       │   │   ├── Bills.jsx
 │       │   │   ├── Transfers.jsx
 │       │   │   └── Statements.jsx
-│       │   └── app/                # Sender-only pages
+│       │   └── app/                # Sender-only pages (Home, Send, Activity)
 │       └── App.jsx                 # Dual-route structure
 └── test_reports/
     └── iteration_*.json
@@ -129,6 +163,29 @@ Dark theme: neutral-950, amber-400, red-600
 ---
 
 ## API Endpoints
+
+### Profile Management (P0 - COMPLETE ✅ Jan 2026)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/profiles/me` | GET | Get all profiles for user (auto-creates personal if none) |
+| `/api/profiles/active` | GET | Get currently active profile |
+| `/api/profiles/switch/{profile_id}` | POST | Switch active profile |
+| `/api/profiles/personal` | POST | Create/update personal profile |
+| `/api/profiles/business` | POST | Create business profile |
+| `/api/profiles/{profile_id}` | PUT | Update profile |
+| `/api/profiles/{profile_id}` | DELETE | Delete business profile |
+| `/api/profiles/search/people` | GET | Search personal profiles |
+| `/api/profiles/search/businesses` | GET | Search business profiles |
+
+### Business Discovery & Payments (P0 - COMPLETE ✅ Jan 2026)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/businesses/discover` | GET | Discover businesses (category filter) |
+| `/api/businesses/categories` | GET | Get business category list |
+| `/api/businesses/paid` | GET | Get businesses user has paid |
+| `/api/businesses/{profile_id}` | GET | Get business profile |
+| `/api/businesses/chat/{profile_id}` | POST | Start/get chat with business |
+| `/api/businesses/pay` | POST | Send PBX payment to business |
 
 ### User Management
 | Endpoint | Method | Description |
@@ -192,11 +249,66 @@ Dark theme: neutral-950, amber-400, red-600
   user_id: String,      // Session token (first 36 chars)
   email: String,
   role: "sender" | "recipient",
+  active_profile_id: String,  // Currently active profile
   created_at: DateTime,
   updated_at: DateTime
 }
 
-// wallets collection (planned)
+// profiles collection (NEW - Jan 2026)
+{
+  profile_id: String,     // "prof_xxx" for personal, "biz_xxx" for business
+  user_id: String,        // Owner user_id
+  type: "personal" | "business",
+  handle: String,         // @username or @businesshandle
+  display_name: String,   // For personal profiles
+  business_name: String,  // For business profiles
+  avatar_url: String,     // For personal profiles
+  logo_url: String,       // For business profiles
+  category: String,       // For business profiles
+  verified: Boolean,      // For business profiles (admin-assigned)
+  created_at: DateTime,
+  updated_at: DateTime
+}
+
+// friendships collection (Personal-only)
+{
+  requester_user_id: String,
+  addressee_user_id: String,
+  status: "pending" | "accepted" | "declined" | "blocked",
+  created_at: DateTime,
+  updated_at: DateTime
+}
+
+// conversations collection
+{
+  conversation_id: String,
+  profile1_id: String,      // Supports profile-to-profile chat
+  profile2_id: String,
+  profile1_type: String,    // "personal" or "business"
+  profile2_type: String,
+  user1_id: String,         // Legacy - owner user IDs
+  user2_id: String,
+  last_message_at: DateTime,
+  created_at: DateTime
+}
+
+// messages collection
+{
+  message_id: String,
+  conversation_id: String,
+  sender_profile_id: String,
+  sender_user_id: String,
+  type: "text" | "payment" | "system",
+  text: String,
+  payment: {               // For payment messages
+    tx_id: String,
+    amount_usd: Number,
+    status: String
+  },
+  created_at: DateTime
+}
+
+// wallets collection
 {
   user_id: String,
   usd_balance: Number,
@@ -205,9 +317,13 @@ Dark theme: neutral-950, amber-400, red-600
   updated_at: DateTime
 }
 
-// ledger collection (planned)
+// ledger collection
 {
+  tx_id: String,
   user_id: String,
+  from_profile_id: String,  // NEW - supports profile tracking
+  to_profile_id: String,
+  to_profile_type: String,  // "personal" or "business"
   type: String,
   currency: "USD" | "PHP",
   amount: Number,
@@ -220,6 +336,21 @@ Dark theme: neutral-950, amber-400, red-600
 ---
 
 ## Test Results
+
+### Iteration 11 (Phase 1 - Business Profiles) ✅ Jan 2026
+- **Status**: ✅ Backend 31/31 passed, Frontend 100% UI verified
+- **Key Features Tested**:
+  - Profiles API: auto-create personal, create business, switch, search
+  - Businesses API: discover, categories, chat, pay
+  - 6-tab navigation (Home, Send, People, Businesses, Activity, Settings)
+  - Profile Switcher component
+  - Businesses page with Discover/Recently Paid tabs
+- **Report**: `/app/test_reports/iteration_11.json`
+
+### Iteration 10 (Social Payment Platform) ✅
+- **Status**: ✅ All tests passed
+- **Key Verifications**: Social features, in-chat payments, navigation
+- **Report**: `/app/test_reports/iteration_10.json`
 
 ### Iteration 6 (Session & Role Persistence)
 - **Status**: ✅ Backend 14/14 passed, Frontend 10/10 passed
@@ -272,19 +403,37 @@ Dark theme: neutral-950, amber-400, red-600
   - 1:1 Chat threads (iMessage-style)
   - In-chat PBX payments with payment bubbles
   - Navigation: Home, Send, People, Activity, Settings
+- [x] **Phase 1 - Business Profiles (P0)** ✅ Jan 2026
+  - Personal + Business account types
+  - One login, multi-profile (User → Profiles)
+  - Profile Switcher (Instagram-style)
+  - 6-tab navigation: Home, Send, People, Businesses, Activity, Settings
+  - People tab (Personal-only friends)
+  - Businesses tab (Discover, Categories, Pay)
+  - Chat: Person↔Person, Person↔Business, Business↔Business
+  - In-chat payments for all profile combinations
 
 ### P1 (High Priority)
 - [ ] Plaid integration for sender flow
 - [ ] Stripe subscription billing
 - [ ] Rate lock backend with TTL (Redis)
 
-### P2 (Medium Priority)
+### P2 (Medium Priority) - Phase 2 Features
+- [ ] Contact discovery (find friends from contacts)
+- [ ] Money requests in chat
+- [ ] Business profile completion & KYB gating
+- [ ] Better Activity feed
+- [ ] Notifications for requests
 - [ ] OAuth integration (Google/Apple)
 - [ ] Recurring transfers
 - [ ] Push notifications (mobile)
 - [ ] Rate alerts
 
-### P3 (Future)
+### P3 (Future) - Phase 3 Features
+- [ ] Social feed (Venmo-style)
+- [ ] Reactions & comments on transactions
+- [ ] Groups (family, payroll)
+- [ ] Business monetization tools
 - [ ] Real payment integrations (GCash, Maya APIs)
 - [ ] KYC/AML integration
 - [ ] Multi-corridor support (beyond US-PH)
@@ -292,6 +441,21 @@ Dark theme: neutral-950, amber-400, red-600
 ---
 
 ## Change Log
+
+### January 17, 2026 - Phase 1: Business Profiles (P0 COMPLETE) ✅
+- ✅ Implemented User → Profile abstraction (one login, multiple profiles)
+- ✅ Personal Account: @username, display_name, avatar, friends system
+- ✅ Business Account: @businesshandle, business_name, logo, category, verified badge
+- ✅ `/api/profiles/*` endpoints: me, active, switch, personal, business, search
+- ✅ `/api/businesses/*` endpoints: discover, categories, paid, chat, pay
+- ✅ Profile Switcher component (Instagram-style account switching)
+- ✅ 6-tab navigation: Home, Send, People, Businesses, Activity, Settings
+- ✅ People tab (Personal-only friends)
+- ✅ Businesses tab (Discover, Recently Paid, category filters)
+- ✅ Chat supports: Person↔Person, Person↔Business, Business↔Business
+- ✅ In-chat payments for all profile combinations
+- ✅ SessionContext updated with profiles, activeProfile, switchProfile
+- ✅ Tests: 31/31 backend, 100% frontend UI verified
 
 ### January 17, 2025 - Enhanced Add Recipient with PBX-to-PBX (P0 COMPLETE)
 - ✅ Added "PBX Wallet (Instant)" as first delivery method with "Recommended" badge

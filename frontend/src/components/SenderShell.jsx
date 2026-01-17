@@ -1,16 +1,16 @@
 /**
  * SenderShell - Layout wrapper for sender dashboard
  * For employers, businesses, and payers
- * Shows: Dashboard, Payouts, Recipients, Reports, Settings
+ * Shows: Home, Send, People, Businesses, Activity, Settings
  * 
- * MUST NOT show: Wallet balances, FX rate locks, Bills, GCash/Maya, "Hold USD"
+ * Supports both Personal and Business profiles
  */
 import React, { useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "../contexts/SessionContext";
-import { tw } from "../lib/theme";
+import ProfileSwitcher from "./ProfileSwitcher";
 
-// Navigation items for sender dashboard
+// Navigation items for sender dashboard - 6 tabs
 const navItems = [
   { 
     to: "/sender/dashboard", 
@@ -36,6 +36,15 @@ const navItems = [
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    ),
+  },
+  { 
+    to: "/sender/businesses", 
+    label: "Businesses", 
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
       </svg>
     ),
   },
@@ -70,6 +79,9 @@ export default function SenderShell() {
     navigate("/");
   };
 
+  // Check if user is on a business profile
+  const isBusinessProfile = session?.activeProfile?.type === "business";
+
   return (
     <div className="min-h-screen bg-[#F6F8FB] flex flex-col">
       {/* Top Header */}
@@ -91,17 +103,21 @@ export default function SenderShell() {
               <div className="h-8 w-8 rounded-lg bg-[#F6C94B]/20 border border-[#F6C94B]/40 flex items-center justify-center">
                 <span className="text-[#F6C94B] font-bold text-xs">PBX</span>
               </div>
-              <span className="text-[#F6C94B] font-semibold hidden sm:block">Sender</span>
+              {isBusinessProfile && (
+                <span className="hidden sm:inline-block px-2 py-0.5 bg-[#F6C94B]/20 text-[#F6C94B] text-xs font-medium rounded border border-[#F6C94B]/40">
+                  Business
+                </span>
+              )}
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-white/70 hidden sm:block">
-              {session?.user?.email}
-            </span>
+          <div className="flex items-center gap-3">
+            {/* Profile Switcher */}
+            <ProfileSwitcher />
+            
             <button
               onClick={handleLogout}
-              className="text-sm text-white/70 hover:text-[#F6C94B] transition"
+              className="text-sm text-white/70 hover:text-[#F6C94B] transition hidden sm:block"
               data-testid="sender-logout-btn"
             >
               Sign out
@@ -184,6 +200,19 @@ export default function SenderShell() {
               ))}
             </ul>
           </nav>
+          
+          {/* Mobile logout */}
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-[#F6C94B]/20">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-white/70 hover:text-[#F6C94B] transition"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sign out
+            </button>
+          </div>
         </aside>
 
         {/* Main Content */}
@@ -201,21 +230,21 @@ export default function SenderShell() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation - 6 tabs */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0A2540] border-t border-[#F6C94B]/20 z-40">
         <div className="flex justify-around py-2">
-          {navItems.slice(0, 5).map(({ to, label, icon }) => (
+          {navItems.map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex flex-col items-center py-1 px-2 ${
+                `flex flex-col items-center py-1 px-1 min-w-0 ${
                   isActive ? "text-[#F6C94B]" : "text-white/60"
                 }`
               }
             >
               {icon}
-              <span className="text-[10px] mt-0.5">{label}</span>
+              <span className="text-[9px] mt-0.5 truncate">{label}</span>
             </NavLink>
           ))}
         </div>
