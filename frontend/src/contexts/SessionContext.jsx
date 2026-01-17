@@ -38,34 +38,41 @@ export function SessionProvider({ children }) {
     }
   }, [session]);
 
-  // Persist role to backend when token becomes available
+  // Persist role and email to backend when token becomes available
   // This handles the case where role is set during onboarding before login
   useEffect(() => {
-    const persistRoleToBackend = async () => {
+    const persistUserToBackend = async () => {
       if (session.token && session.role && !session._rolePersisted) {
         try {
           const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+          const payload = { role: session.role };
+          
+          // Include email if available (normalized on backend)
+          if (session.user?.email) {
+            payload.email = session.user.email;
+          }
+          
           const response = await fetch(`${backendUrl}/api/users/role`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               'X-Session-Token': session.token,
             },
-            body: JSON.stringify({ role: session.role }),
+            body: JSON.stringify(payload),
           });
           
           if (response.ok) {
             // Mark as persisted to avoid duplicate calls
             setSession(prev => ({ ...prev, _rolePersisted: true }));
-            auditLog('ROLE_PERSISTED_TO_BACKEND', { role: session.role });
+            auditLog('USER_PERSISTED_TO_BACKEND', { role: session.role, hasEmail: !!session.user?.email });
           }
         } catch (err) {
-          console.error('Failed to persist role to backend:', err);
+          console.error('Failed to persist user to backend:', err);
         }
       }
     };
     
-    persistRoleToBackend();
+    persistUserToBackend();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.token, session.role]);
 
