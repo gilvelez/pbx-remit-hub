@@ -131,10 +131,53 @@ class SaveBillerRequest(BaseModel):
 
 
 # === Helper Functions ===
-def get_mid_market_rate():
-    """Get simulated mid-market rate with slight fluctuation (mock - external API in production)"""
+async def fetch_live_fx_rate() -> tuple[float, str]:
+    """
+    Fetch live USD/PHP rate from OpenExchangeRates API.
+    Returns tuple of (rate, source) where source is 'live' or 'mock'.
+    Falls back to mock rate if API is unavailable.
+    """
+    if not OPENEXCHANGERATES_API_KEY:
+        logger.warning("OPENEXCHANGERATES_API_KEY not configured, using mock rate")
+        return MOCK_FX_RATE, "mock"
+    
+    try:
+        async with httpx.AsyncClient(timeout=FX_API_TIMEOUT) as client:
+            response = await client.get(
+                f"{OPENEXCHANGERATES_BASE_URL}/latest.json",
+                params={
+                    "app_id": OPENEXCHANGERATES_API_KEY,
+                    "base": "USD",
+                    "symbols": "PHP"
+                }
+            )
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if "rates" not in data or "PHP" not in data["rates"]:
+                logger.error("Invalid response structure from OpenExchangeRates API")
+                return MOCK_FX_RATE, "mock"
+            
+            rate = float(data["rates"]["PHP"])
+            logger.info(f"Fetched live FX rate: 1 USD = {rate} PHP")
+            return rate, "live"
+            
+    except httpx.TimeoutException:
+        logger.warning("OpenExchangeRates API timeout, using mock rate")
+        return MOCK_FX_RATE, "mock"
+    except httpx.HTTPError as e:
+        logger.warning(f"OpenExchangeRates API HTTP error: {e}, using mock rate")
+        return MOCK_FX_RATE, "mock"
+    except Exception as e:
+        logger.warning(f"OpenExchangeRates API error: {e}, using mock rate")
+        return MOCK_FX_RATE, "mock"
+
+
+def get_mock_mid_market_rate():
+    """Get mock mid-market rate with slight fluctuation (fallback only)"""
     fluctuation = (random.random() - 0.5) * 0.3
-    return round(BASE_FX_RATE + fluctuation, 2)
+    return round(MOCK_FX_RATE + fluctuation, 2)
 
 
 def get_user_id_from_headers(request: Request) -> str:
