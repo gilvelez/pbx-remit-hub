@@ -368,6 +368,19 @@ async def create_internal_transfer(request: Request, background_tasks: Backgroun
         
         logger.info(f"Internal transfer completed: {sender_id} -> {recipient_id}, ${data.amount_usd}")
         
+        # Send notifications to recipient (email + SMS) in background
+        # This doesn't block the transfer response
+        recipient_phone = recipient.get("phone")
+        background_tasks.add_task(
+            send_transfer_notifications,
+            recipient_email=recipient_email,
+            recipient_phone=recipient_phone,
+            recipient_user_id=recipient_id,
+            sender_name=sender_display or sender_email or "PBX User",
+            amount=data.amount_usd,
+            note=data.note
+        )
+        
         # Get updated sender balance
         updated_wallet = await wallets.find_one({"user_id": sender_id}, {"_id": 0, "usd_balance": 1})
         
