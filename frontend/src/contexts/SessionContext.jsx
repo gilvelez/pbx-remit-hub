@@ -40,12 +40,14 @@ export function SessionProvider({ children }) {
 
   const login = (email) => {
     const token = generateUUID();
-    setSession({
+    // CRITICAL: Preserve existing session fields (especially role set during onboarding)
+    setSession((prev) => ({
+      ...prev,
       exists: true,
       verified: false,
       token,
       user: { email },
-    });
+    }));
     auditLog('SESSION_CREATED', { email, token });
   };
 
