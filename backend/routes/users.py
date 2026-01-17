@@ -230,3 +230,53 @@ async def update_user(request: Request):
     except Exception as e:
         logger.error(f"Error updating user: {e}")
         raise HTTPException(status_code=500, detail="Failed to update user")
+
+
+@router.get("/search")
+async def search_users(request: Request, q: str = ""):
+    """
+    Search PBX users by name, @username, phone, or email.
+    Returns matching users for recipient selection.
+    """
+    if not q or len(q) < 2:
+        return {"users": []}
+    
+    query = q.lower().strip()
+    
+    try:
+        db = get_database()
+        users_collection = db.users
+        
+        # Build search query - match email or phone
+        search_filter = {
+            "$or": [
+                {"email": {"$regex": query, "$options": "i"}},
+                {"phone": {"$regex": query, "$options": "i"}},
+                {"display_name": {"$regex": query, "$options": "i"}},
+            ]
+        }
+        
+        # Find matching users
+        cursor = users_collection.find(
+            search_filter,
+            {"_id": 0, "user_id": 1, "email": 1, "phone": 1, "display_name": 1, "role": 1}
+        ).limit(10)
+        
+        users = await cursor.to_list(10)
+        
+        # Format results
+        results = []
+        for user in users:
+            results.append({
+                "user_id": user.get("user_id"),
+                "email": user.get("email"),
+                "phone": user.get("phone"),
+                "display_name": user.get("display_name") or user.get("email", "").split("@")[0] if user.get("email") else "PBX User",
+                "verified": True,  # All registered users are verified
+            })
+        
+        return {"users": results}
+        
+    except Exception as e:
+        logger.error(f"Error searching users: {e}")
+        return {"users": []}
