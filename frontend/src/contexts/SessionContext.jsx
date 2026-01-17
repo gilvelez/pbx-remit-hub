@@ -38,6 +38,36 @@ export function SessionProvider({ children }) {
     }
   }, [session]);
 
+  // Persist role to backend when token becomes available
+  // This handles the case where role is set during onboarding before login
+  useEffect(() => {
+    const persistRoleToBackend = async () => {
+      if (session.token && session.role && !session._rolePersisted) {
+        try {
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+          const response = await fetch(`${backendUrl}/api/users/role`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Session-Token': session.token,
+            },
+            body: JSON.stringify({ role: session.role }),
+          });
+          
+          if (response.ok) {
+            // Mark as persisted to avoid duplicate calls
+            setSession(prev => ({ ...prev, _rolePersisted: true }));
+            auditLog('ROLE_PERSISTED_TO_BACKEND', { role: session.role });
+          }
+        } catch (err) {
+          console.error('Failed to persist role to backend:', err);
+        }
+      }
+    };
+    
+    persistRoleToBackend();
+  }, [session.token, session.role]);
+
   const login = (email) => {
     const token = generateUUID();
     // CRITICAL: Preserve existing session fields (especially role set during onboarding)
