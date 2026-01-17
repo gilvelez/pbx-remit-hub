@@ -217,6 +217,14 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 17, 2025 - Fund Wallet (Simulation) Feature
+- ✅ Added POST /api/recipient/wallet/fund endpoint
+- ✅ Credits USD wallet with max $5,000 per request
+- ✅ Clear "SIMULATION ONLY" labeling in UI
+- ✅ Warning banner explaining it's for testing only
+- ✅ Transaction recorded in ledger as "simulated_credit"
+- ✅ Success modal with updated balance
+
 ### January 17, 2025 - Email Persistence & Real MongoDB APIs
 - ✅ Added email persistence during signup (normalized, unique constraint)
 - ✅ Wired recipient APIs to real MongoDB (wallets, ledger, saved_billers)
