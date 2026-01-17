@@ -34,12 +34,17 @@ export default function MagicLinkHandler() {
           body: JSON.stringify({ token }),
         });
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.detail || "Verification failed");
+        const text = await response.text();
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error("Invalid response from server");
         }
-        
-        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.detail || "Verification failed");
+        }
 
         // Set session in localStorage
         const sessionData = {
