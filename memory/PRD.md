@@ -136,6 +136,16 @@ Dark theme: neutral-950, amber-400, red-600
 | `/api/internal/incoming` | GET | Get incoming PBX transfers for current user |
 | `/api/internal/invite` | POST | Generate invite message for non-PBX user |
 
+### Notification System (P0 - COMPLETE)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/notifications/preferences` | GET | Get user's SMS/Email preferences |
+| `/api/notifications/preferences` | PUT | Update notification preferences |
+| `/api/notifications/status` | GET | Get provider status (Resend/Twilio) |
+| `/api/auth/magic/verify` | POST | Verify magic link token |
+| `/api/auth/magic/resend` | POST | Resend new magic link |
+| `/api/auth/magic/info` | GET | Get magic link info (15-min expiry) |
+
 ### Recipient APIs (Live MongoDB)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
