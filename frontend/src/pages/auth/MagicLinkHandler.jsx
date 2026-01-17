@@ -68,7 +68,12 @@ export default function MagicLinkHandler() {
       } catch (error) {
         console.error("Magic link verification error:", error);
         setStatus("error");
-        setErrorMessage(error.message || "This link has expired or is invalid");
+        // Show user-friendly message instead of technical errors
+        if (error.message.includes("clone") || error.message.includes("Response")) {
+          setErrorMessage("This link has expired or is invalid. Please request a new one.");
+        } else {
+          setErrorMessage(error.message || "This link has expired or is invalid");
+        }
       }
     };
 
