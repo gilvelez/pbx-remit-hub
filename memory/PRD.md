@@ -119,10 +119,19 @@ Dark theme: neutral-950, amber-400, red-600
 | `/api/users/role` | POST | Set user role (sender/recipient) |
 | `/api/users/me` | GET | Get current user info including role |
 
-### Recipient APIs (MOCKED)
+### PBX Internal Transfers (P0 - Closed-Loop)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/internal/lookup` | POST | Find PBX user by email or phone |
+| `/api/internal/transfer` | POST | Execute instant USD transfer to PBX user |
+| `/api/internal/incoming` | GET | Get incoming PBX transfers for current user |
+| `/api/internal/invite` | POST | Generate invite message for non-PBX user |
+
+### Recipient APIs (Live MongoDB)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/recipient/wallet` | GET | Get wallet balances (USD, PHP) |
+| `/api/recipient/wallet/fund` | POST | Simulate wallet funding (dev/demo) |
 | `/api/recipient/convert` | GET | Get FX quote with rate comparison |
 | `/api/recipient/convert/lock` | POST | Lock FX rate for 15 minutes |
 | `/api/recipient/convert/execute` | POST | Execute USD→PHP conversion |
