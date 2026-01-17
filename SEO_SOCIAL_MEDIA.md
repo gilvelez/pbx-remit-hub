@@ -28,7 +28,7 @@ Used by Facebook, LinkedIn, Slack, and other platforms:
 
 ```html
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://filremit.preview.emergentagent.com/" />
+<meta property="og:url" content="https://bayanilink.preview.emergentagent.com/" />
 <meta property="og:title" content="Philippine Bayani Exchange – For the Heroes Who Build Home from Afar" />
 <meta property="og:description" content="Every transfer carries more than money—it carries love, dreams, and family. Seamless, secure remittances built for Global Filipinos." />
 <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
@@ -49,7 +49,7 @@ Optimized for Twitter/X sharing:
 
 ```html
 <meta property="twitter:card" content="summary_large_image" />
-<meta property="twitter:url" content="https://filremit.preview.emergentagent.com/" />
+<meta property="twitter:url" content="https://bayanilink.preview.emergentagent.com/" />
 <meta property="twitter:title" content="Philippine Bayani Exchange – For the Heroes Who Build Home from Afar" />
 <meta property="twitter:description" content="Every transfer carries more than money—it carries love, dreams, and family. Seamless, secure remittances built for Global Filipinos." />
 <meta property="twitter:image" content="%PUBLIC_URL%/og-image.png" />
@@ -101,7 +101,7 @@ Optimized for Twitter/X sharing:
 ```
 https://developers.facebook.com/tools/debug/
 ```
-1. Enter: https://filremit.preview.emergentagent.com/
+1. Enter: https://bayanilink.preview.emergentagent.com/
 2. Click "Debug"
 3. View preview
 4. Click "Scrape Again" to refresh cache
@@ -134,7 +134,7 @@ https://www.opengraph.xyz/
 ### Google Search Result
 ```
 Philippine Bayani Exchange – For the Heroes Who Build Home from Afar
-https://filremit.preview.emergentagent.com
+https://bayanilink.preview.emergentagent.com
 Every transfer carries more than money—it carries love, dreams, and family. 
 Seamless, secure remittances built for Global Filipinos.
 ```
@@ -210,7 +210,7 @@ Standard favicon setup for browser tabs and bookmarks:
 
 2. **Canonical URL**: Add canonical tag
    ```html
-   <link rel="canonical" href="https://filremit.preview.emergentagent.com/" />
+   <link rel="canonical" href="https://bayanilink.preview.emergentagent.com/" />
    ```
 
 3. **Robots meta**: Control indexing
