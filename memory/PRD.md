@@ -216,6 +216,14 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 17, 2025 - Email Persistence & Real MongoDB APIs
+- ✅ Added email persistence during signup (normalized, unique constraint)
+- ✅ Wired recipient APIs to real MongoDB (wallets, ledger, saved_billers)
+- ✅ Real wallet balance tracking (USD/PHP)
+- ✅ Real transaction ledger for all operations
+- ✅ Fixed recipientApi.js to use localStorage (was sessionStorage)
+- ✅ Fixed ESLint build error in SessionContext.jsx
+
 ### January 17, 2025 - Session & Role Persistence Fix
 - ✅ Migrated session from sessionStorage to localStorage
 - ✅ Fixed critical bug: role was lost during signup
