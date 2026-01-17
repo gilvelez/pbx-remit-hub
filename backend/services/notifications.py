@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Configuration
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-APP_URL = os.environ.get("APP_URL", "https://pbx-transfer.preview.emergentagent.com")
+APP_URL = os.environ.get("APP_URL", "https://philippine-bayani.preview.emergentagent.com")
 
 # Initialize Resend
 if RESEND_API_KEY:

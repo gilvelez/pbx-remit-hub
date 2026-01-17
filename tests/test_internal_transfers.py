@@ -14,7 +14,7 @@ import os
 import uuid
 from datetime import datetime
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pbx-transfer.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://philippine-bayani.preview.emergentagent.com').rstrip('/')
 
 # Test session tokens
 SENDER_TOKEN = f"test-sender-{uuid.uuid4()}"
