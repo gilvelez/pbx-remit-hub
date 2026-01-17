@@ -237,6 +237,13 @@ Dark theme: neutral-950, amber-400, red-600
   - Transfer limits ($5,000/txn, $25,000/day)
   - Atomic ledger entries
   - Recipient dashboard incoming transfers
+- [x] **Email + SMS Notifications (P0)** ✅
+  - Magic link authentication (15-min expiry)
+  - User notification preferences
+  - SMS/Email templates for all transfer types
+  - Delivery tracking
+  - Rate limiting (2-3 min window)
+  - Graceful degradation without API keys
 
 ### P1 (High Priority)
 - [ ] Plaid integration for sender flow
@@ -246,7 +253,7 @@ Dark theme: neutral-950, amber-400, red-600
 ### P2 (Medium Priority)
 - [ ] OAuth integration (Google/Apple)
 - [ ] Recurring transfers
-- [ ] Push notifications
+- [ ] Push notifications (mobile)
 - [ ] Rate alerts
 - [ ] Invite system for non-PBX users
 
@@ -258,6 +265,23 @@ Dark theme: neutral-950, amber-400, red-600
 ---
 
 ## Change Log
+
+### January 17, 2025 - Email + SMS Notification System (P0 COMPLETE)
+- ✅ Implemented `/api/notifications/preferences` - User SMS/Email preferences
+- ✅ Implemented `/api/notifications/status` - Provider status (Resend/Twilio)
+- ✅ Implemented `/api/auth/magic/verify` - Verify magic link token
+- ✅ Implemented `/api/auth/magic/resend` - Resend new magic link
+- ✅ Magic link authentication with 15-minute expiry
+- ✅ SHA-256 token hashing for secure storage
+- ✅ SMS templates: PBX-to-PBX, outbound, failed/delayed
+- ✅ Email templates: PBX-to-PBX (with CTA), outbound, failed/delayed
+- ✅ Delivery tracking: sms_sent, email_sent, link_opened
+- ✅ SMS rate limiting (combine within 2-3 minutes)
+- ✅ Notification Settings page at /recipient/notifications
+- ✅ Magic Link Handler with resend option at /auth/magic
+- ✅ Trust footer: "PBX will never ask for your password"
+- ✅ Graceful degradation when RESEND_API_KEY/Twilio not configured
+- ✅ Tests: 19/19 backend, 100% frontend UI verified
 
 ### January 17, 2025 - PBX Closed-Loop Transfer System (P0 COMPLETE)
 - ✅ Implemented `/api/internal/lookup` - User lookup by email OR phone (case-insensitive)
