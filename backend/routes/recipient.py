@@ -470,11 +470,12 @@ async def execute_conversion(request: Request, data: ConvertRequest):
                 "from_currency": "USD",
                 "from_amount": data.amount_usd,
                 "rate": rate,
+                "fx_source": fx_source,  # Track if rate was live or mock for auditability
                 "lock_id": data.lock_id
             }
         )
         
-        logger.info(f"Conversion executed: {user_id} converted ${data.amount_usd} to ₱{amount_php}")
+        logger.info(f"Conversion executed: {user_id} converted ${data.amount_usd} to ₱{amount_php} @ {rate} ({fx_source})")
         
         return {
             "success": True,
@@ -484,6 +485,7 @@ async def execute_conversion(request: Request, data: ConvertRequest):
             "to_amount": amount_php,
             "to_currency": "PHP",
             "rate": rate,
+            "fx_source": fx_source,
             "status": "completed"
         }
         
