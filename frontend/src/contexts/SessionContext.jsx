@@ -73,7 +73,6 @@ export function SessionProvider({ children }) {
     };
     
     persistUserToBackend();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session.token, session.role]);
 
   const login = (email) => {
