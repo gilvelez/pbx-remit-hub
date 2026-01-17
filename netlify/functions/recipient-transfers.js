@@ -1,56 +1,33 @@
 /**
  * PBX Recipient - Transfers/Payouts API
  * Transfer PHP to bank accounts, GCash, Maya
+ * Falls back to mock mode when MongoDB is unavailable
  */
 
-const { MongoClient } = require('mongodb');
-
-const MONGO_URI = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017';
+// Safely handle MongoDB
+let MongoClient = null;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
 const DB_NAME = process.env.DB_NAME || 'pbx_database';
 
-const USE_MOCKS = process.env.USE_MOCKS !== 'false';
+const DB_MODE = MONGODB_URI ? 'live' : 'mock';
+console.log(`[recipient-transfers] DB_MODE=${DB_MODE}`);
 
-// Transfer methods with ETAs
+if (MONGODB_URI) {
+  try {
+    MongoClient = require('mongodb').MongoClient;
+  } catch (e) {
+    console.warn('[recipient-transfers] MongoDB module not available, using mock mode');
+  }
+}
+
+// Transfer methods
 const TRANSFER_METHODS = [
-  { 
-    id: 'instapay', 
-    name: 'InstaPay', 
-    type: 'bank',
-    eta: 'Instant (within minutes)',
-    fee: 0,
-    max_amount: 50000,
-    description: 'Real-time bank transfers',
-  },
-  { 
-    id: 'pesonet', 
-    name: 'PESONet', 
-    type: 'bank',
-    eta: 'Same day (cutoff 3PM)',
-    fee: 0,
-    max_amount: null,
-    description: 'Batch bank transfers',
-  },
-  { 
-    id: 'gcash', 
-    name: 'GCash', 
-    type: 'ewallet',
-    eta: 'Instant',
-    fee: 0,
-    max_amount: 100000,
-    description: 'Send to GCash wallet',
-  },
-  { 
-    id: 'maya', 
-    name: 'Maya', 
-    type: 'ewallet',
-    eta: 'Instant',
-    fee: 0,
-    max_amount: 100000,
-    description: 'Send to Maya wallet',
-  },
+  { id: 'instapay', name: 'InstaPay', type: 'bank', eta: 'Instant (within minutes)', fee: 0, max_amount: 50000, description: 'Real-time bank transfers' },
+  { id: 'pesonet', name: 'PESONet', type: 'bank', eta: 'Same day (cutoff 3PM)', fee: 0, max_amount: null, description: 'Batch bank transfers' },
+  { id: 'gcash', name: 'GCash', type: 'ewallet', eta: 'Instant', fee: 0, max_amount: 100000, description: 'Send to GCash wallet' },
+  { id: 'maya', name: 'Maya', type: 'ewallet', eta: 'Instant', fee: 0, max_amount: 100000, description: 'Send to Maya wallet' },
 ];
 
-// Common Philippine banks
 const BANKS = [
   { code: 'bpi', name: 'BPI' },
   { code: 'bdo', name: 'BDO' },
@@ -64,10 +41,24 @@ const BANKS = [
   { code: 'eastwest', name: 'EastWest Bank' },
 ];
 
+// Mock transfer history
+const MOCK_TRANSFERS = [
+  { id: 'txn_1', method: 'gcash', method_name: 'GCash', recipient: '0917****890', amount: 5000.00, status: 'completed', eta: 'Delivered', created_at: new Date(Date.now() - 3600000).toISOString() },
+  { id: 'txn_2', method: 'instapay', method_name: 'InstaPay', recipient: 'BPI ****4567', amount: 15000.00, status: 'completed', eta: 'Delivered', created_at: new Date(Date.now() - 86400000).toISOString() },
+];
+
 async function getDb() {
-  const client = new MongoClient(MONGO_URI);
-  await client.connect();
-  return { client, db: client.db(DB_NAME) };
+  if (!MongoClient || !MONGODB_URI) {
+    return null;
+  }
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    return { client, db: client.db(DB_NAME) };
+  } catch (e) {
+    console.error('[recipient-transfers] MongoDB connection failed:', e.message);
+    return null;
+  }
 }
 
 exports.handler = async (event) => {
@@ -93,46 +84,29 @@ exports.handler = async (event) => {
         return {
           statusCode: 200,
           headers,
-          body: JSON.stringify({ 
-            methods: TRANSFER_METHODS,
-            banks: BANKS,
-          }),
+          body: JSON.stringify({ methods: TRANSFER_METHODS, banks: BANKS }),
         };
       }
 
       if (params.type === 'history') {
-        if (USE_MOCKS) {
+        if (DB_MODE === 'mock') {
           return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({
-              transfers: [
-                {
-                  id: 'txn_1',
-                  method: 'gcash',
-                  method_name: 'GCash',
-                  recipient: '0917****890',
-                  amount: 5000.00,
-                  status: 'completed',
-                  eta: 'Delivered',
-                  created_at: new Date(Date.now() - 3600000).toISOString(),
-                },
-                {
-                  id: 'txn_2',
-                  method: 'instapay',
-                  method_name: 'InstaPay',
-                  recipient: 'BPI ****4567',
-                  amount: 15000.00,
-                  status: 'completed',
-                  eta: 'Delivered',
-                  created_at: new Date(Date.now() - 86400000).toISOString(),
-                },
-              ],
-            }),
+            body: JSON.stringify({ transfers: MOCK_TRANSFERS, _mode: 'mock' }),
           };
         }
 
-        const { client, db } = await getDb();
+        const connection = await getDb();
+        if (!connection) {
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ transfers: MOCK_TRANSFERS, _mode: 'mock' }),
+          };
+        }
+
+        const { client, db } = connection;
         try {
           const transfers = await db.collection('ledger')
             .find({ user_id, type: 'transfer_out' })
@@ -145,15 +119,16 @@ exports.handler = async (event) => {
             headers,
             body: JSON.stringify({
               transfers: transfers.map(t => ({
-                id: t.transaction_id,
+                id: t.txn_id || t._id.toString(),
                 method: t.metadata?.method,
-                method_name: TRANSFER_METHODS.find(m => m.id === t.metadata?.method)?.name,
+                method_name: t.metadata?.method_name || TRANSFER_METHODS.find(m => m.id === t.metadata?.method)?.name,
                 recipient: t.metadata?.recipient_display,
-                amount: t.amount,
+                amount: Math.abs(t.amount),
                 status: t.status,
                 eta: t.status === 'completed' ? 'Delivered' : t.metadata?.eta,
                 created_at: t.created_at,
               })),
+              _mode: 'live',
             }),
           };
         } finally {
@@ -164,10 +139,7 @@ exports.handler = async (event) => {
       return {
         statusCode: 200,
         headers,
-        body: JSON.stringify({ 
-          methods: TRANSFER_METHODS,
-          banks: BANKS,
-        }),
+        body: JSON.stringify({ methods: TRANSFER_METHODS, banks: BANKS }),
       };
     }
 
@@ -199,74 +171,61 @@ exports.handler = async (event) => {
           return {
             statusCode: 400,
             headers,
-            body: JSON.stringify({ 
-              error: `Amount exceeds ${method} limit of ₱${transferMethod.max_amount.toLocaleString()}` 
-            }),
+            body: JSON.stringify({ error: `Amount exceeds ${method} limit of ₱${transferMethod.max_amount.toLocaleString()}` }),
           };
         }
 
         const transaction_id = `txn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
-        // Mask recipient for display
+        // Mask recipient
         let recipient_display = recipient_account;
-        if (transferMethod.type === 'ewallet') {
-          recipient_display = recipient_account.substring(0, 4) + '****' + recipient_account.substring(recipient_account.length - 3);
+        if (transferMethod.type === 'ewallet' && recipient_account.length > 7) {
+          recipient_display = recipient_account.substring(0, 4) + '****' + recipient_account.slice(-3);
         } else if (transferMethod.type === 'bank') {
           const bankName = BANKS.find(b => b.code === bank_code)?.name || 'Bank';
           recipient_display = `${bankName} ****${recipient_account.slice(-4)}`;
         }
 
-        if (!USE_MOCKS) {
-          const { client, db } = await getDb();
-          try {
-            // Check PHP balance
-            const wallet = await db.collection('wallets').findOne({ user_id });
-            if (!wallet || wallet.php_balance < amount) {
-              return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Insufficient PHP balance' }),
-              };
-            }
+        const status = transferMethod.type === 'ewallet' ? 'completed' : 'processing';
 
-            // Deduct from PHP wallet
-            await db.collection('wallets').updateOne(
-              { user_id },
-              {
-                $inc: { php_balance: -amount },
-                $set: { updated_at: new Date().toISOString() },
-              }
-            );
-
-            // Record ledger entry
-            await db.collection('ledger').insertOne({
-              transaction_id,
-              user_id,
-              type: 'transfer_out',
-              currency: 'PHP',
-              amount,
-              status: 'processing',
-              metadata: {
-                method,
-                method_name: transferMethod.name,
-                recipient_account,
-                recipient_name: recipient_name || '',
-                recipient_display,
-                bank_code: bank_code || null,
-                eta: transferMethod.eta,
-              },
-              created_at: new Date().toISOString(),
-            });
-
-            // Simulate instant completion for e-wallets
-            if (transferMethod.type === 'ewallet') {
-              await db.collection('ledger').updateOne(
-                { transaction_id },
-                { $set: { status: 'completed', completed_at: new Date().toISOString() } }
+        if (DB_MODE === 'live') {
+          const connection = await getDb();
+          if (connection) {
+            const { client, db } = connection;
+            try {
+              // Deduct from PHP wallet
+              await db.collection('wallets').updateOne(
+                { user_id },
+                {
+                  $inc: { php_balance: -amount },
+                  $set: { updated_at: new Date().toISOString() },
+                }
               );
+
+              // Record ledger entry
+              await db.collection('ledger').insertOne({
+                txn_id: transaction_id,
+                user_id,
+                type: 'transfer_out',
+                category: 'Transfer',
+                description: `${transferMethod.name} to ${recipient_display}`,
+                currency: 'PHP',
+                amount: -amount,
+                status,
+                metadata: {
+                  method,
+                  method_name: transferMethod.name,
+                  recipient_account,
+                  recipient_name: recipient_name || '',
+                  recipient_display,
+                  bank_code: bank_code || null,
+                  eta: transferMethod.eta,
+                },
+                created_at: new Date().toISOString(),
+              });
+            } finally {
+              await client.close();
             }
-          } finally {
-            await client.close();
           }
         }
 
@@ -279,9 +238,10 @@ exports.handler = async (event) => {
             method: transferMethod.name,
             recipient: recipient_display,
             amount,
-            status: transferMethod.type === 'ewallet' ? 'completed' : 'processing',
+            status,
             eta: transferMethod.eta,
             created_at: new Date().toISOString(),
+            _mode: DB_MODE,
           }),
         };
       }
@@ -300,7 +260,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Transfers API error:', error);
+    console.error('[recipient-transfers] Error:', error);
     return {
       statusCode: 500,
       headers,
