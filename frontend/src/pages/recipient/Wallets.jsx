@@ -55,6 +55,41 @@ export default function Wallets() {
     }
   };
 
+  // Handle test funding
+  const handleFundWallet = async () => {
+    const amount = parseFloat(fundAmount);
+    if (!fundAmount || amount <= 0) {
+      setFundError('Please enter a valid amount');
+      return;
+    }
+    if (amount > 5000) {
+      setFundError('Maximum funding amount is $5,000');
+      return;
+    }
+    
+    setFundLoading(true);
+    setFundError('');
+    setFundSuccess(null);
+    
+    try {
+      const result = await fundWalletSimulation(amount);
+      setFundSuccess(result);
+      // Refresh wallet data
+      const walletData = await getWalletBalances();
+      setWallet(walletData);
+      setFundAmount('');
+      // Auto-close after 3 seconds
+      setTimeout(() => {
+        setShowFundModal(false);
+        setFundSuccess(null);
+      }, 3000);
+    } catch (error) {
+      setFundError(error.message || 'Failed to fund wallet');
+    } finally {
+      setFundLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
