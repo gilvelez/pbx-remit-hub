@@ -1,16 +1,26 @@
 /**
  * PBX Recipient - Bills Payment API
  * Pay Philippine billers from PHP wallet
+ * Falls back to mock mode when MongoDB is unavailable
  */
 
-const { MongoClient } = require('mongodb');
-
-const MONGO_URI = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017';
+// Safely handle MongoDB
+let MongoClient = null;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
 const DB_NAME = process.env.DB_NAME || 'pbx_database';
 
-const USE_MOCKS = process.env.USE_MOCKS !== 'false';
+const DB_MODE = MONGODB_URI ? 'live' : 'mock';
+console.log(`[recipient-bills] DB_MODE=${DB_MODE}`);
 
-// Supported billers (Phase 1 - hardcoded)
+if (MONGODB_URI) {
+  try {
+    MongoClient = require('mongodb').MongoClient;
+  } catch (e) {
+    console.warn('[recipient-bills] MongoDB module not available, using mock mode');
+  }
+}
+
+// Supported billers
 const BILLERS = [
   { code: 'meralco', name: 'Meralco', category: 'electricity', logo: '⚡' },
   { code: 'pldt', name: 'PLDT', category: 'telecom', logo: '📞' },
@@ -20,10 +30,45 @@ const BILLERS = [
   { code: 'manila_water', name: 'Manila Water', category: 'water', logo: '🚰' },
 ];
 
+// Mock data for demo mode
+const MOCK_SAVED_BILLERS = [
+  { id: 'saved_1', biller_code: 'meralco', biller_name: 'Meralco', account_no: '1234567890', nickname: 'Home Electric' },
+  { id: 'saved_2', biller_code: 'pldt', biller_name: 'PLDT', account_no: '0987654321', nickname: 'Internet' },
+];
+
+const MOCK_PAYMENT_HISTORY = [
+  {
+    id: 'bill_1',
+    biller_code: 'meralco',
+    biller_name: 'Meralco',
+    account_no: '1234567890',
+    amount: 3500.00,
+    status: 'paid',
+    paid_at: new Date(Date.now() - 86400000).toISOString(),
+  },
+  {
+    id: 'bill_2',
+    biller_code: 'pldt',
+    biller_name: 'PLDT',
+    account_no: '0987654321',
+    amount: 1899.00,
+    status: 'paid',
+    paid_at: new Date(Date.now() - 172800000).toISOString(),
+  },
+];
+
 async function getDb() {
-  const client = new MongoClient(MONGO_URI);
-  await client.connect();
-  return { client, db: client.db(DB_NAME) };
+  if (!MongoClient || !MONGODB_URI) {
+    return null;
+  }
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    return { client, db: client.db(DB_NAME) };
+  } catch (e) {
+    console.error('[recipient-bills] MongoDB connection failed:', e.message);
+    return null;
+  }
 }
 
 exports.handler = async (event) => {
@@ -46,7 +91,6 @@ exports.handler = async (event) => {
       const params = event.queryStringParameters || {};
       
       if (params.type === 'billers') {
-        // Return list of supported billers
         return {
           statusCode: 200,
           headers,
@@ -55,23 +99,26 @@ exports.handler = async (event) => {
       }
 
       if (params.type === 'saved') {
-        // Return user's saved billers
-        if (USE_MOCKS) {
+        if (DB_MODE === 'mock') {
           return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({
-              saved_billers: [
-                { id: 'saved_1', biller_code: 'meralco', account_no: '1234567890', nickname: 'Home Electric' },
-                { id: 'saved_2', biller_code: 'pldt', account_no: '0987654321', nickname: 'Internet' },
-              ],
-            }),
+            body: JSON.stringify({ saved_billers: MOCK_SAVED_BILLERS, _mode: 'mock' }),
           };
         }
 
-        const { client, db } = await getDb();
+        const connection = await getDb();
+        if (!connection) {
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ saved_billers: MOCK_SAVED_BILLERS, _mode: 'mock' }),
+          };
+        }
+
+        const { client, db } = connection;
         try {
-          const saved = await db.collection('billers').find({ user_id }).toArray();
+          const saved = await db.collection('saved_billers').find({ user_id }).toArray();
           return {
             statusCode: 200,
             headers,
@@ -79,9 +126,11 @@ exports.handler = async (event) => {
               saved_billers: saved.map(b => ({
                 id: b._id.toString(),
                 biller_code: b.biller_code,
+                biller_name: BILLERS.find(bl => bl.code === b.biller_code)?.name || b.biller_code,
                 account_no: b.account_no,
                 nickname: b.nickname,
               })),
+              _mode: 'live',
             }),
           };
         } finally {
@@ -90,37 +139,24 @@ exports.handler = async (event) => {
       }
 
       if (params.type === 'history') {
-        // Return bill payment history
-        if (USE_MOCKS) {
+        if (DB_MODE === 'mock') {
           return {
             statusCode: 200,
             headers,
-            body: JSON.stringify({
-              payments: [
-                {
-                  id: 'bill_1',
-                  biller_code: 'meralco',
-                  biller_name: 'Meralco',
-                  account_no: '1234567890',
-                  amount: 3500.00,
-                  status: 'paid',
-                  paid_at: new Date(Date.now() - 86400000).toISOString(),
-                },
-                {
-                  id: 'bill_2',
-                  biller_code: 'pldt',
-                  biller_name: 'PLDT',
-                  account_no: '0987654321',
-                  amount: 1899.00,
-                  status: 'paid',
-                  paid_at: new Date(Date.now() - 172800000).toISOString(),
-                },
-              ],
-            }),
+            body: JSON.stringify({ payments: MOCK_PAYMENT_HISTORY, _mode: 'mock' }),
           };
         }
 
-        const { client, db } = await getDb();
+        const connection = await getDb();
+        if (!connection) {
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ payments: MOCK_PAYMENT_HISTORY, _mode: 'mock' }),
+          };
+        }
+
+        const { client, db } = connection;
         try {
           const payments = await db.collection('ledger')
             .find({ user_id, type: 'bill_payment' })
@@ -133,14 +169,15 @@ exports.handler = async (event) => {
             headers,
             body: JSON.stringify({
               payments: payments.map(p => ({
-                id: p.transaction_id,
+                id: p.txn_id || p._id.toString(),
                 biller_code: p.metadata?.biller_code,
-                biller_name: BILLERS.find(b => b.code === p.metadata?.biller_code)?.name,
+                biller_name: p.metadata?.biller_name || BILLERS.find(b => b.code === p.metadata?.biller_code)?.name,
                 account_no: p.metadata?.account_no,
-                amount: p.amount,
+                amount: Math.abs(p.amount),
                 status: p.status,
                 paid_at: p.created_at,
               })),
+              _mode: 'live',
             }),
           };
         } finally {
@@ -172,18 +209,21 @@ exports.handler = async (event) => {
 
         const biller_id = `biller_${Date.now()}`;
 
-        if (!USE_MOCKS) {
-          const { client, db } = await getDb();
-          try {
-            await db.collection('billers').insertOne({
-              user_id,
-              biller_code,
-              account_no,
-              nickname: nickname || '',
-              created_at: new Date().toISOString(),
-            });
-          } finally {
-            await client.close();
+        if (DB_MODE === 'live') {
+          const connection = await getDb();
+          if (connection) {
+            const { client, db } = connection;
+            try {
+              await db.collection('saved_billers').insertOne({
+                user_id,
+                biller_code,
+                account_no,
+                nickname: nickname || '',
+                created_at: new Date().toISOString(),
+              });
+            } finally {
+              await client.close();
+            }
           }
         }
 
@@ -194,6 +234,7 @@ exports.handler = async (event) => {
             success: true,
             biller_id,
             message: 'Biller saved successfully',
+            _mode: DB_MODE,
           }),
         };
       }
@@ -220,62 +261,52 @@ exports.handler = async (event) => {
         const transaction_id = `bill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const billerInfo = BILLERS.find(b => b.code === biller_code);
 
-        if (!USE_MOCKS) {
-          const { client, db } = await getDb();
-          try {
-            // Check PHP balance
-            const wallet = await db.collection('wallets').findOne({ user_id });
-            if (!wallet || wallet.php_balance < amount) {
-              return {
-                statusCode: 400,
-                headers,
-                body: JSON.stringify({ error: 'Insufficient PHP balance' }),
-              };
-            }
-
-            // Deduct from PHP wallet
-            await db.collection('wallets').updateOne(
-              { user_id },
-              {
-                $inc: { php_balance: -amount },
-                $set: { updated_at: new Date().toISOString() },
-              }
-            );
-
-            // Record ledger entry
-            await db.collection('ledger').insertOne({
-              transaction_id,
-              user_id,
-              type: 'bill_payment',
-              currency: 'PHP',
-              amount,
-              status: 'paid',
-              metadata: {
-                biller_code,
-                biller_name: billerInfo.name,
-                account_no,
-              },
-              created_at: new Date().toISOString(),
-            });
-
-            // Save biller if requested
-            if (save_biller) {
-              await db.collection('billers').updateOne(
-                { user_id, biller_code, account_no },
+        if (DB_MODE === 'live') {
+          const connection = await getDb();
+          if (connection) {
+            const { client, db } = connection;
+            try {
+              // Deduct from PHP wallet
+              await db.collection('wallets').updateOne(
+                { user_id },
                 {
-                  $set: {
-                    nickname: nickname || '',
-                    updated_at: new Date().toISOString(),
-                  },
-                  $setOnInsert: {
-                    created_at: new Date().toISOString(),
-                  },
-                },
-                { upsert: true }
+                  $inc: { php_balance: -amount },
+                  $set: { updated_at: new Date().toISOString() },
+                }
               );
+
+              // Record ledger entry
+              await db.collection('ledger').insertOne({
+                txn_id: transaction_id,
+                user_id,
+                type: 'bill_payment',
+                category: 'Bill Payment',
+                description: `${billerInfo.name} - ${account_no}`,
+                currency: 'PHP',
+                amount: -amount,
+                status: 'paid',
+                metadata: {
+                  biller_code,
+                  biller_name: billerInfo.name,
+                  account_no,
+                },
+                created_at: new Date().toISOString(),
+              });
+
+              // Save biller if requested
+              if (save_biller) {
+                await db.collection('saved_billers').updateOne(
+                  { user_id, biller_code, account_no },
+                  {
+                    $set: { nickname: nickname || billerInfo.name, updated_at: new Date().toISOString() },
+                    $setOnInsert: { created_at: new Date().toISOString() },
+                  },
+                  { upsert: true }
+                );
+              }
+            } finally {
+              await client.close();
             }
-          } finally {
-            await client.close();
           }
         }
 
@@ -290,6 +321,7 @@ exports.handler = async (event) => {
             amount,
             status: 'paid',
             paid_at: new Date().toISOString(),
+            _mode: DB_MODE,
           }),
         };
       }
@@ -308,7 +340,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Bills API error:', error);
+    console.error('[recipient-bills] Error:', error);
     return {
       statusCode: 500,
       headers,

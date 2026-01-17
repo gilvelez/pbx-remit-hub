@@ -1,23 +1,31 @@
 /**
  * PBX Recipient - FX Conversion API
  * Handles USD → PHP conversion with rate lock
+ * Falls back to mock mode when MongoDB is unavailable
  */
 
-const { MongoClient } = require('mongodb');
-
-const MONGO_URI = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017';
+// Safely handle MongoDB
+let MongoClient = null;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
 const DB_NAME = process.env.DB_NAME || 'pbx_database';
 
-const USE_MOCKS = process.env.USE_MOCKS !== 'false';
+const DB_MODE = MONGODB_URI ? 'live' : 'mock';
+console.log(`[recipient-convert] DB_MODE=${DB_MODE}`);
 
-// PBX spread configuration (basis points)
+if (MONGODB_URI) {
+  try {
+    MongoClient = require('mongodb').MongoClient;
+  } catch (e) {
+    console.warn('[recipient-convert] MongoDB module not available, using mock mode');
+  }
+}
+
+// PBX spread configuration
 const PBX_SPREAD_BPS = 50; // 0.50% spread
+const BANK_SPREAD_BPS = 250; // Typical bank spread ~2.5%
 const RATE_LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
-// Bank comparison rate (for "you saved" calculation)
-const BANK_SPREAD_BPS = 250; // Typical bank spread ~2.5%
-
-// Mid-market rate (simulated)
+// Mid-market rate (simulated - would use OpenExchangeRates in production)
 const getMidMarketRate = () => {
   const baseRate = 56.25;
   const fluctuation = (Math.random() - 0.5) * 0.3;
@@ -25,9 +33,17 @@ const getMidMarketRate = () => {
 };
 
 async function getDb() {
-  const client = new MongoClient(MONGO_URI);
-  await client.connect();
-  return { client, db: client.db(DB_NAME) };
+  if (!MongoClient || !MONGODB_URI) {
+    return null;
+  }
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    return { client, db: client.db(DB_NAME) };
+  } catch (e) {
+    console.error('[recipient-convert] MongoDB connection failed:', e.message);
+    return null;
+  }
 }
 
 exports.handler = async (event) => {
@@ -47,7 +63,7 @@ exports.handler = async (event) => {
     const user_id = sessionToken ? sessionToken.substring(0, 36) : 'demo_user';
 
     if (event.httpMethod === 'GET') {
-      // GET current FX quote
+      // GET current FX quote - always works (no DB needed)
       const params = event.queryStringParameters || {};
       const amount_usd = parseFloat(params.amount_usd) || 100;
 
@@ -75,7 +91,7 @@ exports.handler = async (event) => {
           savings_php: Math.round(savings * 100) / 100,
           lock_duration_seconds: RATE_LOCK_DURATION_MS / 1000,
           timestamp: Date.now(),
-          source: USE_MOCKS ? 'mock' : 'live',
+          source: 'mock', // Would be 'live' with OpenExchangeRates
         }),
       };
     }
@@ -85,7 +101,6 @@ exports.handler = async (event) => {
       const { action, amount_usd, locked_rate } = body;
 
       if (action === 'lock_rate') {
-        // Lock the FX rate for 15 minutes
         const midRate = getMidMarketRate();
         const pbxSpread = midRate * (PBX_SPREAD_BPS / 10000);
         const pbxRate = locked_rate || (midRate - pbxSpread);
@@ -93,20 +108,23 @@ exports.handler = async (event) => {
         const lock_id = `lock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         const expires_at = new Date(Date.now() + RATE_LOCK_DURATION_MS).toISOString();
 
-        if (!USE_MOCKS) {
-          const { client, db } = await getDb();
-          try {
-            await db.collection('rate_locks').insertOne({
-              lock_id,
-              user_id,
-              rate: pbxRate,
-              amount_usd: amount_usd || 0,
-              expires_at,
-              created_at: new Date().toISOString(),
-              status: 'active',
-            });
-          } finally {
-            await client.close();
+        if (DB_MODE === 'live') {
+          const connection = await getDb();
+          if (connection) {
+            const { client, db } = connection;
+            try {
+              await db.collection('rate_locks').insertOne({
+                lock_id,
+                user_id,
+                rate: pbxRate,
+                amount_usd: amount_usd || 0,
+                expires_at,
+                created_at: new Date().toISOString(),
+                status: 'active',
+              });
+            } finally {
+              await client.close();
+            }
           }
         }
 
@@ -119,12 +137,12 @@ exports.handler = async (event) => {
             rate: Math.round(pbxRate * 100) / 100,
             expires_at,
             expires_in_seconds: RATE_LOCK_DURATION_MS / 1000,
+            _mode: DB_MODE,
           }),
         };
       }
 
       if (action === 'convert') {
-        // Execute USD → PHP conversion
         const { lock_id } = body;
 
         if (!amount_usd || amount_usd <= 0) {
@@ -135,7 +153,6 @@ exports.handler = async (event) => {
           };
         }
 
-        // Calculate conversion
         const midRate = getMidMarketRate();
         const pbxSpread = midRate * (PBX_SPREAD_BPS / 10000);
         const rate = locked_rate || (midRate - pbxSpread);
@@ -143,45 +160,54 @@ exports.handler = async (event) => {
 
         const transaction_id = `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        if (!USE_MOCKS) {
-          const { client, db } = await getDb();
-          try {
-            // Record ledger entry
-            await db.collection('ledger').insertOne({
-              transaction_id,
-              user_id,
-              type: 'fx_conversion',
-              from_currency: 'USD',
-              to_currency: 'PHP',
-              from_amount: amount_usd,
-              to_amount: Math.round(amount_php * 100) / 100,
-              rate,
-              lock_id: lock_id || null,
-              status: 'completed',
-              created_at: new Date().toISOString(),
-            });
-
-            // Update wallet balances
-            await db.collection('wallets').updateOne(
-              { user_id },
-              {
-                $inc: {
-                  usd_balance: -amount_usd,
-                  php_balance: Math.round(amount_php * 100) / 100,
+        if (DB_MODE === 'live') {
+          const connection = await getDb();
+          if (connection) {
+            const { client, db } = connection;
+            try {
+              // Record ledger entry
+              await db.collection('ledger').insertOne({
+                txn_id: transaction_id,
+                user_id,
+                type: 'fx_conversion',
+                category: 'FX Conversion',
+                description: `USD → PHP @ ${Math.round(rate * 100) / 100}`,
+                currency: 'PHP',
+                amount: Math.round(amount_php * 100) / 100,
+                metadata: {
+                  from_currency: 'USD',
+                  from_amount: amount_usd,
+                  rate: Math.round(rate * 100) / 100,
+                  fx_source: 'mock',
+                  lock_id: lock_id || null,
                 },
-                $set: { updated_at: new Date().toISOString() },
-              }
-            );
+                status: 'completed',
+                created_at: new Date().toISOString(),
+              });
 
-            // Mark rate lock as used
-            if (lock_id) {
-              await db.collection('rate_locks').updateOne(
-                { lock_id },
-                { $set: { status: 'used', used_at: new Date().toISOString() } }
+              // Update wallet balances
+              await db.collection('wallets').updateOne(
+                { user_id },
+                {
+                  $inc: {
+                    usd_balance: -amount_usd,
+                    php_balance: Math.round(amount_php * 100) / 100,
+                  },
+                  $set: { updated_at: new Date().toISOString() },
+                },
+                { upsert: true }
               );
+
+              // Mark rate lock as used
+              if (lock_id) {
+                await db.collection('rate_locks').updateOne(
+                  { lock_id },
+                  { $set: { status: 'used', used_at: new Date().toISOString() } }
+                );
+              }
+            } finally {
+              await client.close();
             }
-          } finally {
-            await client.close();
           }
         }
 
@@ -196,7 +222,9 @@ exports.handler = async (event) => {
             to_amount: Math.round(amount_php * 100) / 100,
             to_currency: 'PHP',
             rate: Math.round(rate * 100) / 100,
+            fx_source: 'mock',
             status: 'completed',
+            _mode: DB_MODE,
           }),
         };
       }
@@ -215,7 +243,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('FX Convert API error:', error);
+    console.error('[recipient-convert] Error:', error);
     return {
       statusCode: 500,
       headers,

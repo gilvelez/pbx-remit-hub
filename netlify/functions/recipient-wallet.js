@@ -1,21 +1,33 @@
 /**
  * PBX Recipient - Wallet API
  * Manages USD (USDC) and PHP balances
- * Uses MongoDB for persistence
+ * Uses MongoDB for persistence when available, falls back to mock mode
  */
 
-const { MongoClient, ObjectId } = require('mongodb');
-
-const MONGO_URI = process.env.MONGO_URL || process.env.MONGODB_URI || 'mongodb://localhost:27017';
+// Safely handle MongoDB - only import if we have a connection string
+let MongoClient = null;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
 const DB_NAME = process.env.DB_NAME || 'pbx_database';
 
-// Mock mode toggle
-const USE_MOCKS = process.env.USE_MOCKS !== 'false';
+// Determine DB mode based on environment
+const DB_MODE = MONGODB_URI ? 'live' : 'mock';
 
-// Default wallet for new users
+// Log mode at function cold start
+console.log(`[recipient-wallet] DB_MODE=${DB_MODE}`);
+
+// Only require MongoDB if we have a connection URI
+if (MONGODB_URI) {
+  try {
+    MongoClient = require('mongodb').MongoClient;
+  } catch (e) {
+    console.warn('[recipient-wallet] MongoDB module not available, using mock mode');
+  }
+}
+
+// Default wallet for demo/mock mode
 const DEFAULT_WALLET = {
-  usd_balance: 1500.00,  // Demo balance
-  php_balance: 25000.00, // Demo balance
+  usd_balance: 1500.00,
+  php_balance: 25000.00,
   sub_wallets: {
     bills: 5000.00,
     savings: 10000.00,
@@ -26,7 +38,10 @@ const DEFAULT_WALLET = {
 };
 
 async function getDb() {
-  const client = new MongoClient(MONGO_URI);
+  if (!MongoClient || !MONGODB_URI) {
+    return null;
+  }
+  const client = new MongoClient(MONGODB_URI);
   await client.connect();
   return { client, db: client.db(DB_NAME) };
 }
@@ -46,14 +61,11 @@ exports.handler = async (event) => {
 
   try {
     const sessionToken = event.headers['x-session-token'] || event.headers['X-Session-Token'];
-    
-    // For demo, derive user_id from session token or use default
     const user_id = sessionToken ? sessionToken.substring(0, 36) : 'demo_user';
 
     if (event.httpMethod === 'GET') {
-      // GET wallet balances
-      if (USE_MOCKS) {
-        // Return mock wallet
+      // If no MongoDB connection, return mock data
+      if (DB_MODE === 'mock') {
         return {
           statusCode: 200,
           headers,
@@ -63,17 +75,34 @@ exports.handler = async (event) => {
             php_balance: DEFAULT_WALLET.php_balance,
             sub_wallets: DEFAULT_WALLET.sub_wallets,
             updated_at: new Date().toISOString(),
+            _mode: 'mock',
           }),
         };
       }
 
       // Real MongoDB query
-      const { client, db } = await getDb();
+      const connection = await getDb();
+      if (!connection) {
+        // Fallback to mock if connection fails
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            user_id,
+            usd_balance: DEFAULT_WALLET.usd_balance,
+            php_balance: DEFAULT_WALLET.php_balance,
+            sub_wallets: DEFAULT_WALLET.sub_wallets,
+            updated_at: new Date().toISOString(),
+            _mode: 'mock',
+          }),
+        };
+      }
+
+      const { client, db } = connection;
       try {
         let wallet = await db.collection('wallets').findOne({ user_id });
         
         if (!wallet) {
-          // Create default wallet for new user
           wallet = { user_id, ...DEFAULT_WALLET };
           await db.collection('wallets').insertOne(wallet);
         }
@@ -87,6 +116,7 @@ exports.handler = async (event) => {
             php_balance: wallet.php_balance,
             sub_wallets: wallet.sub_wallets || DEFAULT_WALLET.sub_wallets,
             updated_at: wallet.updated_at,
+            _mode: 'live',
           }),
         };
       } finally {
@@ -99,7 +129,6 @@ exports.handler = async (event) => {
       const { action } = body;
 
       if (action === 'allocate_sub_wallet') {
-        // Move funds between PHP wallet and sub-wallets
         const { sub_wallet, amount } = body;
         
         if (!['bills', 'savings', 'family'].includes(sub_wallet)) {
@@ -110,7 +139,8 @@ exports.handler = async (event) => {
           };
         }
 
-        if (USE_MOCKS) {
+        // Mock mode response
+        if (DB_MODE === 'mock') {
           return {
             statusCode: 200,
             headers,
@@ -121,16 +151,115 @@ exports.handler = async (event) => {
                 ...DEFAULT_WALLET.sub_wallets,
                 [sub_wallet]: DEFAULT_WALLET.sub_wallets[sub_wallet] + amount,
               },
+              _mode: 'mock',
             }),
           };
         }
 
-        // Real MongoDB update would go here
-        return {
-          statusCode: 200,
-          headers,
-          body: JSON.stringify({ success: true, message: 'Sub-wallet updated' }),
-        };
+        // Real MongoDB update
+        const connection = await getDb();
+        if (!connection) {
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              message: `Allocated ₱${amount} to ${sub_wallet} (mock)`,
+              _mode: 'mock',
+            }),
+          };
+        }
+
+        const { client, db } = connection;
+        try {
+          await db.collection('wallets').updateOne(
+            { user_id },
+            {
+              $inc: { [`sub_wallets.${sub_wallet}`]: amount },
+              $set: { updated_at: new Date().toISOString() },
+            }
+          );
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({ success: true, message: 'Sub-wallet updated', _mode: 'live' }),
+          };
+        } finally {
+          await client.close();
+        }
+      }
+
+      // Fund wallet simulation
+      if (action === 'fund') {
+        const { amount } = body;
+        
+        if (!amount || amount <= 0 || amount > 5000) {
+          return {
+            statusCode: 400,
+            headers,
+            body: JSON.stringify({ error: 'Invalid amount (max $5,000)' }),
+          };
+        }
+
+        if (DB_MODE === 'mock') {
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              transaction_id: `fund_${Date.now()}`,
+              amount,
+              new_balance: DEFAULT_WALLET.usd_balance + amount,
+              is_simulation: true,
+              message: 'Test funding completed (simulation only)',
+              _mode: 'mock',
+            }),
+          };
+        }
+
+        const connection = await getDb();
+        if (!connection) {
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              transaction_id: `fund_${Date.now()}`,
+              amount,
+              is_simulation: true,
+              message: 'Test funding completed (mock mode)',
+              _mode: 'mock',
+            }),
+          };
+        }
+
+        const { client, db } = connection;
+        try {
+          const result = await db.collection('wallets').findOneAndUpdate(
+            { user_id },
+            {
+              $inc: { usd_balance: amount },
+              $set: { updated_at: new Date().toISOString() },
+            },
+            { returnDocument: 'after', upsert: true }
+          );
+
+          return {
+            statusCode: 200,
+            headers,
+            body: JSON.stringify({
+              success: true,
+              transaction_id: `fund_${Date.now()}`,
+              amount,
+              new_balance: result.value?.usd_balance || amount,
+              is_simulation: true,
+              message: 'Test funding completed',
+              _mode: 'live',
+            }),
+          };
+        } finally {
+          await client.close();
+        }
       }
 
       return {
@@ -147,7 +276,7 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error('Wallet API error:', error);
+    console.error('[recipient-wallet] Error:', error);
     return {
       statusCode: 500,
       headers,

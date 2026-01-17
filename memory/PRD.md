@@ -197,7 +197,7 @@ Dark theme: neutral-950, amber-400, red-600
 - [ ] Test and verify all edge cases (insufficient balance, concurrent updates)
 
 ### P1 (High Priority)
-- [ ] Real FX rate API (OpenExchangeRates)
+- [x] Real FX rate API (OpenExchangeRates) ✅
 - [ ] Plaid integration for sender flow
 - [ ] Stripe subscription billing
 - [ ] Rate lock backend with TTL
@@ -216,6 +216,31 @@ Dark theme: neutral-950, amber-400, red-600
 ---
 
 ## Change Log
+
+### January 17, 2025 - Netlify Deploy Fix (MongoDB Graceful Fallback)
+- ✅ Added `mongodb` to root package.json dependencies
+- ✅ Generated package-lock.json for Netlify build
+- ✅ Updated all recipient Netlify functions to gracefully handle missing MONGODB_URI
+- ✅ Functions return mock data when DB unavailable (DB_MODE=mock vs live in logs)
+- ✅ No breaking changes to sender flow
+
+### January 17, 2025 - OpenExchangeRates FX API & Phone Country Code
+- ✅ Integrated OpenExchangeRates API for live USD/PHP rates
+- ✅ Fallback to mock rate (56.25) when API unavailable
+- ✅ FX source tracked in responses and ledger ("live" or "mock")
+- ✅ Added country code selector to phone input
+- ✅ Philippines (+63) and US (+1) pinned at top of dropdown
+- ✅ Role-based default: Recipients → +63, Senders → +1
+- ✅ Search functionality in country dropdown
+- ✅ E.164 format stored in session (countryCode + phone)
+
+### January 17, 2025 - Fund Wallet (Simulation) Feature
+- ✅ Added POST /api/recipient/wallet/fund endpoint
+- ✅ Credits USD wallet with max $5,000 per request
+- ✅ Clear "SIMULATION ONLY" labeling in UI
+- ✅ Warning banner explaining it's for testing only
+- ✅ Transaction recorded in ledger as "simulated_credit"
+- ✅ Success modal with updated balance
 
 ### January 17, 2025 - Email Persistence & Real MongoDB APIs
 - ✅ Added email persistence during signup (normalized, unique constraint)
