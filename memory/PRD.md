@@ -244,6 +244,13 @@ Dark theme: neutral-950, amber-400, red-600
   - Delivery tracking
   - Rate limiting (2-3 min window)
   - Graceful degradation without API keys
+- [x] **Enhanced Add Recipient (P0)** ✅
+  - PBX Wallet as default delivery method with "Recommended" badge
+  - PBX Friends tab with user search (name/@username/phone/email)
+  - Manual Details tab with all delivery methods
+  - Invite via SMS/Email for non-PBX users
+  - Dynamic form fields based on delivery method
+  - Venmo/Cash App/Zelle-like UX
 
 ### P1 (High Priority)
 - [ ] Plaid integration for sender flow
@@ -255,7 +262,6 @@ Dark theme: neutral-950, amber-400, red-600
 - [ ] Recurring transfers
 - [ ] Push notifications (mobile)
 - [ ] Rate alerts
-- [ ] Invite system for non-PBX users
 
 ### P3 (Future)
 - [ ] Real payment integrations (GCash, Maya APIs)
