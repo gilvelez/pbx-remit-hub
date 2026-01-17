@@ -442,6 +442,21 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 17, 2026 - Phase 1: Business Profiles (P0 COMPLETE) ✅
+- ✅ Implemented User → Profile abstraction (one login, multiple profiles)
+- ✅ Personal Account: @username, display_name, avatar, friends system
+- ✅ Business Account: @businesshandle, business_name, logo, category, verified badge
+- ✅ `/api/profiles/*` endpoints: me, active, switch, personal, business, search
+- ✅ `/api/businesses/*` endpoints: discover, categories, paid, chat, pay
+- ✅ Profile Switcher component (Instagram-style account switching)
+- ✅ 6-tab navigation: Home, Send, People, Businesses, Activity, Settings
+- ✅ People tab (Personal-only friends)
+- ✅ Businesses tab (Discover, Recently Paid, category filters)
+- ✅ Chat supports: Person↔Person, Person↔Business, Business↔Business
+- ✅ In-chat payments for all profile combinations
+- ✅ SessionContext updated with profiles, activeProfile, switchProfile
+- ✅ Tests: 31/31 backend, 100% frontend UI verified
+
 ### January 17, 2025 - Enhanced Add Recipient with PBX-to-PBX (P0 COMPLETE)
 - ✅ Added "PBX Wallet (Instant)" as first delivery method with "Recommended" badge
 - ✅ Created Venmo/Cash App-style "PBX Friends" and "Manual Details" tabs
