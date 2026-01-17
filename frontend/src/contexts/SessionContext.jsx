@@ -26,6 +26,10 @@ export function SessionProvider({ children }) {
       token: null,
       user: null,
       role: null,  // 'sender' or 'recipient'
+      // Profile system
+      profiles: [],           // All user profiles (personal + business)
+      activeProfile: null,    // Currently active profile
+      activeProfileId: null,  // Currently active profile ID
     };
   });
 
@@ -75,6 +79,42 @@ export function SessionProvider({ children }) {
     persistUserToBackend();
   }, [session.token, session.role]);
 
+  // Load profiles when logged in
+  useEffect(() => {
+    const loadProfiles = async () => {
+      if (session.token && !session._profilesLoaded) {
+        try {
+          const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+          const response = await fetch(`${backendUrl}/api/profiles/me`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Session-Token': session.token,
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            const profiles = data.profiles || [];
+            const personalProfile = data.personal || profiles[0];
+            
+            setSession(prev => ({
+              ...prev,
+              profiles,
+              activeProfile: prev.activeProfile || personalProfile,
+              activeProfileId: prev.activeProfileId || personalProfile?.profile_id,
+              _profilesLoaded: true,
+            }));
+            auditLog('PROFILES_LOADED', { count: profiles.length });
+          }
+        } catch (err) {
+          console.error('Failed to load profiles:', err);
+        }
+      }
+    };
+    
+    loadProfiles();
+  }, [session.token]);
+
   const login = (email) => {
     const token = generateUUID();
     // CRITICAL: Preserve existing session fields (especially role set during onboarding)
@@ -84,6 +124,7 @@ export function SessionProvider({ children }) {
       verified: false,
       token,
       user: { email },
+      _profilesLoaded: false, // Reset to load profiles
     }));
     auditLog('SESSION_CREATED', { email, token });
   };
@@ -112,7 +153,16 @@ export function SessionProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY);
-    setSession({ exists: false, verified: false, token: null, user: null, role: null });
+    setSession({ 
+      exists: false, 
+      verified: false, 
+      token: null, 
+      user: null, 
+      role: null,
+      profiles: [],
+      activeProfile: null,
+      activeProfileId: null,
+    });
     auditLog('SESSION_LOGOUT');
   };
 
@@ -122,8 +172,69 @@ export function SessionProvider({ children }) {
     auditLog('ROLE_SET', { role });
   };
 
+  // Switch active profile
+  const switchProfile = async (profile) => {
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+      await fetch(`${backendUrl}/api/profiles/switch/${profile.profile_id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': session.token,
+        },
+      });
+      
+      setSession((prev) => ({
+        ...prev,
+        activeProfile: profile,
+        activeProfileId: profile.profile_id,
+      }));
+      auditLog('PROFILE_SWITCHED', { profileId: profile.profile_id, type: profile.type });
+    } catch (err) {
+      console.error('Failed to switch profile:', err);
+    }
+  };
+
+  // Refresh profiles from server
+  const refreshProfiles = async () => {
+    if (!session.token) return;
+    
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+      const response = await fetch(`${backendUrl}/api/profiles/me`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': session.token,
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        const profiles = data.profiles || [];
+        
+        setSession((prev) => ({
+          ...prev,
+          profiles,
+          // Update active profile if it was modified
+          activeProfile: profiles.find(p => p.profile_id === prev.activeProfileId) || prev.activeProfile,
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to refresh profiles:', err);
+    }
+  };
+
   return (
-    <SessionContext.Provider value={{ session, setSession, login, verify, logout, setRole }}>
+    <SessionContext.Provider value={{ 
+      session, 
+      setSession, 
+      login, 
+      verify, 
+      logout, 
+      setRole,
+      switchProfile,
+      refreshProfiles,
+    }}>
       {children}
     </SessionContext.Provider>
   );
