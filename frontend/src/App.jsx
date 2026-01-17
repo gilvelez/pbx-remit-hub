@@ -107,6 +107,11 @@ function AppRoutes() {
       <Route path="/security" element={<PublicShell><Security /></PublicShell>} />
 
       {/* ========================================
+          AUTH ROUTES
+         ======================================== */}
+      <Route path="/auth/magic" element={<MagicLinkHandler />} />
+
+      {/* ========================================
           SENDER ROUTES (/sender/*)
           For employers, businesses, and payers
           Shows: Dashboard, Send, Recipients, Activity, Settings
