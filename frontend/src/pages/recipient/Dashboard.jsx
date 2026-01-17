@@ -157,6 +157,54 @@ export default function RecipientDashboard() {
         </div>
       </div>
 
+      {/* Incoming PBX Transfers */}
+      {incomingTransfers.length > 0 && (
+        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden" data-testid="incoming-transfers-section">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-green-50">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+                <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="font-semibold text-[#0B1F3B]">Incoming PBX Transfers</h2>
+                <p className="text-xs text-gray-500">Instant • Free • From PBX users</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="divide-y divide-gray-100">
+            {incomingTransfers.map((tx) => (
+              <div key={tx.id || tx.transfer_id} className="px-5 py-4 flex items-center justify-between" data-testid="incoming-transfer-item">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-600 font-bold">
+                      {tx.from?.[0]?.toUpperCase() || '?'}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-[#0B1F3B] text-sm">From {tx.from || 'PBX User'}</p>
+                    {tx.note && <p className="text-xs text-gray-500">"{tx.note}"</p>}
+                    <p className="text-xs text-gray-400">
+                      {new Date(tx.created_at).toLocaleDateString()} • {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-green-600 text-lg">
+                    +${tx.amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                  </p>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                    Received
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Recent Activity */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
