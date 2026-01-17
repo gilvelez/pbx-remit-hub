@@ -1,13 +1,21 @@
 # PBX (Philippine Bayani Exchange) - Product Requirements Document
 
 ## Original Problem Statement
-Build a dual-UX financial platform (PBX) for cross-border money transfers between the U.S. and the Philippines. The application supports two distinct user roles:
-- **Senders** (Employers/Businesses): Manage payroll, batch payments, recipient management
+Build a **social payments platform** (PBX) for cross-border money transfers between the U.S. and the Philippines. The application feels like Venmo/Cash App/Zelle with:
+- **Senders** (Employers/Businesses): Send to friends, manage payroll, batch payments
 - **Recipients** (End Users): Receive USD, convert to PHP, pay bills, transfer funds
 
-**Core Feature: PBX Closed-Loop Transfers** - The primary UX is PBX-to-PBX instant, free USD transfers. This is the default option when sending money.
+**Core Feature: PBX Closed-Loop Transfers** - Send to PBX friends instantly and free. This is the default and primary UX.
 
 ## 🔒 HARD RULES (Locked In)
+
+### Social Network Features (P0 - COMPLETE)
+- **People Tab**: Friends list, search by @username/name/phone/email
+- **Friend Requests**: Add/Accept/Decline/Block/Unfriend like Instagram
+- **Chat Threads**: 1:1 iMessage-style chat for each friend
+- **In-Chat Payments**: Send PBX inside chat, appears as payment bubbles
+- **Navigation**: Home, Send, People, Activity, Settings
+- **No "Add Recipient"**: Users add friends, not recipients
 
 ### PBX-to-PBX Closed-Loop Transfers (P0)
 - **Default Option**: PBX-to-PBX is the RECOMMENDED send option
@@ -29,7 +37,7 @@ Build a dual-UX financial platform (PBX) for cross-border money transfers betwee
 
 ### Dual-UX Architecture
 - **Role Selection**: Mandatory question during onboarding determines UX path
-- **Sender UX** (`/sender/*`): Dashboard, Send, Recipients, Activity, Settings
+- **Sender UX** (`/sender/*`): Home, Send, People, Chat, Activity, Settings
 - **Recipient UX** (`/recipient/*`): Dashboard, Wallets, Convert, Bills, Transfers, Statements, Notifications
 - **Strict Access Control**: Users confined to their role's routes
 
