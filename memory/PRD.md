@@ -191,9 +191,10 @@ Dark theme: neutral-950, amber-400, red-600
 - [x] Mock recipient APIs (wallet, FX, bills, transfers)
 
 ### P0 (Critical - Next Up)
-- [ ] Wire recipient APIs to real MongoDB (wallets, ledger, billers)
-- [ ] Implement real USD/PHP wallet balances
-- [ ] Store transactions in ledger collection
+- [x] Wire recipient APIs to real MongoDB ✅
+- [x] Implement real USD/PHP wallet balances ✅
+- [x] Store transactions in ledger collection ✅
+- [ ] Test and verify all edge cases (insufficient balance, concurrent updates)
 
 ### P1 (High Priority)
 - [ ] Real FX rate API (OpenExchangeRates)
