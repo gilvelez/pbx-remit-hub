@@ -1,13 +1,21 @@
 # PBX (Philippine Bayani Exchange) - Product Requirements Document
 
 ## Original Problem Statement
-Build a dual-UX financial platform (PBX) for cross-border money transfers between the U.S. and the Philippines. The application supports two distinct user roles:
-- **Senders** (Employers/Businesses): Manage payroll, batch payments, recipient management
+Build a **social payments platform** (PBX) for cross-border money transfers between the U.S. and the Philippines. The application feels like Venmo/Cash App/Zelle with:
+- **Senders** (Employers/Businesses): Send to friends, manage payroll, batch payments
 - **Recipients** (End Users): Receive USD, convert to PHP, pay bills, transfer funds
 
-**Core Feature: PBX Closed-Loop Transfers** - The primary UX is PBX-to-PBX instant, free USD transfers. This is the default option when sending money.
+**Core Feature: PBX Closed-Loop Transfers** - Send to PBX friends instantly and free. This is the default and primary UX.
 
 ## 🔒 HARD RULES (Locked In)
+
+### Social Network Features (P0 - COMPLETE)
+- **People Tab**: Friends list, search by @username/name/phone/email
+- **Friend Requests**: Add/Accept/Decline/Block/Unfriend like Instagram
+- **Chat Threads**: 1:1 iMessage-style chat for each friend
+- **In-Chat Payments**: Send PBX inside chat, appears as payment bubbles
+- **Navigation**: Home, Send, People, Activity, Settings
+- **No "Add Recipient"**: Users add friends, not recipients
 
 ### PBX-to-PBX Closed-Loop Transfers (P0)
 - **Default Option**: PBX-to-PBX is the RECOMMENDED send option
@@ -29,7 +37,7 @@ Build a dual-UX financial platform (PBX) for cross-border money transfers betwee
 
 ### Dual-UX Architecture
 - **Role Selection**: Mandatory question during onboarding determines UX path
-- **Sender UX** (`/sender/*`): Dashboard, Send, Recipients, Activity, Settings
+- **Sender UX** (`/sender/*`): Home, Send, People, Chat, Activity, Settings
 - **Recipient UX** (`/recipient/*`): Dashboard, Wallets, Convert, Bills, Transfers, Statements, Notifications
 - **Strict Access Control**: Users confined to their role's routes
 
@@ -135,6 +143,19 @@ Dark theme: neutral-950, amber-400, red-600
 | `/api/internal/transfer` | POST | Execute instant USD transfer to PBX user |
 | `/api/internal/incoming` | GET | Get incoming PBX transfers for current user |
 | `/api/internal/invite` | POST | Generate invite message for non-PBX user |
+
+### Social Features (P0 - COMPLETE)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/social/friends/request` | POST | Send friend request |
+| `/api/social/friends/action` | POST | Accept/decline/block/unfriend |
+| `/api/social/friends/list` | GET | Get friends, incoming/outgoing requests |
+| `/api/social/friends/status/:userId` | GET | Get friendship status |
+| `/api/social/conversations` | GET | Get all conversations |
+| `/api/social/conversations/:userId` | GET | Get/create conversation with user |
+| `/api/social/messages/:conversationId` | GET | Get messages |
+| `/api/social/messages/send` | POST | Send text message |
+| `/api/social/payments/send-in-chat` | POST | Send PBX payment in chat |
 
 ### Notification System (P0 - COMPLETE)
 | Endpoint | Method | Description |
@@ -244,13 +265,13 @@ Dark theme: neutral-950, amber-400, red-600
   - Delivery tracking
   - Rate limiting (2-3 min window)
   - Graceful degradation without API keys
-- [x] **Enhanced Add Recipient (P0)** ✅
-  - PBX Wallet as default delivery method with "Recommended" badge
-  - PBX Friends tab with user search (name/@username/phone/email)
-  - Manual Details tab with all delivery methods
-  - Invite via SMS/Email for non-PBX users
-  - Dynamic form fields based on delivery method
-  - Venmo/Cash App/Zelle-like UX
+- [x] **Social Network Features (P0)** ✅
+  - People tab with Friends/Requests sections
+  - Friend requests (add/accept/decline/block/unfriend)
+  - User search by name/@username/phone/email
+  - 1:1 Chat threads (iMessage-style)
+  - In-chat PBX payments with payment bubbles
+  - Navigation: Home, Send, People, Activity, Settings
 
 ### P1 (High Priority)
 - [ ] Plaid integration for sender flow
