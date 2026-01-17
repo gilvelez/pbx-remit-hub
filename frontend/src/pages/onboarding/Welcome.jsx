@@ -27,10 +27,17 @@ export default function Welcome() {
   const [role, setRoleLocal] = useState(null);  // 'sender' or 'recipient'
   const [accountType, setAccountType] = useState('personal');
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     if (!email) return;
     login(email);
+    // After login, we have a token - persist the role to backend if it was set
+    if (role) {
+      // Small delay to ensure session state is updated with token
+      setTimeout(async () => {
+        await setRole(role);
+      }, 100);
+    }
     setStep(STEPS.ACCOUNT_TYPE);
   };
 
