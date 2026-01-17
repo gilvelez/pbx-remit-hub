@@ -3,6 +3,7 @@
   "private": true,
   "license": "UNLICENSED",
   "dependencies": {
+    "mongodb": "^6.3.0",
     "plaid": "^24.0.0"
   },
   "devDependencies": {
