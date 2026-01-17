@@ -1,6 +1,9 @@
 """
 PBX Social Features - Friendships, Conversations, Messages
 Backend routes for social networking features
+
+NOTE: Friendships are PERSONAL-ONLY (between personal profiles).
+Businesses do NOT have friends - they have chats and can be paid/messaged.
 """
 from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from pydantic import BaseModel, Field
@@ -24,6 +27,41 @@ def utc_now():
 def get_user_id_from_headers(request: Request) -> str:
     """Extract user ID from session token"""
     return request.headers.get("X-Session-Token", "")
+
+
+async def get_or_create_personal_profile(db, user_id: str) -> dict:
+    """Get or create personal profile for a user"""
+    profiles_coll = db.profiles
+    users_coll = db.users
+    
+    profile = await profiles_coll.find_one({
+        "user_id": user_id,
+        "type": "personal"
+    }, {"_id": 0})
+    
+    if profile:
+        return profile
+    
+    # Create default profile
+    user = await users_coll.find_one({"user_id": user_id}, {"_id": 0})
+    email = user.get("email") if user else None
+    
+    now = utc_now()
+    profile_id = f"prof_{uuid.uuid4().hex[:12]}"
+    
+    profile = {
+        "profile_id": profile_id,
+        "user_id": user_id,
+        "type": "personal",
+        "handle": None,
+        "display_name": email.split("@")[0] if email else "PBX User",
+        "avatar_url": None,
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await profiles_coll.insert_one(profile)
+    return await profiles_coll.find_one({"profile_id": profile_id}, {"_id": 0})
 
 
 # ============================================================
