@@ -197,7 +197,7 @@ Dark theme: neutral-950, amber-400, red-600
 - [ ] Test and verify all edge cases (insufficient balance, concurrent updates)
 
 ### P1 (High Priority)
-- [ ] Real FX rate API (OpenExchangeRates)
+- [x] Real FX rate API (OpenExchangeRates) ✅
 - [ ] Plaid integration for sender flow
 - [ ] Stripe subscription billing
 - [ ] Rate lock backend with TTL
