@@ -2,7 +2,7 @@
 PBX Internal Transfers - Closed-loop PBX-to-PBX transfers
 User lookup and instant internal transfers between PBX users
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -10,6 +10,7 @@ import logging
 import os
 
 from database.connection import get_database
+from services.notifications import send_transfer_notifications
 
 router = APIRouter(prefix="/api/internal", tags=["internal"])
 logger = logging.getLogger(__name__)
