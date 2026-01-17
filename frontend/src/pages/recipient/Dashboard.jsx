@@ -185,7 +185,7 @@ export default function RecipientDashboard() {
                   </div>
                   <div>
                     <p className="font-medium text-[#0B1F3B] text-sm">From {tx.from || 'PBX User'}</p>
-                    {tx.note && <p className="text-xs text-gray-500">"{tx.note}"</p>}
+                    {tx.note && <p className="text-xs text-gray-500">&ldquo;{tx.note}&rdquo;</p>}
                     <p className="text-xs text-gray-400">
                       {new Date(tx.created_at).toLocaleDateString()} • {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
