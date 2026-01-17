@@ -117,16 +117,18 @@ function AppRoutes() {
       {/* ========================================
           SENDER ROUTES (/sender/*)
           For employers, businesses, and payers
-          Shows: Dashboard, Send, Recipients, Activity, Settings
-          NEVER shows: Wallets, FX locks, Bills, GCash/Maya
+          Shows: Home, Send, People, Activity, Settings
+          Social features: Friends, Chat, In-Chat Payments
          ======================================== */}
       <Route path="/sender" element={<SenderProtectedRoute><SenderShell /></SenderProtectedRoute>}>
         <Route index element={<Navigate to="/sender/dashboard" replace />} />
         <Route path="dashboard" element={<Home />} />
         <Route path="send" element={<Send />} />
-        <Route path="recipients" element={<Manage />} />
+        <Route path="people" element={<People />} />
+        <Route path="chat/:userId" element={<Chat />} />
         <Route path="activity" element={<Activity />} />
         <Route path="settings" element={<Manage />} />
+        <Route path="recipients" element={<Manage />} />
         <Route path="*" element={<Navigate to="/sender/dashboard" replace />} />
       </Route>
 
