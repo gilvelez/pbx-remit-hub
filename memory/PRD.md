@@ -249,11 +249,66 @@ Dark theme: neutral-950, amber-400, red-600
   user_id: String,      // Session token (first 36 chars)
   email: String,
   role: "sender" | "recipient",
+  active_profile_id: String,  // Currently active profile
   created_at: DateTime,
   updated_at: DateTime
 }
 
-// wallets collection (planned)
+// profiles collection (NEW - Jan 2026)
+{
+  profile_id: String,     // "prof_xxx" for personal, "biz_xxx" for business
+  user_id: String,        // Owner user_id
+  type: "personal" | "business",
+  handle: String,         // @username or @businesshandle
+  display_name: String,   // For personal profiles
+  business_name: String,  // For business profiles
+  avatar_url: String,     // For personal profiles
+  logo_url: String,       // For business profiles
+  category: String,       // For business profiles
+  verified: Boolean,      // For business profiles (admin-assigned)
+  created_at: DateTime,
+  updated_at: DateTime
+}
+
+// friendships collection (Personal-only)
+{
+  requester_user_id: String,
+  addressee_user_id: String,
+  status: "pending" | "accepted" | "declined" | "blocked",
+  created_at: DateTime,
+  updated_at: DateTime
+}
+
+// conversations collection
+{
+  conversation_id: String,
+  profile1_id: String,      // Supports profile-to-profile chat
+  profile2_id: String,
+  profile1_type: String,    // "personal" or "business"
+  profile2_type: String,
+  user1_id: String,         // Legacy - owner user IDs
+  user2_id: String,
+  last_message_at: DateTime,
+  created_at: DateTime
+}
+
+// messages collection
+{
+  message_id: String,
+  conversation_id: String,
+  sender_profile_id: String,
+  sender_user_id: String,
+  type: "text" | "payment" | "system",
+  text: String,
+  payment: {               // For payment messages
+    tx_id: String,
+    amount_usd: Number,
+    status: String
+  },
+  created_at: DateTime
+}
+
+// wallets collection
 {
   user_id: String,
   usd_balance: Number,
@@ -262,9 +317,13 @@ Dark theme: neutral-950, amber-400, red-600
   updated_at: DateTime
 }
 
-// ledger collection (planned)
+// ledger collection
 {
+  tx_id: String,
   user_id: String,
+  from_profile_id: String,  // NEW - supports profile tracking
+  to_profile_id: String,
+  to_profile_type: String,  // "personal" or "business"
   type: String,
   currency: "USD" | "PHP",
   amount: Number,
