@@ -105,10 +105,11 @@ Dark theme: neutral-950, amber-400, red-600
 ```
 
 ### Key Components
-- `SenderShell.jsx` - Navigation for sender app
+- `SenderShell.jsx` - 6-tab navigation for sender app
 - `RecipientShell.jsx` - Navigation for recipient app
 - `SenderProtectedRoute` - Access control for sender routes
 - `RecipientProtectedRoute` - Access control for recipient routes
+- `ProfileSwitcher.jsx` - Instagram-style account switcher (NEW - Jan 2026)
 
 ---
 
@@ -117,6 +118,9 @@ Dark theme: neutral-950, amber-400, red-600
 /app/
 ├── backend/
 │   ├── routes/
+│   │   ├── profiles.py     # Profile management (personal, business) - NEW
+│   │   ├── businesses.py   # Business discovery, chat, payments - NEW
+│   │   ├── social.py       # Friends, conversations, messages
 │   │   ├── recipient.py    # Recipient wallet, FX, bills, transfers APIs
 │   │   ├── users.py        # User role persistence APIs
 │   │   └── plaid.py        # Plaid bank linking
@@ -126,12 +130,21 @@ Dark theme: neutral-950, amber-400, red-600
 ├── frontend/
 │   └── src/
 │       ├── components/
-│       │   ├── SenderShell.jsx
+│       │   ├── SenderShell.jsx    # 6-tab navigation
+│       │   ├── ProfileSwitcher.jsx # Account switcher - NEW
 │       │   ├── RecipientShell.jsx
 │       │   └── PublicShell.jsx
 │       ├── contexts/
-│       │   └── SessionContext.jsx  # Session + role management
+│       │   └── SessionContext.jsx  # Session + role + profiles management
+│       ├── lib/
+│       │   ├── profilesApi.js      # Profile API client - NEW
+│       │   ├── businessesApi.js    # Businesses API client - NEW
+│       │   └── socialApi.js        # Social API client
 │       ├── pages/
+│       │   ├── sender/
+│       │   │   ├── People.jsx      # Friends management (personal-only)
+│       │   │   ├── Businesses.jsx  # Business discovery - NEW
+│       │   │   └── Chat.jsx        # 1:1 chat
 │       │   ├── onboarding/
 │       │   │   └── Welcome.jsx     # Role selection flow
 │       │   ├── recipient/          # Recipient-only pages
@@ -141,7 +154,7 @@ Dark theme: neutral-950, amber-400, red-600
 │       │   │   ├── Bills.jsx
 │       │   │   ├── Transfers.jsx
 │       │   │   └── Statements.jsx
-│       │   └── app/                # Sender-only pages
+│       │   └── app/                # Sender-only pages (Home, Send, Activity)
 │       └── App.jsx                 # Dual-route structure
 └── test_reports/
     └── iteration_*.json
