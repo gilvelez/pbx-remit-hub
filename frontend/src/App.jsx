@@ -142,6 +142,7 @@ function AppRoutes() {
         <Route path="bills" element={<RecipientBills />} />
         <Route path="transfers" element={<RecipientTransfers />} />
         <Route path="statements" element={<RecipientStatements />} />
+        <Route path="notifications" element={<NotificationSettings />} />
         <Route path="*" element={<Navigate to="/recipient/dashboard" replace />} />
       </Route>
 
