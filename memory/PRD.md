@@ -418,13 +418,22 @@ Dark theme: neutral-950, amber-400, red-600
 - [ ] Stripe subscription billing
 - [ ] Rate lock backend with TTL (Redis)
 
-### P2 (Medium Priority)
+### P2 (Medium Priority) - Phase 2 Features
+- [ ] Contact discovery (find friends from contacts)
+- [ ] Money requests in chat
+- [ ] Business profile completion & KYB gating
+- [ ] Better Activity feed
+- [ ] Notifications for requests
 - [ ] OAuth integration (Google/Apple)
 - [ ] Recurring transfers
 - [ ] Push notifications (mobile)
 - [ ] Rate alerts
 
-### P3 (Future)
+### P3 (Future) - Phase 3 Features
+- [ ] Social feed (Venmo-style)
+- [ ] Reactions & comments on transactions
+- [ ] Groups (family, payroll)
+- [ ] Business monetization tools
 - [ ] Real payment integrations (GCash, Maya APIs)
 - [ ] KYC/AML integration
 - [ ] Multi-corridor support (beyond US-PH)
