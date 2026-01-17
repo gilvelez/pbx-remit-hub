@@ -108,3 +108,46 @@ export async function generateInvite(identifier) {
   
   return res.json();
 }
+
+
+/**
+ * Send an invite to a non-PBX user via SMS or Email
+ * @param {string} method - 'sms' or 'email'
+ * @param {string} identifier - Phone number or email address
+ * @returns {Promise<{success: boolean, message: string}>}
+ */
+export async function inviteToPbx(method, identifier) {
+  // First generate the invite message
+  const inviteData = await generateInvite(identifier);
+  
+  // In production, this would trigger actual SMS/email
+  // For now, log and return success (mock mode)
+  console.log(`Invite via ${method}:`, inviteData.message);
+  
+  return {
+    success: true,
+    method,
+    identifier,
+    message: inviteData.message,
+    invite_link: inviteData.invite_link,
+  };
+}
+
+
+/**
+ * Search PBX users by name, username, phone, or email
+ * @param {string} query - Search query
+ * @returns {Promise<{users: array}>}
+ */
+export async function searchPbxUsers(query) {
+  const res = await fetch(`${API_BASE}/api/users/search?q=${encodeURIComponent(query)}`, {
+    headers: getHeaders(),
+  });
+  
+  if (!res.ok) {
+    // If endpoint doesn't exist yet, fall back to lookup
+    return { users: [] };
+  }
+  
+  return res.json();
+}

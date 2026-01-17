@@ -63,6 +63,13 @@ export default function Landing() {
           <p className="text-xl md:text-2xl text-gray-200 mb-4 max-w-3xl mx-auto">
             The all-in-one platform to <span className="text-amber-400 font-semibold">send, save, and earn</span> — for Filipinos at home and abroad.
           </p>
+          
+          {/* PBX-to-PBX Highlight */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border border-green-500/40 mb-4">
+            <span className="text-green-400">⚡</span>
+            <span className="text-sm font-semibold text-green-300">Send to PBX users instantly — free, no fees</span>
+          </div>
+          
           <p className="text-sm text-gray-400 mb-8">
             Built in the United States • No fees • Instant delivery to GCash & Maya
           </p>
@@ -94,6 +101,16 @@ export default function Landing() {
           </p>
 
           <div className="grid md:grid-cols-3 gap-8">
+            {/* PBX-to-PBX Transfers - New Primary Feature */}
+            <div className="bg-gradient-to-br from-green-900/40 to-green-900/20 p-6 rounded-2xl border border-green-500/40 hover:border-green-500 transition">
+              <div className="text-4xl mb-4">⚡</div>
+              <h3 className="text-xl font-semibold text-green-400 mb-2">PBX-to-PBX Transfers</h3>
+              <p className="text-gray-400 text-sm">
+                Send USD instantly to other PBX users — <span className="text-green-400 font-semibold">100% free</span>. Recipients can hold USD or convert to PHP anytime.
+              </p>
+              <p className="text-xs text-green-400 mt-3">Instant • Free • All plans</p>
+            </div>
+
             {/* Recurring Transfers */}
             <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 hover:border-amber-500/50 transition">
               <div className="text-4xl mb-4">🔄</div>
@@ -102,16 +119,6 @@ export default function Landing() {
                 Schedule automatic transfers to loved ones or suppliers with ease. Set up weekly or monthly payments and never miss a date.
               </p>
               <p className="text-xs text-amber-400 mt-3">Premium, SME, Enterprise</p>
-            </div>
-
-            {/* Wallet & Yield */}
-            <div className="bg-neutral-900 p-6 rounded-2xl border border-neutral-800 hover:border-amber-500/50 transition">
-              <div className="text-4xl mb-4">💰</div>
-              <h3 className="text-xl font-semibold text-gray-100 mb-2">Wallet & Yield</h3>
-              <p className="text-gray-400 text-sm">
-                Hold funds securely in your PBX Wallet. Premium users earn <span className="text-amber-400 font-semibold">1% APY</span> on balances, so your money grows while you plan your next transfer.
-              </p>
-              <p className="text-xs text-amber-400 mt-3">Interest: Premium only</p>
             </div>
 
             {/* Locked-in FX Rates */}

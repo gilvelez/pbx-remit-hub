@@ -2,7 +2,7 @@
 PBX Internal Transfers - Closed-loop PBX-to-PBX transfers
 User lookup and instant internal transfers between PBX users
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, timezone
@@ -10,6 +10,7 @@ import logging
 import os
 
 from database.connection import get_database
+from services.notifications import send_transfer_notifications
 
 router = APIRouter(prefix="/api/internal", tags=["internal"])
 logger = logging.getLogger(__name__)
@@ -50,9 +51,14 @@ class UserLookupRequest(BaseModel):
     identifier: str = Field(..., description="Email or phone number (E.164 format)")
 
 
+# Transfer limits
+MAX_TRANSFER_PER_TXN = 5000.0  # $5,000 per transaction
+DAILY_TRANSFER_LIMIT = 25000.0  # $25,000 per day per sender
+
+
 class InternalTransferRequest(BaseModel):
     recipient_identifier: str = Field(..., description="Recipient email or phone")
-    amount_usd: float = Field(..., gt=0, le=10000, description="Amount in USD")
+    amount_usd: float = Field(..., gt=0, le=MAX_TRANSFER_PER_TXN, description="Amount in USD")
     note: Optional[str] = Field(None, max_length=200)
 
 
@@ -164,14 +170,17 @@ async def lookup_pbx_user(request: Request, data: UserLookupRequest):
 
 
 @router.post("/transfer")
-async def create_internal_transfer(request: Request, data: InternalTransferRequest):
+async def create_internal_transfer(request: Request, background_tasks: BackgroundTasks, data: InternalTransferRequest):
     """
     Execute an instant PBX-to-PBX internal transfer.
     
     - USD only (internal transfers)
     - Instant completion
     - No fees
+    - Max $5,000 per transaction
+    - Max $25,000 per day per sender
     - Creates ledger entries for both sender and recipient
+    - Sends email + SMS notifications to recipient
     """
     sender_id = get_user_id_from_headers(request)
     if not sender_id:
@@ -180,6 +189,13 @@ async def create_internal_transfer(request: Request, data: InternalTransferReque
     if data.amount_usd <= 0:
         raise HTTPException(status_code=400, detail="Amount must be positive")
     
+    # Validate per-transaction limit
+    if data.amount_usd > MAX_TRANSFER_PER_TXN:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Transfer exceeds current PBX limits. Maximum ${MAX_TRANSFER_PER_TXN:,.0f} per transaction."
+        )
+    
     identifier = data.recipient_identifier.lower().strip()
     
     try:
@@ -187,6 +203,35 @@ async def create_internal_transfer(request: Request, data: InternalTransferReque
         users = db.users
         wallets = db.wallets
         ledger = db.ledger
+        
+        # Check daily transfer limit
+        now = utc_now()
+        start_of_day = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        daily_total_cursor = ledger.aggregate([
+            {
+                "$match": {
+                    "user_id": sender_id,
+                    "type": "internal_transfer_out",
+                    "created_at": {"$gte": start_of_day}
+                }
+            },
+            {
+                "$group": {
+                    "_id": None,
+                    "total": {"$sum": {"$abs": "$amount"}}
+                }
+            }
+        ])
+        daily_total_result = await daily_total_cursor.to_list(1)
+        daily_total = daily_total_result[0]["total"] if daily_total_result else 0
+        
+        if daily_total + data.amount_usd > DAILY_TRANSFER_LIMIT:
+            remaining = DAILY_TRANSFER_LIMIT - daily_total
+            raise HTTPException(
+                status_code=400,
+                detail=f"Transfer exceeds daily PBX limit. You have ${remaining:,.2f} remaining today. Daily limit: ${DAILY_TRANSFER_LIMIT:,.0f}."
+            )
         
         # Find recipient
         recipient = await users.find_one(
@@ -322,6 +367,19 @@ async def create_internal_transfer(request: Request, data: InternalTransferReque
         # === ATOMIC OPERATION END ===
         
         logger.info(f"Internal transfer completed: {sender_id} -> {recipient_id}, ${data.amount_usd}")
+        
+        # Send notifications to recipient (email + SMS) in background
+        # This doesn't block the transfer response
+        recipient_phone = recipient.get("phone")
+        background_tasks.add_task(
+            send_transfer_notifications,
+            recipient_email=recipient_email,
+            recipient_phone=recipient_phone,
+            recipient_user_id=recipient_id,
+            sender_name=sender_display or sender_email or "PBX User",
+            amount=data.amount_usd,
+            note=data.note
+        )
         
         # Get updated sender balance
         updated_wallet = await wallets.find_one({"user_id": sender_id}, {"_id": 0, "usd_balance": 1})

@@ -18,6 +18,7 @@ import Roadmap from "./pages/Roadmap.jsx";
 // Auth Pages
 import Login from "./pages/Login.jsx";
 import Verify from "./pages/Verify.jsx";
+import MagicLinkHandler from "./pages/auth/MagicLinkHandler.jsx";
 
 // Onboarding (with role selection)
 import Welcome from "./pages/onboarding/Welcome.jsx";
@@ -38,6 +39,7 @@ import RecipientConvert from "./pages/recipient/Convert.jsx";
 import RecipientBills from "./pages/recipient/Bills.jsx";
 import RecipientTransfers from "./pages/recipient/Transfers.jsx";
 import RecipientStatements from "./pages/recipient/Statements.jsx";
+import NotificationSettings from "./pages/recipient/NotificationSettings.jsx";
 
 // Legal Pages
 import Privacy from "./pages/Privacy.jsx";
@@ -106,6 +108,11 @@ function AppRoutes() {
       <Route path="/security" element={<PublicShell><Security /></PublicShell>} />
 
       {/* ========================================
+          AUTH ROUTES
+         ======================================== */}
+      <Route path="/auth/magic" element={<MagicLinkHandler />} />
+
+      {/* ========================================
           SENDER ROUTES (/sender/*)
           For employers, businesses, and payers
           Shows: Dashboard, Send, Recipients, Activity, Settings
@@ -135,6 +142,7 @@ function AppRoutes() {
         <Route path="bills" element={<RecipientBills />} />
         <Route path="transfers" element={<RecipientTransfers />} />
         <Route path="statements" element={<RecipientStatements />} />
+        <Route path="notifications" element={<NotificationSettings />} />
         <Route path="*" element={<Navigate to="/recipient/dashboard" replace />} />
       </Route>
 
