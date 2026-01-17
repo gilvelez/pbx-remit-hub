@@ -17,14 +17,14 @@ const STEPS = {
 };
 
 export default function Welcome() {
-  const { login, setSession } = useSession();
+  const { login, setSession, setRole } = useSession();
   const navigate = useNavigate();
   const [step, setStep] = useState(STEPS.WELCOME);
   
   // Form data
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState(null);  // 'sender' or 'recipient'
+  const [role, setRoleLocal] = useState(null);  // 'sender' or 'recipient'
   const [accountType, setAccountType] = useState('personal');
 
   const handleSignup = (e) => {
@@ -34,15 +34,15 @@ export default function Welcome() {
     setStep(STEPS.ACCOUNT_TYPE);
   };
 
-  const handleRoleSelection = (selectedRole) => {
-    setRole(selectedRole);
-    // Save role to session immediately
-    setSession(prev => ({ ...prev, role: selectedRole }));
+  const handleRoleSelection = async (selectedRole) => {
+    setRoleLocal(selectedRole);
+    // Save role to session (triggers backend persistence via setRole)
+    await setRole(selectedRole);
     setStep(STEPS.CORRIDOR);
   };
 
   const handleAccountType = () => {
-    setSession(prev => ({ ...prev, accountType, role }));
+    setSession(prev => ({ ...prev, accountType, role: role }));
     // Next step: Phone OTP (separate page)
     navigate('/onboarding/phone');
   };
