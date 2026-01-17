@@ -18,10 +18,19 @@ Build a dual-UX financial platform (PBX) for cross-border money transfers betwee
 - **Atomic Ledger**: Two entries per transfer (sender out, recipient in)
 - **Self-Transfer Prevention**: Cannot send to yourself
 
+### Email + SMS Notifications (P0 - COMPLETE)
+- **All Transfer Types**: PBX-to-PBX, outbound, bills, failed/delayed
+- **Magic Link Auth**: Secure 15-minute expiry tokens for passwordless login
+- **User Preferences**: SMS and Email toggles (default: ON)
+- **Delivery Tracking**: sms_sent, email_sent, link_opened
+- **SMS Rate Limiting**: Combine within 2-3 minutes
+- **Security**: No balances in notifications, no raw tokens, short secure links
+- **Trust Footer**: "PBX will never ask for your password"
+
 ### Dual-UX Architecture
 - **Role Selection**: Mandatory question during onboarding determines UX path
 - **Sender UX** (`/sender/*`): Dashboard, Send, Recipients, Activity, Settings
-- **Recipient UX** (`/recipient/*`): Dashboard, Wallets, Convert, Bills, Transfers, Statements
+- **Recipient UX** (`/recipient/*`): Dashboard, Wallets, Convert, Bills, Transfers, Statements, Notifications
 - **Strict Access Control**: Users confined to their role's routes
 
 ### Currency Rules
