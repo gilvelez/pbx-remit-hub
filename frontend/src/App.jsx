@@ -33,6 +33,7 @@ import Activity from "./pages/app/Activity.jsx";
 import Manage from "./pages/app/Manage.jsx";
 import People from "./pages/sender/People.jsx";
 import Chat from "./pages/sender/Chat.jsx";
+import Businesses from "./pages/sender/Businesses.jsx";
 
 // Recipient Pages (for end users receiving payments)
 import RecipientDashboard from "./pages/recipient/Dashboard.jsx";
