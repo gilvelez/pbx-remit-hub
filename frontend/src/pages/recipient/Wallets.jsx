@@ -272,6 +272,113 @@ export default function Wallets() {
           </div>
         </div>
       )}
+
+      {/* Test Funding Modal */}
+      {showFundModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <span className="text-xl">🧪</span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-[#0B1F3B]">Test Funding</h3>
+                <p className="text-xs text-amber-600 font-medium">SIMULATION ONLY</p>
+              </div>
+            </div>
+
+            {/* Warning Banner */}
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4">
+              <p className="text-xs text-amber-800">
+                <strong>Demo Credit:</strong> This is for testing purposes only. 
+                No real money is involved. Funds will be credited to your USD wallet 
+                to test the conversion and transaction flow.
+              </p>
+            </div>
+
+            {fundSuccess ? (
+              // Success State
+              <div className="text-center py-4">
+                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-[#0B1F3B]">Funding Complete!</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  ${fundSuccess.amount?.toFixed(2)} USD credited
+                </p>
+                <p className="text-xs text-gray-400 mt-2">
+                  New balance: ${fundSuccess.new_balance?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                </p>
+              </div>
+            ) : (
+              // Input Form
+              <>
+                <div className="mb-4">
+                  <label className="text-sm text-gray-600 mb-2 block">Amount (USD)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                    <input
+                      type="number"
+                      value={fundAmount}
+                      onChange={(e) => { setFundAmount(e.target.value); setFundError(''); }}
+                      className="w-full h-12 pl-8 pr-4 border border-gray-200 rounded-xl focus:border-[#0B1F3B] focus:ring-2 focus:ring-[#0B1F3B]/10 outline-none"
+                      placeholder="0.00"
+                      max={5000}
+                      step="0.01"
+                      data-testid="fund-amount-input"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Maximum: $5,000 per request</p>
+                  {fundError && (
+                    <p className="text-xs text-red-500 mt-1">{fundError}</p>
+                  )}
+                </div>
+
+                {/* Quick Amount Buttons */}
+                <div className="flex gap-2 mb-4">
+                  {[100, 500, 1000, 2500].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => setFundAmount(amt.toString())}
+                      className="flex-1 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                    >
+                      ${amt}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowFundModal(false); setFundAmount(''); setFundError(''); }}
+                    className="flex-1 py-3 border border-gray-200 rounded-xl text-gray-600 font-medium"
+                    disabled={fundLoading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleFundWallet}
+                    disabled={fundLoading || !fundAmount}
+                    className="flex-1 py-3 bg-[#0B1F3B] text-white rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    data-testid="fund-confirm-btn"
+                  >
+                    {fundLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      'Add Demo Credit'
+                    )}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
