@@ -337,6 +337,21 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Test Results
 
+### Iteration 11 (Phase 1 - Business Profiles) ✅ Jan 2026
+- **Status**: ✅ Backend 31/31 passed, Frontend 100% UI verified
+- **Key Features Tested**:
+  - Profiles API: auto-create personal, create business, switch, search
+  - Businesses API: discover, categories, chat, pay
+  - 6-tab navigation (Home, Send, People, Businesses, Activity, Settings)
+  - Profile Switcher component
+  - Businesses page with Discover/Recently Paid tabs
+- **Report**: `/app/test_reports/iteration_11.json`
+
+### Iteration 10 (Social Payment Platform) ✅
+- **Status**: ✅ All tests passed
+- **Key Verifications**: Social features, in-chat payments, navigation
+- **Report**: `/app/test_reports/iteration_10.json`
+
 ### Iteration 6 (Session & Role Persistence)
 - **Status**: ✅ Backend 14/14 passed, Frontend 10/10 passed
 - **Key Fixes**:
@@ -388,6 +403,15 @@ Dark theme: neutral-950, amber-400, red-600
   - 1:1 Chat threads (iMessage-style)
   - In-chat PBX payments with payment bubbles
   - Navigation: Home, Send, People, Activity, Settings
+- [x] **Phase 1 - Business Profiles (P0)** ✅ Jan 2026
+  - Personal + Business account types
+  - One login, multi-profile (User → Profiles)
+  - Profile Switcher (Instagram-style)
+  - 6-tab navigation: Home, Send, People, Businesses, Activity, Settings
+  - People tab (Personal-only friends)
+  - Businesses tab (Discover, Categories, Pay)
+  - Chat: Person↔Person, Person↔Business, Business↔Business
+  - In-chat payments for all profile combinations
 
 ### P1 (High Priority)
 - [ ] Plaid integration for sender flow
