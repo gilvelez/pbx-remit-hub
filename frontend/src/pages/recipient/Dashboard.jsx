@@ -223,12 +223,16 @@ export default function RecipientDashboard() {
               <div key={tx.id} className="px-5 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    tx.type === 'credit' ? 'bg-green-100' :
+                    tx.type === 'credit' || tx.type === 'simulated_credit' ? 'bg-green-100' :
+                    tx.type === 'internal_transfer_in' ? 'bg-green-100' :
+                    tx.type === 'internal_transfer_out' ? 'bg-orange-100' :
                     tx.type === 'fx_conversion' ? 'bg-blue-100' :
                     tx.type === 'bill_payment' ? 'bg-amber-100' :
                     'bg-purple-100'
                   }`}>
-                    {tx.type === 'credit' && <span className="text-green-600">↓</span>}
+                    {(tx.type === 'credit' || tx.type === 'simulated_credit') && <span className="text-green-600">↓</span>}
+                    {tx.type === 'internal_transfer_in' && <span className="text-green-600">⚡</span>}
+                    {tx.type === 'internal_transfer_out' && <span className="text-orange-600">⚡</span>}
                     {tx.type === 'fx_conversion' && <span className="text-blue-600">↔</span>}
                     {tx.type === 'bill_payment' && <span className="text-amber-600">📄</span>}
                     {tx.type === 'transfer_out' && <span className="text-purple-600">↑</span>}
