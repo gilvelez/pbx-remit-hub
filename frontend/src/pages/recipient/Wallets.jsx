@@ -158,6 +158,15 @@ export default function Wallets() {
           >
             Convert to PHP
           </button>
+
+          {/* Test Funding Button */}
+          <button
+            onClick={() => setShowFundModal(true)}
+            className="w-full mt-2 bg-white/10 text-white py-2.5 rounded-xl font-medium hover:bg-white/20 transition border border-white/20 text-sm"
+            data-testid="test-fund-btn"
+          >
+            <span className="mr-2">🧪</span> Test Funding (Simulation)
+          </button>
         </div>
 
         {/* PHP Wallet */}
