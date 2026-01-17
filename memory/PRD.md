@@ -164,6 +164,29 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## API Endpoints
 
+### Profile Management (P0 - COMPLETE ✅ Jan 2026)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/profiles/me` | GET | Get all profiles for user (auto-creates personal if none) |
+| `/api/profiles/active` | GET | Get currently active profile |
+| `/api/profiles/switch/{profile_id}` | POST | Switch active profile |
+| `/api/profiles/personal` | POST | Create/update personal profile |
+| `/api/profiles/business` | POST | Create business profile |
+| `/api/profiles/{profile_id}` | PUT | Update profile |
+| `/api/profiles/{profile_id}` | DELETE | Delete business profile |
+| `/api/profiles/search/people` | GET | Search personal profiles |
+| `/api/profiles/search/businesses` | GET | Search business profiles |
+
+### Business Discovery & Payments (P0 - COMPLETE ✅ Jan 2026)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/businesses/discover` | GET | Discover businesses (category filter) |
+| `/api/businesses/categories` | GET | Get business category list |
+| `/api/businesses/paid` | GET | Get businesses user has paid |
+| `/api/businesses/{profile_id}` | GET | Get business profile |
+| `/api/businesses/chat/{profile_id}` | POST | Start/get chat with business |
+| `/api/businesses/pay` | POST | Send PBX payment to business |
+
 ### User Management
 | Endpoint | Method | Description |
 |----------|--------|-------------|
