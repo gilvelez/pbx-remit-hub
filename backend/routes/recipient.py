@@ -359,8 +359,10 @@ async def fund_wallet_simulation(request: Request, data: FundWalletRequest):
 # === FX Conversion Endpoints ===
 @router.get("/convert")
 async def get_fx_quote(amount_usd: float = 100):
-    """Get current FX quote with rate comparison (mock rate - external API in production)"""
-    mid_rate = get_mid_market_rate()
+    """Get current FX quote with rate comparison using live OpenExchangeRates API"""
+    # Fetch live mid-market rate (with fallback to mock)
+    mid_rate, fx_source = await fetch_live_fx_rate()
+    
     pbx_spread = mid_rate * (PBX_SPREAD_BPS / 10000)
     pbx_rate = round(mid_rate - pbx_spread, 2)
     bank_spread = mid_rate * (BANK_SPREAD_BPS / 10000)
@@ -381,31 +383,31 @@ async def get_fx_quote(amount_usd: float = 100):
         savings_php=savings,
         lock_duration_seconds=RATE_LOCK_DURATION_SECONDS,
         timestamp=int(utc_now().timestamp() * 1000),
-        source="mock"  # Would be "live" with real FX API
+        source=fx_source
     )
 
 
 @router.post("/convert/lock")
 async def lock_fx_rate(request: Request, data: LockRateRequest):
-    """Lock an FX rate for 15 minutes (mock - would use Redis/DB with TTL in production)"""
+    """Lock an FX rate for 15 minutes (read-only - no Redis/TTL yet)"""
     user_id = get_user_id_from_headers(request)
     
     if not user_id:
         raise HTTPException(status_code=401, detail="No session token provided")
     
-    mid_rate = get_mid_market_rate()
+    # Fetch live rate for locking
+    mid_rate, fx_source = await fetch_live_fx_rate()
     pbx_spread = mid_rate * (PBX_SPREAD_BPS / 10000)
     pbx_rate = data.locked_rate or round(mid_rate - pbx_spread, 2)
     
     lock_id = f"lock_{int(utc_now().timestamp())}_{random.randint(1000, 9999)}"
     expires_at = utc_now().timestamp() + RATE_LOCK_DURATION_SECONDS
     
-    # In production: store lock in Redis with TTL
-    
     return {
         "success": True,
         "lock_id": lock_id,
         "rate": pbx_rate,
+        "source": fx_source,
         "expires_at": datetime.fromtimestamp(expires_at, tz=timezone.utc).isoformat(),
         "expires_in_seconds": RATE_LOCK_DURATION_SECONDS
     }
@@ -413,7 +415,7 @@ async def lock_fx_rate(request: Request, data: LockRateRequest):
 
 @router.post("/convert/execute")
 async def execute_conversion(request: Request, data: ConvertRequest):
-    """Execute USD → PHP conversion with real wallet update"""
+    """Execute USD → PHP conversion with real wallet update and live FX rate"""
     user_id = get_user_id_from_headers(request)
     
     if not user_id:
@@ -433,8 +435,8 @@ async def execute_conversion(request: Request, data: ConvertRequest):
         if wallet["usd_balance"] < data.amount_usd:
             raise HTTPException(status_code=400, detail="Insufficient USD balance")
         
-        # Calculate conversion
-        mid_rate = get_mid_market_rate()
+        # Get live FX rate (or use locked rate if provided)
+        mid_rate, fx_source = await fetch_live_fx_rate()
         pbx_spread = mid_rate * (PBX_SPREAD_BPS / 10000)
         rate = data.locked_rate or round(mid_rate - pbx_spread, 2)
         amount_php = round(data.amount_usd * rate, 2)
