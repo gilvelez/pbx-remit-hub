@@ -8,7 +8,7 @@ const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 // Get session token from storage
 const getSessionToken = () => {
   try {
-    const session = sessionStorage.getItem('pbx_session');
+    const session = localStorage.getItem('pbx_session');
     if (session) {
       const parsed = JSON.parse(session);
       return parsed.token;
