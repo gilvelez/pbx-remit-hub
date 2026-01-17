@@ -101,7 +101,7 @@ async def verify_magic_link(token: str) -> Optional[dict]:
     })
     
     if not magic_link:
-        logger.warning(f"Magic link verification failed - token not found or expired")
+        logger.warning("Magic link verification failed - token not found or expired")
         return None
     
     # Mark as used
