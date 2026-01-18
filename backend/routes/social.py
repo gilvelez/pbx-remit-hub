@@ -352,6 +352,163 @@ async def get_friendship_status(request: Request, other_user_id: str):
     return {"status": "none", "friendship_id": None}
 
 
+@router.post("/quick-add")
+async def quick_add(request: Request, background_tasks: BackgroundTasks, data: QuickAddRequest):
+    """
+    Quick Add - Look up user by phone/email and invite if not found
+    
+    If found: Return user profile for adding as friend
+    If not found: Create pending invite, send SMS/email invitation
+    """
+    user_id = get_user_id_from_headers(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No session token provided")
+    
+    db = get_database()
+    users = db.users
+    invites = db.invites
+    
+    contact = data.contact.strip().lower()
+    
+    # Detect if phone or email
+    is_email = "@" in contact
+    is_phone = contact.replace("+", "").replace("-", "").replace(" ", "").isdigit()
+    
+    if not is_email and not is_phone:
+        raise HTTPException(status_code=400, detail="Invalid phone or email format")
+    
+    # Look up existing PBX user
+    if is_email:
+        existing_user = await users.find_one({"email": contact}, {"_id": 0})
+    else:
+        # Normalize phone - remove spaces, dashes
+        phone_normalized = contact.replace("-", "").replace(" ", "")
+        existing_user = await users.find_one({
+            "$or": [
+                {"phone": phone_normalized},
+                {"phone": contact}
+            ]
+        }, {"_id": 0})
+    
+    # If user exists, return for friend request
+    if existing_user:
+        # Don't allow self-lookup
+        if existing_user.get("user_id") == user_id:
+            raise HTTPException(status_code=400, detail="Cannot add yourself")
+        
+        return {
+            "found": True,
+            "user": {
+                "user_id": existing_user.get("user_id"),
+                "email": existing_user.get("email"),
+                "phone": existing_user.get("phone"),
+                "display_name": existing_user.get("display_name") or (existing_user.get("email", "").split("@")[0] if existing_user.get("email") else "PBX User"),
+            }
+        }
+    
+    # User not found - create pending invite
+    now = utc_now()
+    invite_id = f"inv_{uuid.uuid4().hex[:12]}"
+    
+    # Check if invite already exists
+    existing_invite = await invites.find_one({
+        "inviter_user_id": user_id,
+        "contact": contact,
+        "status": "pending"
+    })
+    
+    if existing_invite:
+        return {
+            "found": False,
+            "invited": True,
+            "invite_id": existing_invite.get("invite_id"),
+            "message": "Invite already sent"
+        }
+    
+    # Create new invite
+    invite = {
+        "invite_id": invite_id,
+        "inviter_user_id": user_id,
+        "contact": contact,
+        "contact_type": "email" if is_email else "phone",
+        "contact_name": data.name,
+        "status": "pending",
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await invites.insert_one(invite)
+    
+    # Get inviter info for notification
+    inviter = await users.find_one({"user_id": user_id}, {"_id": 0})
+    inviter_name = inviter.get("display_name") or (inviter.get("email", "").split("@")[0] if inviter.get("email") else "A PBX user")
+    
+    # Send invite notification (background task)
+    from services.notifications import send_invite_notification
+    background_tasks.add_task(
+        send_invite_notification,
+        contact=contact,
+        contact_type="email" if is_email else "phone",
+        inviter_name=inviter_name,
+        invite_id=invite_id
+    )
+    
+    logger.info(f"Invite created: {invite_id} from {user_id} to {contact}")
+    
+    return {
+        "found": False,
+        "invited": True,
+        "invite_id": invite_id,
+        "contact": contact,
+        "contact_name": data.name,
+        "message": f"Invite sent to {contact}"
+    }
+
+
+@router.get("/invites")
+async def get_pending_invites(request: Request):
+    """Get user's pending invites"""
+    user_id = get_user_id_from_headers(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No session token provided")
+    
+    db = get_database()
+    invites = db.invites
+    
+    cursor = invites.find({
+        "inviter_user_id": user_id,
+        "status": "pending"
+    }, {"_id": 0}).sort("created_at", -1).limit(50)
+    
+    pending = await cursor.to_list(50)
+    
+    return {
+        "invites": pending,
+        "count": len(pending)
+    }
+
+
+@router.delete("/invites/{invite_id}")
+async def cancel_invite(request: Request, invite_id: str):
+    """Cancel a pending invite"""
+    user_id = get_user_id_from_headers(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No session token provided")
+    
+    db = get_database()
+    invites = db.invites
+    
+    result = await invites.delete_one({
+        "invite_id": invite_id,
+        "inviter_user_id": user_id
+    })
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Invite not found")
+    
+    return {"success": True, "message": "Invite cancelled"}
+
+
 # ============================================================
 # CONVERSATION ENDPOINTS
 # ============================================================
