@@ -773,3 +773,117 @@ async def send_transfer_notifications(
         transfer_id=transfer_id,
         note=note
     )
+
+
+# ============================================================
+# INVITE NOTIFICATIONS
+# ============================================================
+
+async def send_invite_notification(
+    contact: str,
+    contact_type: str,  # "email" or "phone"
+    inviter_name: str,
+    invite_id: str
+) -> dict:
+    """
+    Send invite notification to non-PBX user
+    """
+    invite_url = f"{APP_URL}/join?ref={invite_id}"
+    
+    if contact_type == "email":
+        # Send email invite
+        subject = f"{inviter_name} invited you to PBX"
+        html = f'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+        <tr>
+            <td align="center">
+                <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 500px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #0A2540 0%, #1a3a5c 100%); padding: 30px 20px; text-align: center;">
+                            <div style="width: 50px; height: 50px; background: rgba(246, 201, 75, 0.2); border-radius: 12px; display: inline-block; line-height: 50px; margin-bottom: 15px;">
+                                <span style="font-size: 20px; font-weight: bold; color: #F6C94B;">PBX</span>
+                            </div>
+                            <p style="margin: 0; color: #ffffff; font-size: 22px; font-weight: bold;">You've Been Invited! 🎉</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 30px 20px;">
+                            <p style="margin: 0 0 15px; font-size: 16px; color: #1a1a1a;">
+                                <strong>{inviter_name}</strong> wants to send you money through PBX.
+                            </p>
+                            <p style="margin: 0 0 25px; font-size: 14px; color: #495057;">
+                                Join PBX to receive instant, free transfers from friends and family.
+                            </p>
+                            <table width="100%" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td align="center">
+                                        <a href="{invite_url}" style="display: inline-block; background: linear-gradient(135deg, #F6C94B 0%, #f4b832 100%); color: #0A2540; text-decoration: none; padding: 15px 40px; border-radius: 12px; font-weight: 600; font-size: 16px;">
+                                            Join PBX Free
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin-top: 25px; background: #f8f9fa; border-radius: 12px;">
+                                <tr>
+                                    <td style="padding: 20px;">
+                                        <p style="margin: 0 0 10px; font-size: 14px; font-weight: 600; color: #0A2540;">Why PBX?</p>
+                                        <p style="margin: 5px 0; font-size: 14px; color: #495057;">⚡ Instant transfers between friends</p>
+                                        <p style="margin: 5px 0; font-size: 14px; color: #495057;">💵 Zero fees for PBX-to-PBX</p>
+                                        <p style="margin: 5px 0; font-size: 14px; color: #495057;">🔒 Bank-grade security</p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px; background: #f8f9fa; border-top: 1px solid #e9ecef;">
+                            <p style="margin: 0; font-size: 11px; color: #adb5bd; text-align: center;">
+                                © {datetime.now().year} Philippine Bayani Exchange (PBX)
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
+'''
+        
+        try:
+            await send_email(
+                to_email=contact,
+                subject=subject,
+                html=html,
+                user_id="invite",
+                transfer_id=invite_id
+            )
+            logger.info(f"Invite email sent to {contact}")
+            return {"status": "sent", "channel": "email"}
+        except Exception as e:
+            logger.error(f"Failed to send invite email: {e}")
+            return {"status": "error", "error": str(e)}
+    
+    else:  # phone / SMS
+        sms_message = f"{inviter_name} invited you to PBX! Join free to receive instant money transfers: {invite_url}"
+        
+        try:
+            await send_sms(
+                to_phone=contact,
+                message=sms_message,
+                user_id="invite",
+                transfer_id=invite_id
+            )
+            logger.info(f"Invite SMS sent to {contact}")
+            return {"status": "sent", "channel": "sms"}
+        except Exception as e:
+            logger.error(f"Failed to send invite SMS: {e}")
+            return {"status": "error", "error": str(e)}
+

@@ -17,6 +17,8 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Deep Link Routing**: Magic links route to correct screen (chat for transfers, people for friend requests)
 - **X-Active-Profile Header**: All social API requests include active profile ID
 - **No Dead Routes**: Navigation consistent, no blank pages
+- **CTA Click Handler Fixed**: "Send to PBX Friends" sets session.exists, session.verified, session.role='sender', session.onboardingComplete=true before navigating
+- **Setup Banner**: People page shows optional banner "External payee setup is optional" with link to Send → External
 
 ### Account Types - Phase 1 (P0 - COMPLETE ✅ Jan 2026)
 - **Personal Account (People)**: @username, display name, avatar, friends system, social chat
@@ -39,6 +41,8 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Chat Threads**: 1:1 iMessage-style chat for each friend
 - **In-Chat Payments**: Send PBX inside chat, appears as payment bubbles
 - **No "Add Recipient"**: Users add friends, not recipients
+- **Quick Add MVP**: Enter phone/email → lookup PBX user → if found, Add Friend; if not, send invite
+- **Invites System**: Pending invites shown in "Invited" tab, can cancel, auto-track when invited users join
 
 ### Business Features (P0 - COMPLETE ✅ Jan 2026)
 - **Businesses Tab**: Separate from People, for business discovery

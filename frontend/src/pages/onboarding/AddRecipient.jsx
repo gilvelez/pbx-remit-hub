@@ -171,7 +171,19 @@ export default function AddRecipient() {
 
           {/* PBX Friends CTA - Primary Option */}
           <div 
-            onClick={() => navigate('/sender/people')}
+            onClick={() => {
+              // Mark onboarding as complete and set sender role before navigating
+              setSession(prev => ({
+                ...prev,
+                exists: true,
+                verified: true,
+                role: prev.role || 'sender', // Preserve existing role or default to sender
+                onboardingComplete: true,
+                skippedExternalPayee: true, // Track that user skipped external payee setup
+              }));
+              // Navigate to People page
+              navigate('/sender/people');
+            }}
             className="mb-6 p-4 bg-gradient-to-r from-[#0A2540] to-[#1a4a7c] rounded-xl cursor-pointer hover:opacity-95 transition relative overflow-hidden"
             data-testid="pbx-friends-cta"
           >
