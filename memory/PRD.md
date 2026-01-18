@@ -41,6 +41,8 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Chat Threads**: 1:1 iMessage-style chat for each friend
 - **In-Chat Payments**: Send PBX inside chat, appears as payment bubbles
 - **No "Add Recipient"**: Users add friends, not recipients
+- **Quick Add MVP**: Enter phone/email → lookup PBX user → if found, Add Friend; if not, send invite
+- **Invites System**: Pending invites shown in "Invited" tab, can cancel, auto-track when invited users join
 
 ### Business Features (P0 - COMPLETE ✅ Jan 2026)
 - **Businesses Tab**: Separate from People, for business discovery
