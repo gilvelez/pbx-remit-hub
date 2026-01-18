@@ -17,6 +17,8 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Deep Link Routing**: Magic links route to correct screen (chat for transfers, people for friend requests)
 - **X-Active-Profile Header**: All social API requests include active profile ID
 - **No Dead Routes**: Navigation consistent, no blank pages
+- **CTA Click Handler Fixed**: "Send to PBX Friends" sets session.exists, session.verified, session.role='sender', session.onboardingComplete=true before navigating
+- **Setup Banner**: People page shows optional banner "External payee setup is optional" with link to Send → External
 
 ### Account Types - Phase 1 (P0 - COMPLETE ✅ Jan 2026)
 - **Personal Account (People)**: @username, display name, avatar, friends system, social chat
