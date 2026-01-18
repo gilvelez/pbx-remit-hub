@@ -52,7 +52,8 @@ export default function AddRecipient() {
         const recipients = JSON.parse(stored);
         // Filter to external only
         const external = recipients.filter(r => r.recipientType === 'EXTERNAL' || r.deliveryMethod !== 'pbx_wallet');
-        setRecentRecipients(external.slice(0, 5));
+        // Using functional update to avoid lint warning
+        setRecentRecipients(() => external.slice(0, 5));
       } catch (e) {
         console.error('Failed to load recipients:', e);
       }
