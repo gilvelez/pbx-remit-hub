@@ -119,10 +119,51 @@ export default function People() {
     navigate(`/sender/chat/${userId}`);
   };
 
+  // Dismiss the setup banner
+  const dismissSetupBanner = () => {
+    setSession(prev => ({
+      ...prev,
+      skippedExternalPayee: false, // Hide banner after dismissal
+    }));
+  };
+
   const pendingCount = incomingRequests.length;
+  const showSetupBanner = session?.skippedExternalPayee;
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
+      {/* Optional Setup Banner - Shows when user skipped external payee setup */}
+      {showSetupBanner && (
+        <div className="bg-blue-50 border-b border-blue-200 px-4 py-3">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm text-blue-800 font-medium">External payee setup is optional</p>
+              <p className="text-xs text-blue-600 mt-0.5">You can add GCash, Bank, or Cash Pickup recipients anytime from Send → External</p>
+              <button
+                onClick={() => navigate('/sender/send')}
+                className="mt-2 text-xs font-medium text-blue-700 underline"
+              >
+                Add External Payee →
+              </button>
+            </div>
+            <button 
+              onClick={dismissSetupBanner}
+              className="text-blue-400 hover:text-blue-600 p-1"
+              data-testid="dismiss-setup-banner"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
         <h1 className="text-2xl font-bold text-[#0A2540]">People</h1>
