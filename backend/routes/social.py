@@ -441,7 +441,9 @@ async def quick_add(request: Request, background_tasks: BackgroundTasks, data: Q
     
     # Get inviter info for notification
     inviter = await users.find_one({"user_id": user_id}, {"_id": 0})
-    inviter_name = inviter.get("display_name") or (inviter.get("email", "").split("@")[0] if inviter.get("email") else "A PBX user")
+    inviter_name = "A PBX user"
+    if inviter:
+        inviter_name = inviter.get("display_name") or (inviter.get("email", "").split("@")[0] if inviter.get("email") else "A PBX user")
     
     # Send invite notification (background task)
     from services.notifications import send_invite_notification
