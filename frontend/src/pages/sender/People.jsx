@@ -10,7 +10,7 @@ import { lookupPbxUser } from "../../lib/internalApi";
 
 export default function People() {
   const navigate = useNavigate();
-  const { session } = useSession();
+  const { session, setSession } = useSession();
   const [activeTab, setActiveTab] = useState("friends"); // friends | requests
   const [loading, setLoading] = useState(true);
   
