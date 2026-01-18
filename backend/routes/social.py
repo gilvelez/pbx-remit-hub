@@ -102,6 +102,12 @@ class PaymentInChat(BaseModel):
     note: Optional[str] = None
 
 
+class QuickAddRequest(BaseModel):
+    """Quick Add - lookup by phone/email and invite if not found"""
+    contact: str  # Phone or email
+    name: Optional[str] = None  # Optional display name
+
+
 # ============================================================
 # FRIENDSHIP ENDPOINTS
 # ============================================================
