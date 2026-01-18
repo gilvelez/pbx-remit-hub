@@ -9,6 +9,15 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 
 ## 🔒 HARD RULES (Locked In)
 
+### Phase 0 Cleanup (P0 - COMPLETE ✅ Jan 2026)
+- **Onboarding Step 4**: Shows "Send to PBX Friends" as RECOMMENDED primary option with "Instant & free" badges
+- **External Payees Secondary**: GCash, Maya, Bank, Cash Pickup shown below divider "or add external payee"
+- **Send Page External-Only**: `/sender/send` only shows external delivery methods (NO PBX→PBX)
+- **PBX→PBX via Chat Only**: All PBX-to-PBX transfers initiated from Chat (social flow)
+- **Deep Link Routing**: Magic links route to correct screen (chat for transfers, people for friend requests)
+- **X-Active-Profile Header**: All social API requests include active profile ID
+- **No Dead Routes**: Navigation consistent, no blank pages
+
 ### Account Types - Phase 1 (P0 - COMPLETE ✅ Jan 2026)
 - **Personal Account (People)**: @username, display name, avatar, friends system, social chat
 - **Business Account**: Business name, @businesshandle, square logo, category, "Business" badge
@@ -17,9 +26,9 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Friendships are Personal-only**: Businesses do NOT have friends, only transactional chats
 
 ### 6-Tab Navigation (P0 - COMPLETE ✅ Jan 2026)
-- **Home**: Balance summary (USD + PHP), quick actions (Send PBX, Send External), recent activity, recent chats
-- **Send**: External transfers (GCash, Maya, Bank, Cash Pickup)
-- **People**: Personal friends only - search, requests, friends list
+- **Home**: Balance summary (USD + PHP), quick actions (Send PBX → People, Send External → Send), recent activity, recent chats
+- **Send**: External transfers ONLY (GCash, Maya, Bank, Cash Pickup) - NO PBX→PBX
+- **People**: Personal friends only - search, requests, friends list, chat, in-chat payments
 - **Businesses**: Business discovery, search, categories, recently paid businesses
 - **Activity**: Transaction history
 - **Settings**: Profile management, notification preferences, add business profile
