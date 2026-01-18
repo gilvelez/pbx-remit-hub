@@ -1,6 +1,8 @@
 /**
  * PBX Social API Client
  * Friendships, Conversations, Messages, In-Chat Payments
+ * 
+ * Phase 0: All requests include X-Active-Profile header
  */
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
@@ -19,6 +21,7 @@ function getHeaders() {
   return {
     'Content-Type': 'application/json',
     'X-Session-Token': session?.token || '',
+    'X-Active-Profile': session?.activeProfileId || '',
   };
 }
 
