@@ -620,7 +620,7 @@ function QuickAddModal({ contact, setContact, name, setName, loading, result, on
               <p className="text-gray-600 mb-2">{result.contact}</p>
               <p className="text-sm text-gray-500 mb-4">
                 {result.name && `(${result.name}) `}
-                They'll receive an invite to join PBX.
+                They&apos;ll receive an invite to join PBX.
               </p>
               
               <button
