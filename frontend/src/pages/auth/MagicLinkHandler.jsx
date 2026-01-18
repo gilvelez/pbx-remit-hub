@@ -1,13 +1,36 @@
 /**
  * Magic Link Authentication Handler
  * Verifies magic link token and authenticates user automatically
- * Supports redirect based on transfer type
+ * 
+ * Phase 0 Cleanup: Deep Link Routing
+ * - PBX→PBX received → open Chat thread with sender
+ * - Friend request → People tab → Requests section
+ * - Business payment → Business chat thread
+ * - External payout status → Recipient Transfers page
  */
 import React, { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 
 const API_URL = process.env.REACT_APP_BACKEND_URL || "";
+
+// Deep link routing rules
+const DEEP_LINK_ROUTES = {
+  'pbx_transfer': (data) => `/sender/chat/${data.sender_id || data.from_user_id}`,
+  'friend_request': () => '/sender/people?tab=requests',
+  'business_payment': (data) => `/sender/chat/${data.business_id || data.from_profile_id}?type=business`,
+  'external_payout': () => '/recipient/transfers',
+  'incoming_transfer': () => '/recipient/wallets',
+  'default': '/recipient/wallets',
+};
+
+function getDeepLinkRoute(notificationType, data = {}) {
+  const routeFn = DEEP_LINK_ROUTES[notificationType];
+  if (routeFn) {
+    return routeFn(data);
+  }
+  return DEEP_LINK_ROUTES.default;
+}
 
 export default function MagicLinkHandler() {
   const [searchParams] = useSearchParams();
@@ -17,10 +40,35 @@ export default function MagicLinkHandler() {
   const [errorMessage, setErrorMessage] = useState("");
   const [resendEmail, setResendEmail] = useState("");
   const [resendStatus, setResendStatus] = useState(""); // "", "sending", "sent", "error"
+  const [redirectPath, setRedirectPath] = useState("/recipient/wallets");
 
   useEffect(() => {
     const verifyToken = async () => {
       const token = searchParams.get("token");
+      const notificationType = searchParams.get("type");
+      const contextData = searchParams.get("data");
+      const explicitRedirect = searchParams.get("redirect");
+      
+      // Parse context data if provided
+      let parsedData = {};
+      if (contextData) {
+        try {
+          parsedData = JSON.parse(atob(contextData));
+        } catch {
+          console.warn("Failed to parse context data");
+        }
+      }
+      
+      // Determine redirect path based on notification type
+      let targetPath;
+      if (explicitRedirect) {
+        targetPath = explicitRedirect;
+      } else if (notificationType) {
+        targetPath = getDeepLinkRoute(notificationType, parsedData);
+      } else {
+        targetPath = DEEP_LINK_ROUTES.default;
+      }
+      setRedirectPath(targetPath);
       
       if (!token) {
         setStatus("error");
@@ -30,8 +78,7 @@ export default function MagicLinkHandler() {
 
       // If already logged in, bypass auth and redirect
       if (session?.verified && session?.token) {
-        const redirectPath = searchParams.get("redirect") || "/recipient/wallets";
-        navigate(redirectPath);
+        navigate(targetPath);
         return;
       }
 
@@ -62,7 +109,8 @@ export default function MagicLinkHandler() {
           verified: true,
           token: data.user_id,
           user: { email: data.email },
-          role: "recipient", // Magic links are for recipients
+          role: data.role || "recipient", // Use role from backend if provided
+          _profilesLoaded: false, // Will trigger profile load
         };
         
         localStorage.setItem("pbx_session", JSON.stringify(sessionData));
@@ -70,9 +118,13 @@ export default function MagicLinkHandler() {
 
         setStatus("success");
 
+        // Use redirect from backend response if provided, else use calculated path
+        const finalPath = data.redirect_path || targetPath;
+        setRedirectPath(finalPath);
+
         // Redirect after brief success message
         setTimeout(() => {
-          navigate(data.redirect_path || "/recipient/wallets");
+          navigate(finalPath);
         }, 1500);
 
       } catch (error) {
@@ -114,6 +166,20 @@ export default function MagicLinkHandler() {
     }
   };
 
+  // Get friendly description based on redirect path
+  const getRedirectDescription = () => {
+    if (redirectPath.includes('/chat/')) {
+      return "your conversation";
+    } else if (redirectPath.includes('/people')) {
+      return "your friends";
+    } else if (redirectPath.includes('/transfers')) {
+      return "your transfers";
+    } else if (redirectPath.includes('/wallets')) {
+      return "your wallet";
+    }
+    return "your dashboard";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0A2540] to-[#0f3460] flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
@@ -138,12 +204,26 @@ export default function MagicLinkHandler() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-[#0A2540] mb-2">Welcome back!</h1>
-            <p className="text-gray-600">Redirecting you to your wallet...</p>
+            <p className="text-gray-600">Redirecting you to {getRedirectDescription()}...</p>
             
-            {/* Funds Available Banner */}
+            {/* Context-aware Banner */}
             <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-xl">
-              <p className="text-green-700 font-semibold">💰 Funds available</p>
-              <p className="text-sm text-green-600 mt-1">View your balance and recent transfers</p>
+              {redirectPath.includes('/chat/') ? (
+                <>
+                  <p className="text-green-700 font-semibold">💬 New message waiting</p>
+                  <p className="text-sm text-green-600 mt-1">Opening your conversation...</p>
+                </>
+              ) : redirectPath.includes('/people') ? (
+                <>
+                  <p className="text-green-700 font-semibold">👋 Friend request</p>
+                  <p className="text-sm text-green-600 mt-1">Someone wants to connect!</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-green-700 font-semibold">💰 Funds available</p>
+                  <p className="text-sm text-green-600 mt-1">View your balance and recent transfers</p>
+                </>
+              )}
             </div>
           </>
         )}
@@ -207,6 +287,13 @@ export default function MagicLinkHandler() {
             </div>
           </>
         )}
+        
+        {/* Trust Footer */}
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          <p className="text-xs text-gray-400">
+            🔒 PBX will never ask for your password
+          </p>
+        </div>
       </div>
     </div>
   );

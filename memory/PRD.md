@@ -9,6 +9,15 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 
 ## 🔒 HARD RULES (Locked In)
 
+### Phase 0 Cleanup (P0 - COMPLETE ✅ Jan 2026)
+- **Onboarding Step 4**: Shows "Send to PBX Friends" as RECOMMENDED primary option with "Instant & free" badges
+- **External Payees Secondary**: GCash, Maya, Bank, Cash Pickup shown below divider "or add external payee"
+- **Send Page External-Only**: `/sender/send` only shows external delivery methods (NO PBX→PBX)
+- **PBX→PBX via Chat Only**: All PBX-to-PBX transfers initiated from Chat (social flow)
+- **Deep Link Routing**: Magic links route to correct screen (chat for transfers, people for friend requests)
+- **X-Active-Profile Header**: All social API requests include active profile ID
+- **No Dead Routes**: Navigation consistent, no blank pages
+
 ### Account Types - Phase 1 (P0 - COMPLETE ✅ Jan 2026)
 - **Personal Account (People)**: @username, display name, avatar, friends system, social chat
 - **Business Account**: Business name, @businesshandle, square logo, category, "Business" badge
@@ -17,9 +26,9 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Friendships are Personal-only**: Businesses do NOT have friends, only transactional chats
 
 ### 6-Tab Navigation (P0 - COMPLETE ✅ Jan 2026)
-- **Home**: Balance summary (USD + PHP), quick actions (Send PBX, Send External), recent activity, recent chats
-- **Send**: External transfers (GCash, Maya, Bank, Cash Pickup)
-- **People**: Personal friends only - search, requests, friends list
+- **Home**: Balance summary (USD + PHP), quick actions (Send PBX → People, Send External → Send), recent activity, recent chats
+- **Send**: External transfers ONLY (GCash, Maya, Bank, Cash Pickup) - NO PBX→PBX
+- **People**: Personal friends only - search, requests, friends list, chat, in-chat payments
 - **Businesses**: Business discovery, search, categories, recently paid businesses
 - **Activity**: Transaction history
 - **Settings**: Profile management, notification preferences, add business profile
@@ -441,6 +450,37 @@ Dark theme: neutral-950, amber-400, red-600
 ---
 
 ## Change Log
+
+### January 17, 2026 - Phase 1: Business Profiles (P0 COMPLETE) ✅
+- ✅ Implemented User → Profile abstraction (one login, multiple profiles)
+- ✅ Personal Account: @username, display_name, avatar, friends system
+- ✅ Business Account: @businesshandle, business_name, logo, category, verified badge
+- ✅ `/api/profiles/*` endpoints: me, active, switch, personal, business, search
+- ✅ `/api/businesses/*` endpoints: discover, categories, paid, chat, pay
+- ✅ Profile Switcher component (Instagram-style account switching)
+- ✅ 6-tab navigation: Home, Send, People, Businesses, Activity, Settings
+- ✅ People tab (Personal-only friends)
+- ✅ Businesses tab (Discover, Recently Paid, category filters)
+- ✅ Chat supports: Person↔Person, Person↔Business, Business↔Business
+- ✅ In-chat payments for all profile combinations
+- ✅ SessionContext updated with profiles, activeProfile, switchProfile
+- ✅ Tests: 31/31 backend, 100% frontend UI verified
+
+### January 18, 2026 - Phase 0 Cleanup (P0 COMPLETE) ✅
+- ✅ **Onboarding Step 4 Redesign**: "Send to PBX Friends" as primary RECOMMENDED option
+- ✅ "Instant & free" badges with lightning bolt icon
+- ✅ External payees (GCash, Maya, Bank, Cash) below divider "or add external payee"
+- ✅ **Send Page External-Only**: Removed PBX→PBX from /sender/send
+- ✅ Added tip banner: "Sending to a PBX user? Go to People tab for instant, free transfers →"
+- ✅ **Deep Link Routing in MagicLinkHandler**:
+  - pbx_transfer → /sender/chat/{sender_id}
+  - friend_request → /sender/people?tab=requests
+  - business_payment → /sender/chat/{business_id}?type=business
+  - external_payout → /recipient/transfers
+- ✅ **X-Active-Profile Header**: Added to socialApi.js getHeaders()
+- ✅ **Home Page**: "Send PBX" button navigates to /sender/people (not /sender/send)
+- ✅ Social language: "Add your first friend or payee" instead of "Add recipient"
+- ✅ Tests: 100% frontend verified (iteration_12.json)
 
 ### January 17, 2026 - Phase 1: Business Profiles (P0 COMPLETE) ✅
 - ✅ Implemented User → Profile abstraction (one login, multiple profiles)
