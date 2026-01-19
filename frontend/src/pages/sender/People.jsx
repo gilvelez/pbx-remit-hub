@@ -782,31 +782,63 @@ function RequestCard({ request, type, loading, onAccept, onDecline }) {
   );
 }
 
-// Invite Card
+// Invite Card - Updated to show status (pending, converted/joined, canceled)
 function InviteCard({ invite, onCancel }) {
+  const isConverted = invite.status === "converted";
+  const isCanceled = invite.status === "canceled";
+  const isPending = invite.status === "pending";
+  
   return (
-    <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+    <div className={`bg-white rounded-xl p-4 shadow-sm border ${isConverted ? 'border-green-200 bg-green-50/50' : 'border-gray-100'}`}>
       <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
+        <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+          isConverted ? 'bg-green-100' : 'bg-gray-200'
+        }`}>
+          {isConverted ? (
+            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[#0A2540] truncate">{invite.contact_name || invite.contact}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-[#0A2540] truncate">{invite.contact_name || invite.contact}</p>
+            {isConverted && (
+              <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">
+                Joined!
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">
-            {invite.contact_type === "email" ? "📧" : "📱"} Invite sent • waiting to join
+            {invite.contact_type === "email" ? "📧" : "📱"} 
+            {isConverted 
+              ? " They joined PBX — friend request sent" 
+              : isCanceled 
+                ? " Invite canceled"
+                : " Invite sent • waiting to join"
+            }
           </p>
         </div>
-        <button
-          onClick={onCancel}
-          className="p-2 text-gray-400 hover:text-red-500"
-          data-testid="cancel-invite-btn"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        {isPending && (
+          <button
+            onClick={onCancel}
+            className="p-2 text-gray-400 hover:text-red-500"
+            data-testid="cancel-invite-btn"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+        {isConverted && (
+          <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
           </svg>
-        </button>
+        )}
       </div>
     </div>
   );
