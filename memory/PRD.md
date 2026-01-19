@@ -531,6 +531,43 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 19, 2026 - PBX Funding, Withdrawal & Bank Linking (P0 COMPLETE) ✅
+- ✅ **Phase 1: Home Screen Actions**
+  - Add Money button on balance card
+  - Withdraw button on balance card
+- ✅ **Phase 2: Add Money Flow**
+  - `/sender/add-money` page
+  - Bank linking check (shows prompt if no banks)
+  - Amount input with quick amounts ($50, $100, $250, $500)
+  - Bank selector dropdown
+  - Confirmation screen
+- ✅ **Phase 3: Withdraw Flow**
+  - `/sender/withdraw` page
+  - Bank linking check
+  - Available balance display with "Withdraw all" option
+  - Bank selector and confirmation
+- ✅ **Phase 4: Bank Management**
+  - `/sender/banks` page
+  - List linked banks (institution, last 4 digits, status)
+  - "Link a Bank Account" button (Plaid Link integration)
+  - Remove bank with confirmation modal
+- ✅ **Phase 5: Contextual Fallbacks**
+  - "No bank account linked. Link one to continue." prompts
+  - Navigation to bank linking from all relevant screens
+- ✅ **Phase 6: Recurring Transfers Placeholder**
+  - "Coming Soon" UI in Banks page
+- ✅ **Backend Endpoints**
+  - `GET /api/banks/linked` - Get user's linked banks
+  - `POST /api/banks/link` - Link new bank via Plaid
+  - `DELETE /api/banks/{bank_id}` - Soft-delete bank
+  - `POST /api/banks/add-money` - Initiate ACH pull (STUB)
+  - `POST /api/banks/withdraw` - Initiate ACH push (STUB)
+  - `GET /api/banks/transfers` - Transfer history
+- ✅ Tests: 19/19 backend tests + all frontend UI tests passed
+- ✅ New files: `AddMoney.jsx`, `Withdraw.jsx`, `BanksAndPayments.jsx`, `bankApi.js`, `banks.py`
+- ✅ Test report: `/app/test_reports/iteration_20.json`
+- **Note: ACH transfers are STUBBED - returns pending status without actual bank integration**
+
 ### January 19, 2026 - Backend Hardening Phase 1-3 (P0 COMPLETE) ✅
 - ✅ **Phase 1: Ledger Hardening**
   - Idempotency keys via `Idempotency-Key` HTTP header
