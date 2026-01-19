@@ -144,7 +144,10 @@ export default function Chat() {
     );
   }
 
-  const otherUser = conversation?.other_user;
+  const otherUser = otherProfile || conversation?.other_user;
+  const displayName = otherUser?.business_name || otherUser?.display_name || "PBX User";
+  const handle = otherUser?.handle || otherUser?.username;
+  const isBusinessProfile = otherUser?.type === 'business' || isBusiness;
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -160,14 +163,30 @@ export default function Chat() {
           </svg>
         </button>
         
-        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0A2540] to-[#1a4a7c] flex items-center justify-center text-white font-bold">
-          {(otherUser?.display_name || "?")?.[0]?.toUpperCase()}
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
+          isBusinessProfile 
+            ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+            : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
+        }`}>
+          {displayName?.[0]?.toUpperCase() || "?"}
         </div>
         
         <div className="flex-1">
-          <p className="font-semibold text-[#0A2540]">{otherUser?.display_name || "PBX User"}</p>
-          {otherUser?.username && (
-            <p className="text-sm text-gray-500">@{otherUser.username}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-[#0A2540]">{displayName}</p>
+            {isBusinessProfile && (
+              <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded">
+                BUSINESS
+              </span>
+            )}
+            {otherUser?.verified && (
+              <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            )}
+          </div>
+          {handle && (
+            <p className="text-sm text-gray-500">@{handle}</p>
           )}
         </div>
       </div>
