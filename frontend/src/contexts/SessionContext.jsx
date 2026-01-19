@@ -105,6 +105,21 @@ export function SessionProvider({ children }) {
               _profilesLoaded: true,
             }));
             auditLog('PROFILES_LOADED', { count: profiles.length });
+            
+            // Process any pending invites for this user (viral loop)
+            // This creates friend requests from people who invited this user
+            try {
+              await fetch(`${backendUrl}/api/social/invites/process-on-signup`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-Session-Token': session.token,
+                },
+              });
+            } catch (inviteErr) {
+              // Non-critical - don't block login if this fails
+              console.log('Invite processing skipped:', inviteErr);
+            }
           }
         } catch (err) {
           console.error('Failed to load profiles:', err);
