@@ -179,6 +179,7 @@ export function SessionProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(ACTIVE_PROFILE_KEY);
     setSession({ 
       exists: false, 
       verified: false, 
