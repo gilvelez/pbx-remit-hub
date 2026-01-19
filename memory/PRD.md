@@ -39,12 +39,23 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Friendships are Personal-only**: Businesses do NOT have friends, only transactional chats
 
 ### 6-Tab Navigation (P0 - COMPLETE ✅ Jan 2026)
-- **Home**: Balance summary (USD + PHP), quick actions (Send PBX → People, Send External → Send), recent activity, recent chats
+- **Home**: Balance summary (USD + PHP), 4 Quick Actions (Find People, Send External, Pay Bills, Receive), recent activity, recent chats
 - **Send**: External transfers ONLY (GCash, Maya, Bank, Cash Pickup) - NO PBX→PBX
 - **People**: Personal friends only - search, requests, friends list, chat, in-chat payments
 - **Businesses**: Business discovery, search, categories, recently paid businesses
-- **Activity**: Transaction history
+- **Activity**: Transaction history (profile-aware)
 - **Settings**: Profile management, notification preferences, add business profile
+
+### UI MERGE (P0 - COMPLETE ✅ Jan 2026)
+- **Unified Navigation**: Same 6-tab navigation for BOTH Personal and Business profiles
+- **4 Quick Actions on Home**: Find People, Send External, Pay Bills, Receive - visible for ALL profiles
+- **Active Profile Indicator**: Header shows avatar + @handle + type badge (Personal/Business)
+- **Profile Switcher Dropdown**: Switch profiles from header, shows "Active Profile" and "Switch to" sections
+- **Bills Page**: `/sender/bills` accessible for both profiles with different default categories
+- **Personal Bills Categories**: Utilities, Mobile Load, Internet, Government, Credit Card, Insurance
+- **Business Bills Categories**: Utilities, Rent/Lease, Internet, Payroll-related, Suppliers, Gov't/Taxes
+- **Receive Modal**: Shows active profile handle with copy button, QR code placeholder
+- **Profile-Aware**: Chat list, Activity, and Bills receipts show active profile identity
 
 ### Social Network Features (P0 - COMPLETE)
 - **People Tab**: Friends list, search by @username/name/phone/email
