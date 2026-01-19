@@ -205,7 +205,6 @@ async def create_transfer_atomic(
     # 1. Ledger TX header (journal entry)
     ledger_tx_doc = {
         "tx_id": tx_id,
-        "idempotency_key": idempotency_key,
         "type": transfer_type,
         "currency": currency,
         "amount": amount,
@@ -217,6 +216,9 @@ async def create_transfer_atomic(
         "created_at": now,
         "updated_at": now
     }
+    # Only include idempotency_key if provided (sparse index requires field absence for null)
+    if idempotency_key:
+        ledger_tx_doc["idempotency_key"] = idempotency_key
     
     # 2. Ledger entries (debit + credit)
     debit_entry = {
