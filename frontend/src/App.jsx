@@ -112,6 +112,11 @@ function AppRoutes() {
       <Route path="/app/*" element={<Navigate to="/sender/dashboard" replace />} />
 
       {/* ========================================
+          PAY BY HANDLE ROUTE (PUBLIC - QR Code Deep Link)
+         ======================================== */}
+      <Route path="/pay/:handle" element={<PayByHandle />} />
+
+      {/* ========================================
           LEGAL PAGES (Dark Theme with PublicShell)
          ======================================== */}
       <Route path="/privacy" element={<PublicShell><Privacy /></PublicShell>} />
