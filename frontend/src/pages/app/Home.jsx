@@ -385,7 +385,7 @@ export default function Home() {
               </svg>
             </div>
             <p className="text-gray-500">No recent activity</p>
-            <p className="text-sm text-gray-400 mt-1">Your transactions will appear here</p>
+            <p className="text-sm text-gray-400 mt-1">Add money or send to a friend to get started</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
