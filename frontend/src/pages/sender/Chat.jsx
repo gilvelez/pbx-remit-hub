@@ -1,18 +1,23 @@
 /**
  * Chat Page - iMessage/Messenger-style 1:1 chat
  * Supports text messages and in-chat PBX payments
+ * Updated: Shows business badge and handle
  */
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getConversation, getMessages, sendMessage, sendPaymentInChat } from "../../lib/socialApi";
 
 export default function Chat() {
   const { userId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { session } = useSession();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  
+  // Check if this is a business chat
+  const isBusiness = searchParams.get('type') === 'business';
   
   // State
   const [loading, setLoading] = useState(true);
@@ -20,6 +25,7 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [otherProfile, setOtherProfile] = useState(null);
   
   // Payment modal state
   const [showPayment, setShowPayment] = useState(false);
