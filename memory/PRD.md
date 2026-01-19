@@ -103,10 +103,19 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 
 ### Route Structure
 ```
+/onboarding/*       - Onboarding routes
+  /onboarding/recipient - Add first friend or payee
+  /onboarding/people    - People Picker (search + invite) - NEW Jan 2026
+  /onboarding/chat/:id  - Chat in onboarding mode - NEW Jan 2026
+
 /sender/*           - Sender (employer/business) routes
   /sender/dashboard - Sender home with transfer stats
-  /sender/send      - Initiate transfers
-  /sender/recipients - Manage recipients
+  /sender/send      - External transfers only (GCash, Maya, Bank, Cash)
+  /sender/send-external - Same as /sender/send - NEW Jan 2026
+  /sender/people    - Friends management (personal profiles)
+  /sender/people/picker - People Picker (search + invite) - NEW Jan 2026
+  /sender/businesses - Business discovery
+  /sender/chat/:id  - 1:1 chat with payments
   /sender/activity  - Transfer history
   /sender/settings  - Account settings
 
