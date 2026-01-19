@@ -496,8 +496,34 @@ class TestLedgerIntegrity:
     
     def test_transfer_creates_ledger_tx_header(self):
         """Transfer should create ledger_tx header with tx_id"""
+        import pymongo
+        from datetime import datetime, timezone
+        
         sender_id = generate_user_id()
         recipient_id = generate_user_id()
+        
+        # Connect to MongoDB to set up exact balance
+        mongo_client = pymongo.MongoClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+        db = mongo_client['pbx_database']
+        now = datetime.now(timezone.utc)
+        
+        # Create sender wallet with $500
+        db.wallets.insert_one({
+            'user_id': sender_id,
+            'usd_balance': 500.0,
+            'php_balance': 0.0,
+            'created_at': now,
+            'updated_at': now
+        })
+        
+        # Create recipient wallet
+        db.wallets.insert_one({
+            'user_id': recipient_id,
+            'usd_balance': 0.0,
+            'php_balance': 0.0,
+            'created_at': now,
+            'updated_at': now
+        })
         
         # Create friendship
         headers = {"X-Session-Token": sender_id}
@@ -514,13 +540,6 @@ class TestLedgerIntegrity:
                 json={"friendship_id": friendship_id, "action": "accept"},
                 headers=accept_headers
             )
-        
-        # Fund sender wallet
-        requests.post(
-            f"{BASE_URL}/api/recipient/wallet/fund",
-            json={"amount": 500},
-            headers=headers
-        )
         
         # Make transfer
         response = requests.post(
@@ -535,16 +554,55 @@ class TestLedgerIntegrity:
         assert tx_id.startswith("pbx_"), f"tx_id should start with 'pbx_', got: {tx_id}"
         print(f"✓ Transfer created with tx_id: {tx_id}")
         
-        # Store for verification
-        self.tx_id = tx_id
-        self.sender_id = sender_id
-        self.recipient_id = recipient_id
-        return tx_id
+        # Verify ledger_tx header exists
+        ledger_tx = db.ledger_tx.find_one({'tx_id': tx_id})
+        assert ledger_tx, f"ledger_tx header not found for tx_id: {tx_id}"
+        assert ledger_tx.get('from_user_id') == sender_id
+        assert ledger_tx.get('to_user_id') == recipient_id
+        assert ledger_tx.get('amount') == 100.0
+        print(f"✓ ledger_tx header verified")
+        
+        # Verify ledger entries (debit + credit)
+        ledger_entries = list(db.ledger.find({'ledger_tx_id': tx_id}))
+        assert len(ledger_entries) == 2, f"Expected 2 ledger entries, got {len(ledger_entries)}"
+        
+        # Check sum is 0 (balanced)
+        total = sum(e.get('amount', 0) for e in ledger_entries)
+        assert abs(total) < 0.01, f"Ledger entries should sum to 0, got {total}"
+        print(f"✓ Ledger entries balanced (sum={total})")
+        
+        mongo_client.close()
     
     def test_transfer_response_has_required_fields(self):
         """Transfer response should have all required fields"""
+        import pymongo
+        from datetime import datetime, timezone
+        
         sender_id = generate_user_id()
         recipient_id = generate_user_id()
+        
+        # Connect to MongoDB to set up exact balance
+        mongo_client = pymongo.MongoClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+        db = mongo_client['pbx_database']
+        now = datetime.now(timezone.utc)
+        
+        # Create sender wallet with $500
+        db.wallets.insert_one({
+            'user_id': sender_id,
+            'usd_balance': 500.0,
+            'php_balance': 0.0,
+            'created_at': now,
+            'updated_at': now
+        })
+        
+        # Create recipient wallet
+        db.wallets.insert_one({
+            'user_id': recipient_id,
+            'usd_balance': 0.0,
+            'php_balance': 0.0,
+            'created_at': now,
+            'updated_at': now
+        })
         
         # Create friendship
         headers = {"X-Session-Token": sender_id}
@@ -561,13 +619,6 @@ class TestLedgerIntegrity:
                 json={"friendship_id": friendship_id, "action": "accept"},
                 headers=accept_headers
             )
-        
-        # Fund sender wallet
-        requests.post(
-            f"{BASE_URL}/api/recipient/wallet/fund",
-            json={"amount": 500},
-            headers=headers
-        )
         
         # Make transfer
         response = requests.post(
@@ -590,6 +641,8 @@ class TestLedgerIntegrity:
         assert data["success"] == True
         assert data["amount_usd"] == 100
         print(f"✓ Transfer response has all required fields")
+        
+        mongo_client.close()
 
 
 class TestWalletFunding:
