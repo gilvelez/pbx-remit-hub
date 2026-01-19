@@ -1,15 +1,11 @@
 /**
- * Home - Sender dashboard home page
- * Phase 1 Layout:
- * - Balance summary (USD + PHP)
- * - Primary buttons: Send PBX, Send to External
- * - Recent activity preview (last 5)
- * - Recent chats shortcut row
+ * Home - Unified dashboard home page
+ * UI MERGE: Same for Personal and Business profiles
+ * Quick Actions: Find People, Send External, Pay Bills, Receive
  */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
-import { tw } from "../../lib/theme";
 import { getConversations } from "../../lib/socialApi";
 
 export default function Home() {
@@ -19,10 +15,18 @@ export default function Home() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Send Sheet state
+  const [showSendSheet, setShowSendSheet] = useState(false);
+  // Receive modal state
+  const [showReceive, setShowReceive] = useState(false);
 
-  const userName = session?.user?.email?.split('@')[0] || 'there';
   const activeProfile = session?.activeProfile;
   const isBusinessProfile = activeProfile?.type === "business";
+  const displayName = isBusinessProfile 
+    ? (activeProfile?.business_name || "Business")
+    : (activeProfile?.display_name || session?.user?.email?.split('@')[0] || 'there');
+  const handle = activeProfile?.handle;
 
   // Fetch wallet balance
   useEffect(() => {
@@ -114,20 +118,23 @@ export default function Home() {
 
   return (
     <div className="pb-20">
-      {/* Welcome Header */}
+      {/* Welcome Header - Profile aware */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[#0A2540]">
-          {isBusinessProfile ? (
-            <>Hey, {activeProfile?.business_name || "Business"} 🏢</>
-          ) : (
-            <>Hello, {userName} 👋</>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[#0A2540]">
+            Hey, {displayName}
+          </h1>
+          {isBusinessProfile && (
+            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded">
+              BUSINESS
+            </span>
           )}
-        </h1>
+        </div>
+        {handle && (
+          <p className="text-sm text-gray-500 mt-0.5">@{handle}</p>
+        )}
         <p className="text-sm text-gray-500 mt-1">
-          {isBusinessProfile 
-            ? "Manage payments and connect with customers"
-            : "Send money to friends and businesses"
-          }
+          Send money, pay bills, and connect with {isBusinessProfile ? "customers" : "friends"}
         </p>
       </div>
 
@@ -148,34 +155,62 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Primary Action Buttons */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      {/* PRIMARY QUICK ACTIONS - SAME FOR BOTH PROFILES */}
+      <div className="grid grid-cols-4 gap-2 mb-6">
+        {/* Find People */}
         <button
-          onClick={() => navigate('/sender/people')}
-          className="flex flex-col items-center gap-2 bg-[#0A2540] text-white rounded-xl py-4 px-3 hover:bg-[#0A2540]/90 transition"
-          data-testid="send-pbx-btn"
+          onClick={() => navigate('/sender/people/picker')}
+          className="flex flex-col items-center gap-1.5 bg-[#0A2540] text-white rounded-xl py-3 px-2 hover:bg-[#0A2540]/90 transition"
+          data-testid="find-people-btn"
         >
           <div className="w-10 h-10 rounded-full bg-[#F6C94B]/20 flex items-center justify-center">
             <svg className="w-5 h-5 text-[#F6C94B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </div>
-          <span className="font-medium">Send PBX</span>
-          <span className="text-xs text-white/60">To friends</span>
+          <span className="text-xs font-medium">Find People</span>
         </button>
 
+        {/* Send External */}
         <button
-          onClick={() => navigate('/sender/send')}
-          className="flex flex-col items-center gap-2 bg-white text-[#0A2540] rounded-xl py-4 px-3 border border-gray-200 hover:border-[#0A2540] transition"
+          onClick={() => navigate('/sender/send-external')}
+          className="flex flex-col items-center gap-1.5 bg-white text-[#0A2540] rounded-xl py-3 px-2 border border-gray-200 hover:border-[#0A2540] transition"
           data-testid="send-external-btn"
         >
           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
             <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
           </div>
-          <span className="font-medium">Send to External</span>
-          <span className="text-xs text-gray-500">GCash, Banks</span>
+          <span className="text-xs font-medium">Send External</span>
+        </button>
+
+        {/* Pay Bills */}
+        <button
+          onClick={() => navigate('/sender/bills')}
+          className="flex flex-col items-center gap-1.5 bg-white text-[#0A2540] rounded-xl py-3 px-2 border border-gray-200 hover:border-[#0A2540] transition"
+          data-testid="pay-bills-btn"
+        >
+          <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <span className="text-xs font-medium">Pay Bills</span>
+        </button>
+
+        {/* Receive */}
+        <button
+          onClick={() => setShowReceive(true)}
+          className="flex flex-col items-center gap-1.5 bg-white text-[#0A2540] rounded-xl py-3 px-2 border border-gray-200 hover:border-green-500 transition"
+          data-testid="receive-btn"
+        >
+          <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+            </svg>
+          </div>
+          <span className="text-xs font-medium">Receive</span>
         </button>
       </div>
 
@@ -193,25 +228,36 @@ export default function Home() {
           </div>
           
           <div className="flex gap-3 overflow-x-auto pb-2">
-            {recentChats.map((chat) => (
-              <button
-                key={chat.conversation_id}
-                onClick={() => navigate(`/sender/chat/${chat.other_user?.user_id}`)}
-                className="flex flex-col items-center min-w-[72px]"
-                data-testid="recent-chat-btn"
-              >
-                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#0A2540] to-[#1a4a7c] flex items-center justify-center text-white font-bold text-lg mb-1">
-                  {(chat.other_user?.display_name || "?")?.[0]?.toUpperCase()}
-                </div>
-                <span className="text-xs text-gray-600 truncate max-w-[72px]">
-                  {chat.other_user?.display_name || "Friend"}
-                </span>
-              </button>
-            ))}
+            {recentChats.map((chat) => {
+              const otherUser = chat.other_user;
+              const isBiz = otherUser?.type === 'business';
+              return (
+                <button
+                  key={chat.conversation_id}
+                  onClick={() => navigate(`/sender/chat/${otherUser?.user_id}`)}
+                  className="flex flex-col items-center min-w-[72px]"
+                  data-testid="recent-chat-btn"
+                >
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-white font-bold text-lg mb-1 ${
+                    isBiz 
+                      ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+                      : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
+                  }`}>
+                    {(otherUser?.display_name || otherUser?.business_name || "?")?.[0]?.toUpperCase()}
+                  </div>
+                  <span className="text-xs text-gray-600 truncate max-w-[72px]">
+                    {otherUser?.display_name || otherUser?.business_name || "Friend"}
+                  </span>
+                  {isBiz && (
+                    <span className="text-[8px] text-purple-600 font-medium">Business</span>
+                  )}
+                </button>
+              );
+            })}
             
             {/* Add Friend Button */}
             <button
-              onClick={() => navigate('/sender/people')}
+              onClick={() => navigate('/sender/people/picker')}
               className="flex flex-col items-center min-w-[72px]"
             >
               <div className="w-14 h-14 rounded-full bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
@@ -276,6 +322,7 @@ export default function Home() {
                     {tx.type === "internal_transfer_in" ? "Received PBX" :
                      tx.type === "internal_transfer_out" ? "Sent PBX" :
                      tx.type === "conversion" ? "Converted" :
+                     tx.type === "bill_payment" ? "Bill Payment" :
                      tx.type || "Transaction"}
                   </p>
                   <p className="text-xs text-gray-500">
@@ -302,10 +349,10 @@ export default function Home() {
             subtitle="Send to friends with zero fees"
           />
           <TrustItem 
-            icon={<svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5" /></svg>}
+            icon={<svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>}
             bgColor="bg-blue-100"
-            title="Pay Businesses"
-            subtitle="Message and pay businesses in-app"
+            title="Pay Bills Instantly"
+            subtitle="Utilities, mobile load, and more"
           />
           <TrustItem 
             icon={<svg className="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>}
@@ -315,6 +362,17 @@ export default function Home() {
           />
         </div>
       </div>
+
+      {/* Receive Modal */}
+      {showReceive && (
+        <ReceiveModal 
+          activeProfile={activeProfile}
+          isBusinessProfile={isBusinessProfile}
+          handle={handle}
+          displayName={displayName}
+          onClose={() => setShowReceive(false)}
+        />
+      )}
     </div>
   );
 }
@@ -328,6 +386,114 @@ function TrustItem({ icon, bgColor, title, subtitle }) {
       <div>
         <div className="text-sm font-medium text-[#0A2540]">{title}</div>
         <div className="text-xs text-gray-500">{subtitle}</div>
+      </div>
+    </div>
+  );
+}
+
+// Receive Modal Component
+function ReceiveModal({ activeProfile, isBusinessProfile, handle, displayName, onClose }) {
+  const [copied, setCopied] = useState(false);
+  
+  const copyHandle = () => {
+    if (handle) {
+      navigator.clipboard.writeText(`@${handle}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  return (
+    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-sm p-6" data-testid="receive-modal">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-[#0A2540]">Receive PBX</h2>
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-gray-100 rounded-full"
+          >
+            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        {/* Profile Display */}
+        <div className="text-center mb-6">
+          <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 ${
+            isBusinessProfile 
+              ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+              : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
+          }`}>
+            {displayName?.[0]?.toUpperCase() || "?"}
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <p className="font-semibold text-lg text-[#0A2540]">{displayName}</p>
+            {isBusinessProfile && (
+              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded">
+                BUSINESS
+              </span>
+            )}
+          </div>
+          {handle && (
+            <p className="text-gray-500">@{handle}</p>
+          )}
+        </div>
+        
+        {/* Handle Copy Section */}
+        {handle ? (
+          <div className="bg-gray-50 rounded-xl p-4 mb-4">
+            <p className="text-sm text-gray-500 mb-2 text-center">Your PBX handle</p>
+            <div className="flex items-center gap-2">
+              <div className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-3 font-mono text-lg text-center">
+                @{handle}
+              </div>
+              <button
+                onClick={copyHandle}
+                className={`p-3 rounded-lg transition ${
+                  copied 
+                    ? 'bg-green-100 text-green-600' 
+                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                }`}
+                data-testid="copy-handle-btn"
+              >
+                {copied ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                )}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+            <p className="text-sm text-yellow-800 text-center">
+              Set up your @handle in Settings to receive payments easily
+            </p>
+          </div>
+        )}
+        
+        {/* Instructions */}
+        <div className="text-center">
+          <p className="text-sm text-gray-600">
+            Share your @handle to receive PBX instantly from anyone
+          </p>
+        </div>
+        
+        {/* QR Code placeholder for future */}
+        <div className="mt-4 p-4 bg-gray-100 rounded-xl text-center">
+          <div className="w-24 h-24 mx-auto bg-white rounded-lg flex items-center justify-center mb-2">
+            <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+            </svg>
+          </div>
+          <p className="text-xs text-gray-400">QR Code coming soon</p>
+        </div>
       </div>
     </div>
   );
