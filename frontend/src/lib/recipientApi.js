@@ -40,11 +40,15 @@ export async function fundWalletSimulation(amount) {
     headers: getHeaders(),
     body: JSON.stringify({ amount }),
   });
+  
+  // Read response body ONLY ONCE
+  const data = await res.json();
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to fund wallet');
+    throw new Error(data.detail || data.message || 'Failed to fund wallet');
   }
-  return res.json();
+  
+  return data;
 }
 
 export async function allocateSubWallet(subWallet, amount) {
