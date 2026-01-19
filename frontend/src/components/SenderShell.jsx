@@ -270,21 +270,21 @@ export default function SenderShell() {
         </main>
       </div>
 
-      {/* Mobile Bottom Navigation - 6 tabs */}
+      {/* Mobile Bottom Navigation - 5 tabs (Bills accessible via Home) */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0A2540] border-t border-[#F6C94B]/20 z-40">
         <div className="flex justify-around py-2">
-          {navItems.map(({ to, label, icon }) => (
+          {mobileNavItems.map(({ to, label, icon }) => (
             <NavLink
               key={to}
               to={to}
               className={({ isActive }) =>
-                `flex flex-col items-center py-1 px-1 min-w-0 ${
+                `flex flex-col items-center py-1 px-2 min-w-0 ${
                   isActive ? "text-[#F6C94B]" : "text-white/60"
                 }`
               }
             >
               {icon}
-              <span className="text-[9px] mt-0.5 truncate">{label}</span>
+              <span className="text-[10px] mt-0.5 truncate">{label}</span>
             </NavLink>
           ))}
         </div>
