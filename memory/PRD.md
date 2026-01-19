@@ -469,8 +469,31 @@ Dark theme: neutral-950, amber-400, red-600
   - Businesses tab (Discover, Categories, Pay)
   - Chat: Person↔Person, Person↔Business, Business↔Business
   - In-chat payments for all profile combinations
+- [x] **Backend Hardening Phase 1 - Ledger (P0)** ✅ Jan 2026
+  - Idempotency keys via `Idempotency-Key` header
+  - `ledger_tx` collection for journal headers
+  - Atomic MongoDB transactions with balance check
+  - Double-spend prevention (concurrent race protection)
+  - Amount validation (0, negative, >$5000)
+  - Self-transfer prevention
+- [x] **Backend Hardening Phase 2 - Admin + Audit (P0)** ✅ Jan 2026
+  - Admin roles: admin_read, admin_ops, admin_compliance, admin_finance, admin_super
+  - `audit_log` collection (immutable append-only)
+  - Read-only admin endpoints at `/api/admin/*`
+  - Wallet reconciliation endpoint
+  - Transfer integrity verification
+  - Balance adjustment with audit trail (admin_super only)
+- [x] **Backend Hardening Phase 3 - Health (P0)** ✅ Jan 2026
+  - `/api/health` endpoint with service status
+  - MongoDB connectivity check
+  - Feature flags reporting
+  - No secrets exposed in responses
 
 ### P1 (High Priority)
+- [ ] Deploy to Netlify
+- [ ] Enable real FX rates (OPENEXCHANGERATES_API_KEY)
+- [ ] Enable email notifications (RESEND_API_KEY)
+- [ ] Enable SMS notifications (TWILIO credentials)
 - [ ] Plaid integration for sender flow
 - [ ] Stripe subscription billing
 - [ ] Rate lock backend with TTL (Redis)
