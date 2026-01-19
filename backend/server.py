@@ -102,7 +102,50 @@ async def root():
 
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """
+    Health endpoint for Phase 3: Health + Safety
+    Reports service status, DB connectivity, and feature flags.
+    
+    NO SECRETS logged or exposed.
+    """
+    from database.connection import get_database
+    
+    health_status = {
+        "status": "healthy",
+        "service": "pbx-api",
+        "version": "1.0.0",
+        "components": {}
+    }
+    
+    # Check MongoDB connectivity
+    try:
+        db = get_database()
+        await db.command("ping")
+        health_status["components"]["mongodb"] = {
+            "status": "connected",
+            "db_name": os.environ.get("DB_NAME", "pbx_database")
+        }
+    except Exception as e:
+        health_status["status"] = "degraded"
+        health_status["components"]["mongodb"] = {
+            "status": "disconnected",
+            "error": "Database connection failed"  # No detailed error for security
+        }
+    
+    # Feature flags (loaded from env, no secrets)
+    health_status["features"] = {
+        "email_notifications": bool(os.environ.get("RESEND_API_KEY")),
+        "sms_notifications": bool(os.environ.get("TWILIO_ACCOUNT_SID")),
+        "live_fx_rates": bool(os.environ.get("OPENEXCHANGERATES_API_KEY")),
+        "plaid_mode": os.environ.get("PLAID_MODE", "MOCK"),
+        "ledger_transactions": True,  # Phase 1: Ledger hardening
+        "admin_audit_logs": True,     # Phase 2: Admin + Audit
+    }
+    
+    # Timestamps
+    health_status["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    
+    return health_status
 
 
 # ============== Lead Management Routes ==============
