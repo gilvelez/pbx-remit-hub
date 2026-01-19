@@ -38,6 +38,9 @@ import Chat from "./pages/sender/Chat.jsx";
 import Businesses from "./pages/sender/Businesses.jsx";
 import SenderPeoplePicker from "./pages/sender/PeoplePicker.jsx";
 import SenderBills from "./pages/sender/Bills.jsx";
+import AddMoney from "./pages/sender/AddMoney.jsx";
+import Withdraw from "./pages/sender/Withdraw.jsx";
+import BanksAndPayments from "./pages/sender/BanksAndPayments.jsx";
 
 // Public Pay Route (QR code deep link)
 import PayByHandle from "./pages/pay/PayByHandle.jsx";
@@ -148,6 +151,9 @@ function AppRoutes() {
         <Route path="activity" element={<Activity />} />
         <Route path="settings" element={<Manage />} />
         <Route path="recipients" element={<Manage />} />
+        <Route path="add-money" element={<AddMoney />} />
+        <Route path="withdraw" element={<Withdraw />} />
+        <Route path="banks" element={<BanksAndPayments />} />
         <Route path="*" element={<Navigate to="/sender/dashboard" replace />} />
       </Route>
 

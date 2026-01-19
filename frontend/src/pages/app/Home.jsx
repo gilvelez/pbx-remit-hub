@@ -139,10 +139,34 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Balance Summary Card */}
+      {/* Balance Summary Card with Add Money / Withdraw CTAs */}
       <div className="bg-gradient-to-br from-[#0A2540] to-[#1a4a7c] rounded-2xl p-5 text-white mb-6">
         <div className="text-sm text-white/70 mb-1">Total Balance</div>
         <div className="text-3xl font-bold mb-4">{formatUSD(wallet.usd_balance)}</div>
+        
+        {/* ADD MONEY / WITHDRAW BUTTONS - Always visible */}
+        <div className="flex gap-3 mb-4">
+          <button
+            onClick={() => navigate('/sender/add-money')}
+            className="flex-1 h-11 bg-[#F6C94B] text-[#0A2540] font-semibold rounded-xl hover:bg-[#F6C94B]/90 transition flex items-center justify-center gap-2"
+            data-testid="add-money-btn"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Money
+          </button>
+          <button
+            onClick={() => navigate('/sender/withdraw')}
+            className="flex-1 h-11 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition flex items-center justify-center gap-2 border border-white/20"
+            data-testid="withdraw-btn"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+            </svg>
+            Withdraw
+          </button>
+        </div>
         
         <div className="flex gap-4 pt-3 border-t border-white/20">
           <div>

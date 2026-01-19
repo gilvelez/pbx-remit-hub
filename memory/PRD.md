@@ -469,9 +469,41 @@ Dark theme: neutral-950, amber-400, red-600
   - Businesses tab (Discover, Categories, Pay)
   - Chat: Person↔Person, Person↔Business, Business↔Business
   - In-chat payments for all profile combinations
+- [x] **Backend Hardening Phase 1 - Ledger (P0)** ✅ Jan 2026
+  - Idempotency keys via `Idempotency-Key` header
+  - `ledger_tx` collection for journal headers
+  - Atomic MongoDB transactions with balance check
+  - Double-spend prevention (concurrent race protection)
+  - Amount validation (0, negative, >$5000)
+  - Self-transfer prevention
+- [x] **Backend Hardening Phase 2 - Admin + Audit (P0)** ✅ Jan 2026
+  - Admin roles: admin_read, admin_ops, admin_compliance, admin_finance, admin_super
+  - `audit_log` collection (immutable append-only)
+  - Read-only admin endpoints at `/api/admin/*`
+  - Wallet reconciliation endpoint
+  - Transfer integrity verification
+  - Balance adjustment with audit trail (admin_super only)
+- [x] **Backend Hardening Phase 3 - Health (P0)** ✅ Jan 2026
+  - `/api/health` endpoint with service status
+  - MongoDB connectivity check
+  - Feature flags reporting
+  - No secrets exposed in responses
+- [x] **PBX Funding, Withdrawal & Bank Linking (P0)** ✅ Jan 2026
+  - Home page: Add Money / Withdraw buttons on balance card
+  - Add Money flow: /sender/add-money with bank check
+  - Withdraw flow: /sender/withdraw with balance display
+  - Bank Management: /sender/banks with list, link, unlink
+  - Settings: "Banks & Payment Methods" menu item
+  - Contextual fallbacks: "Link a bank" prompts when no banks
+  - Recurring Transfers: Coming Soon placeholder (Phase 6)
+  - Backend: /api/banks/* endpoints (linked, link, unlink, add-money, withdraw)
 
 ### P1 (High Priority)
-- [ ] Plaid integration for sender flow
+- [ ] Deploy to Netlify
+- [ ] Enable real FX rates (OPENEXCHANGERATES_API_KEY)
+- [ ] Enable email notifications (RESEND_API_KEY)
+- [ ] Enable SMS notifications (TWILIO credentials)
+- [ ] Plaid integration for live ACH (requires Plaid Auth product)
 - [ ] Stripe subscription billing
 - [ ] Rate lock backend with TTL (Redis)
 
@@ -498,6 +530,68 @@ Dark theme: neutral-950, amber-400, red-600
 ---
 
 ## Change Log
+
+### January 19, 2026 - PBX Funding, Withdrawal & Bank Linking (P0 COMPLETE) ✅
+- ✅ **Phase 1: Home Screen Actions**
+  - Add Money button on balance card
+  - Withdraw button on balance card
+- ✅ **Phase 2: Add Money Flow**
+  - `/sender/add-money` page
+  - Bank linking check (shows prompt if no banks)
+  - Amount input with quick amounts ($50, $100, $250, $500)
+  - Bank selector dropdown
+  - Confirmation screen
+- ✅ **Phase 3: Withdraw Flow**
+  - `/sender/withdraw` page
+  - Bank linking check
+  - Available balance display with "Withdraw all" option
+  - Bank selector and confirmation
+- ✅ **Phase 4: Bank Management**
+  - `/sender/banks` page
+  - List linked banks (institution, last 4 digits, status)
+  - "Link a Bank Account" button (Plaid Link integration)
+  - Remove bank with confirmation modal
+- ✅ **Phase 5: Contextual Fallbacks**
+  - "No bank account linked. Link one to continue." prompts
+  - Navigation to bank linking from all relevant screens
+- ✅ **Phase 6: Recurring Transfers Placeholder**
+  - "Coming Soon" UI in Banks page
+- ✅ **Backend Endpoints**
+  - `GET /api/banks/linked` - Get user's linked banks
+  - `POST /api/banks/link` - Link new bank via Plaid
+  - `DELETE /api/banks/{bank_id}` - Soft-delete bank
+  - `POST /api/banks/add-money` - Initiate ACH pull (STUB)
+  - `POST /api/banks/withdraw` - Initiate ACH push (STUB)
+  - `GET /api/banks/transfers` - Transfer history
+- ✅ Tests: 19/19 backend tests + all frontend UI tests passed
+- ✅ New files: `AddMoney.jsx`, `Withdraw.jsx`, `BanksAndPayments.jsx`, `bankApi.js`, `banks.py`
+- ✅ Test report: `/app/test_reports/iteration_20.json`
+- **Note: ACH transfers are STUBBED - returns pending status without actual bank integration**
+
+### January 19, 2026 - Backend Hardening Phase 1-3 (P0 COMPLETE) ✅
+- ✅ **Phase 1: Ledger Hardening**
+  - Idempotency keys via `Idempotency-Key` HTTP header
+  - `ledger_tx` collection for journal headers (one per transfer)
+  - `ledger` collection entries linked via `ledger_tx_id`
+  - Atomic MongoDB transactions with balance check in update query
+  - Double-spend prevention (concurrent race protection)
+  - Unique sparse index on `idempotency_key`
+  - Amount validation (0, negative, >$5000 rejected)
+  - Self-transfer prevention
+- ✅ **Phase 2: Admin + Audit**
+  - Admin roles: `admin_read`, `admin_ops`, `admin_compliance`, `admin_finance`, `admin_super`
+  - `audit_log` collection (immutable append-only)
+  - Read-only admin endpoints: `/api/admin/users`, `/api/admin/wallets`, `/api/admin/ledger`, `/api/admin/audit-logs`
+  - Wallet reconciliation endpoint: `/api/admin/reconciliation/wallet/{user_id}`
+  - Transfer integrity verification: `/api/admin/integrity/transfer/{tx_id}`
+  - Balance adjustment with audit trail (admin_super only)
+- ✅ **Phase 3: Health + Safety**
+  - `/api/health` endpoint returns service status, MongoDB connectivity, feature flags
+  - No secrets exposed in responses
+  - All credentials loaded from environment variables
+- ✅ Tests: 24/24 backend tests passed
+- ✅ New files: `/app/backend/utils/ledger.py`, `/app/backend/utils/admin.py`, `/app/backend/routes/admin.py`
+- ✅ Test report: `/app/test_reports/iteration_19.json`
 
 ### January 17, 2026 - Phase 1: Business Profiles (P0 COMPLETE) ✅
 - ✅ Implemented User → Profile abstraction (one login, multiple profiles)

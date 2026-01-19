@@ -42,6 +42,8 @@ from routes.notification_prefs import router as notification_router
 from routes.social import router as social_router
 from routes.profiles import router as profiles_router
 from routes.businesses import router as businesses_router
+from routes.admin import router as admin_router
+from routes.banks import router as banks_router
 
 # Import utilities
 from utils.user_helper import get_user_id, get_user_id_from_request
@@ -102,7 +104,50 @@ async def root():
 
 @api_router.get("/health")
 async def health_check():
-    return {"status": "healthy"}
+    """
+    Health endpoint for Phase 3: Health + Safety
+    Reports service status, DB connectivity, and feature flags.
+    
+    NO SECRETS logged or exposed.
+    """
+    from database.connection import get_database
+    
+    health_status = {
+        "status": "healthy",
+        "service": "pbx-api",
+        "version": "1.0.0",
+        "components": {}
+    }
+    
+    # Check MongoDB connectivity
+    try:
+        db = get_database()
+        await db.command("ping")
+        health_status["components"]["mongodb"] = {
+            "status": "connected",
+            "db_name": os.environ.get("DB_NAME", "pbx_database")
+        }
+    except Exception as e:
+        health_status["status"] = "degraded"
+        health_status["components"]["mongodb"] = {
+            "status": "disconnected",
+            "error": "Database connection failed"  # No detailed error for security
+        }
+    
+    # Feature flags (loaded from env, no secrets)
+    health_status["features"] = {
+        "email_notifications": bool(os.environ.get("RESEND_API_KEY")),
+        "sms_notifications": bool(os.environ.get("TWILIO_ACCOUNT_SID")),
+        "live_fx_rates": bool(os.environ.get("OPENEXCHANGERATES_API_KEY")),
+        "plaid_mode": os.environ.get("PLAID_MODE", "MOCK"),
+        "ledger_transactions": True,  # Phase 1: Ledger hardening
+        "admin_audit_logs": True,     # Phase 2: Admin + Audit
+    }
+    
+    # Timestamps
+    health_status["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    
+    return health_status
 
 
 # ============== Lead Management Routes ==============
@@ -579,6 +624,8 @@ app.include_router(notification_router)
 app.include_router(social_router)
 app.include_router(profiles_router)
 app.include_router(businesses_router)
+app.include_router(admin_router)
+app.include_router(banks_router)
 
 # CORS middleware - only allow specific origins when using credentials
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
@@ -612,10 +659,19 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Connect to MongoDB on startup."""
+    """Connect to MongoDB on startup and setup indexes."""
     try:
-        await connect_to_mongo()
-        logger.info("PBX API started successfully")
+        db = await connect_to_mongo()
+        logger.info("PBX API connected to MongoDB")
+        
+        # Setup ledger and audit indexes
+        from utils.ledger import setup_ledger_indexes
+        from utils.admin import setup_audit_indexes
+        
+        await setup_ledger_indexes(db)
+        await setup_audit_indexes(db)
+        
+        logger.info("PBX API started successfully with ledger hardening enabled")
     except Exception as e:
         logger.error(f"Failed to start PBX API: {e}")
         raise

@@ -954,19 +954,45 @@ async def send_message(request: Request, data: MessageSend):
 
 @router.post("/payments/send-in-chat")
 async def send_payment_in_chat(request: Request, background_tasks: BackgroundTasks, data: PaymentInChat):
-    """Send PBX payment inside a chat - creates payment and message bubble"""
+    """
+    Send PBX payment inside a chat - creates payment and message bubble.
+    
+    HARDENED with:
+    - Idempotency key support (header: Idempotency-Key)
+    - Atomic ledger transactions (ledger_tx header + 2 entries)
+    - Double-spend prevention via optimistic concurrency
+    - Amount validation (0, negative, > balance, > $5000 limit)
+    - Self-transfer prevention
+    
+    Returns:
+    - On success: tx_id, message_id, new_balance
+    - On duplicate (same idempotency key, same params): original tx_id (idempotent replay)
+    - On collision (same key, different params): 409 error
+    """
+    from utils.ledger import get_idempotency_key, create_transfer_atomic
+    
     user_id = get_user_id_from_headers(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No session token provided")
     
+    # Get idempotency key from headers
+    idempotency_key = get_idempotency_key(request)
+    
+    # Self-transfer check (also done in create_transfer_atomic, but fail fast)
     if user_id == data.recipient_user_id:
         raise HTTPException(status_code=400, detail="Cannot send to yourself")
+    
+    # Amount validation
+    if data.amount_usd <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be greater than 0")
+    
+    if data.amount_usd > 5000:
+        raise HTTPException(status_code=400, detail="Amount exceeds single transaction limit of $5,000")
     
     db = get_database()
     conversations = db.conversations
     messages_coll = db.messages
     wallets = db.wallets
-    ledger = db.ledger
     users = db.users
     friendships = db.friendships
     
@@ -995,58 +1021,22 @@ async def send_payment_in_chat(request: Request, background_tasks: BackgroundTas
     else:
         conversation_id = conversation.get("conversation_id")
     
-    # Get sender wallet
-    sender_wallet = await wallets.find_one({"user_id": user_id})
-    if not sender_wallet:
-        # Create wallet with default balance
-        sender_wallet = {"user_id": user_id, "usd_balance": 1500.0, "php_balance": 0.0}
-        await wallets.insert_one(sender_wallet)
+    # Execute atomic transfer with idempotency protection
+    # This handles: balance check, ledger_tx creation, ledger entries, wallet updates
+    ledger_tx_result, is_duplicate = await create_transfer_atomic(
+        db=db,
+        from_user_id=user_id,
+        to_user_id=data.recipient_user_id,
+        amount=data.amount_usd,
+        currency="USD",
+        note=data.note,
+        idempotency_key=idempotency_key,
+        transfer_type="pbx_transfer",
+        metadata={"conversation_id": conversation_id, "source": "chat"}
+    )
     
-    if sender_wallet.get("usd_balance", 0) < data.amount_usd:
-        raise HTTPException(status_code=400, detail="Insufficient balance")
-    
-    # Get or create recipient wallet
-    recipient_wallet = await wallets.find_one({"user_id": data.recipient_user_id})
-    if not recipient_wallet:
-        recipient_wallet = {"user_id": data.recipient_user_id, "usd_balance": 0.0, "php_balance": 0.0}
-        await wallets.insert_one(recipient_wallet)
-    
+    tx_id = ledger_tx_result.get("tx_id")
     now = utc_now()
-    tx_id = f"pbx_{uuid.uuid4().hex[:12]}"
-    
-    # Execute atomic transfer
-    await wallets.update_one(
-        {"user_id": user_id},
-        {"$inc": {"usd_balance": -data.amount_usd}}
-    )
-    await wallets.update_one(
-        {"user_id": data.recipient_user_id},
-        {"$inc": {"usd_balance": data.amount_usd}}
-    )
-    
-    # Create ledger entries
-    await ledger.insert_one({
-        "tx_id": tx_id,
-        "user_id": user_id,
-        "type": "internal_transfer_out",
-        "currency": "USD",
-        "amount": -data.amount_usd,
-        "counterparty_user_id": data.recipient_user_id,
-        "note": data.note,
-        "status": "completed",
-        "created_at": now
-    })
-    await ledger.insert_one({
-        "tx_id": tx_id,
-        "user_id": data.recipient_user_id,
-        "type": "internal_transfer_in",
-        "currency": "USD",
-        "amount": data.amount_usd,
-        "counterparty_user_id": user_id,
-        "note": data.note,
-        "status": "completed",
-        "created_at": now
-    })
     
     # Get sender info for display
     sender = await users.find_one({"user_id": user_id}, {"_id": 0})
@@ -1055,45 +1045,54 @@ async def send_payment_in_chat(request: Request, background_tasks: BackgroundTas
     # Get recipient info for notifications
     recipient = await users.find_one({"user_id": data.recipient_user_id}, {"_id": 0})
     
-    # Create payment message bubble
-    message_id = f"msg_{uuid.uuid4().hex[:12]}"
-    payment_message = {
-        "message_id": message_id,
-        "conversation_id": conversation_id,
-        "sender_user_id": user_id,
-        "type": MessageType.PAYMENT,
-        "text": data.note,
-        "payment": {
-            "tx_id": tx_id,
-            "amount_usd": data.amount_usd,
-            "status": "completed",
-            "sender_name": sender_name
-        },
-        "created_at": now
-    }
+    # Check if message already exists (for idempotent replay)
+    existing_message = await messages_coll.find_one({"payment.tx_id": tx_id})
     
-    await messages_coll.insert_one(payment_message)
-    
-    # Update conversation
-    await conversations.update_one(
-        {"conversation_id": conversation_id},
-        {"$set": {"last_message_at": now}}
-    )
-    
-    # Send notifications in background
-    if recipient:
-        background_tasks.add_task(
-            notify_pbx_to_pbx_recipient,
-            recipient_email=recipient.get("email"),
-            recipient_phone=recipient.get("phone"),
-            recipient_user_id=data.recipient_user_id,
-            sender_name=sender_name,
-            amount=data.amount_usd,
-            transfer_id=tx_id,
-            note=data.note
+    if not existing_message:
+        # Create payment message bubble (only if not duplicate)
+        message_id = f"msg_{uuid.uuid4().hex[:12]}"
+        payment_message = {
+            "message_id": message_id,
+            "conversation_id": conversation_id,
+            "sender_user_id": user_id,
+            "type": MessageType.PAYMENT,
+            "text": data.note,
+            "payment": {
+                "tx_id": tx_id,
+                "amount_usd": data.amount_usd,
+                "status": "completed",
+                "sender_name": sender_name
+            },
+            "created_at": now
+        }
+        
+        await messages_coll.insert_one(payment_message)
+        
+        # Update conversation
+        await conversations.update_one(
+            {"conversation_id": conversation_id},
+            {"$set": {"last_message_at": now}}
         )
+        
+        # Send notifications in background (only for new transfers)
+        if recipient:
+            background_tasks.add_task(
+                notify_pbx_to_pbx_recipient,
+                recipient_email=recipient.get("email"),
+                recipient_phone=recipient.get("phone"),
+                recipient_user_id=data.recipient_user_id,
+                sender_name=sender_name,
+                amount=data.amount_usd,
+                transfer_id=tx_id,
+                note=data.note
+            )
+    else:
+        message_id = existing_message.get("message_id")
     
-    logger.info(f"Payment in chat: {tx_id} from {user_id} to {data.recipient_user_id} for ${data.amount_usd}")
+    if is_duplicate:
+        logger.info(f"Idempotent replay: {tx_id} (key: {idempotency_key})")
+    else:
+        logger.info(f"Payment in chat: {tx_id} from {user_id} to {data.recipient_user_id} for ${data.amount_usd}")
     
     # Get updated balance
     updated_wallet = await wallets.find_one({"user_id": user_id}, {"_id": 0, "usd_balance": 1})
@@ -1105,5 +1104,7 @@ async def send_payment_in_chat(request: Request, background_tasks: BackgroundTas
         "conversation_id": conversation_id,
         "amount_usd": data.amount_usd,
         "new_balance": updated_wallet.get("usd_balance", 0) if updated_wallet else 0,
-        "created_at": now.isoformat()
+        "created_at": ledger_tx_result.get("created_at", now).isoformat() if hasattr(ledger_tx_result.get("created_at", now), "isoformat") else str(ledger_tx_result.get("created_at", now)),
+        "is_duplicate": is_duplicate,
+        "idempotency_key": idempotency_key
     }
