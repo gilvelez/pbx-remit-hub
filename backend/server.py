@@ -42,6 +42,7 @@ from routes.notification_prefs import router as notification_router
 from routes.social import router as social_router
 from routes.profiles import router as profiles_router
 from routes.businesses import router as businesses_router
+from routes.admin import router as admin_router
 
 # Import utilities
 from utils.user_helper import get_user_id, get_user_id_from_request
