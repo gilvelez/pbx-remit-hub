@@ -295,6 +295,8 @@ async def get_friends_list(request: Request):
             "avatar_url": other_user.get("avatar_url") if other_user else None,
             "friendship_id": f["friendship_id"],
             "status": f["status"],
+            "source": f.get("source"),  # 'invite_auto' if from invite viral loop
+            "invite_id": f.get("invite_id"),  # Original invite ID if from invite
             "created_at": f["created_at"].isoformat() if f.get("created_at") else None
         }
         
