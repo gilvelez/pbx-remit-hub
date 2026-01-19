@@ -158,6 +158,56 @@ async def get_active_profile(request: Request):
     return {"profile": personal}
 
 
+@router.get("/by-handle/{handle}")
+async def get_profile_by_handle(handle: str):
+    """
+    PUBLIC ENDPOINT - Look up a profile by handle
+    Used for QR code / deep link pay flows
+    Only returns public info (no sensitive data)
+    """
+    # Clean handle (remove @ if present)
+    handle = handle.lstrip("@").lower()
+    
+    if not handle or len(handle) < 2:
+        raise HTTPException(status_code=400, detail="Invalid handle")
+    
+    db = get_database()
+    profiles_coll = db.profiles
+    
+    # Find profile by handle
+    profile = await profiles_coll.find_one(
+        {"handle": handle},
+        {
+            "_id": 0, 
+            "profile_id": 1,
+            "user_id": 1,
+            "type": 1,
+            "handle": 1,
+            "display_name": 1,
+            "business_name": 1,
+            "avatar_url": 1,
+            "logo_url": 1,
+            "verified": 1
+        }
+    )
+    
+    if not profile:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Return public profile info
+    return {
+        "profile_id": profile.get("profile_id"),
+        "user_id": profile.get("user_id"),
+        "type": profile.get("type"),
+        "handle": profile.get("handle"),
+        "display_name": profile.get("display_name"),
+        "business_name": profile.get("business_name"),
+        "avatar_url": profile.get("avatar_url"),
+        "logo_url": profile.get("logo_url"),
+        "verified": profile.get("verified", False)
+    }
+
+
 @router.post("/switch/{profile_id}")
 async def switch_active_profile(request: Request, profile_id: str):
     """

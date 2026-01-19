@@ -47,15 +47,28 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 - **Settings**: Profile management, notification preferences, add business profile
 
 ### UI MERGE (P0 - COMPLETE ✅ Jan 2026)
-- **Unified Navigation**: Same 6-tab navigation for BOTH Personal and Business profiles
+- **Unified Navigation**: Same navigation for BOTH Personal and Business profiles
+- **Desktop Sidebar (7 items)**: Home, Send, Bills, People, Businesses, Activity, Settings
+- **Mobile Bottom Nav (5 items)**: Home, Send, People, Activity, Settings (Bills accessible via Home)
 - **4 Quick Actions on Home**: Find People, Send External, Pay Bills, Receive - visible for ALL profiles
 - **Active Profile Indicator**: Header shows avatar + @handle + type badge (Personal/Business)
 - **Profile Switcher Dropdown**: Switch profiles from header, shows "Active Profile" and "Switch to" sections
 - **Bills Page**: `/sender/bills` accessible for both profiles with different default categories
 - **Personal Bills Categories**: Utilities, Mobile Load, Internet, Government, Credit Card, Insurance
 - **Business Bills Categories**: Utilities, Rent/Lease, Internet, Payroll-related, Suppliers, Gov't/Taxes
-- **Receive Modal**: Shows active profile handle with copy button, QR code placeholder
 - **Profile-Aware**: Chat list, Activity, and Bills receipts show active profile identity
+
+### QR Code Receive (P0 - COMPLETE ✅ Jan 2026)
+- **Receive Modal**: Shows active profile handle with QR code + Copy @handle button
+- **QR Code Format**: Encodes deep link URL `/pay/@handle` using qrcode.react library
+- **Primary Action**: Copy @handle button (above QR)
+- **Secondary Action**: QR code for in-person scanning
+- **Profile Switcher**: In-modal switcher to change receiving profile
+- **Share Button**: Uses Web Share API if available
+- **Deep Link Route**: `/pay/:handle` public route
+- **Logged Out**: Shows landing page with target profile + Login/Signup CTAs
+- **Logged In**: Redirects to chat with target user (auto-opens pay flow)
+- **Backend**: `GET /api/profiles/by-handle/:handle` public endpoint for profile lookup
 
 ### Social Network Features (P0 - COMPLETE)
 - **People Tab**: Friends list, search by @username/name/phone/email

@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getConversations } from "../../lib/socialApi";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function Home() {
   const { session } = useSession();
@@ -391,10 +392,18 @@ function TrustItem({ icon, bgColor, title, subtitle }) {
   );
 }
 
-// Receive Modal Component
+// Receive Modal Component - Enhanced with QR Code
 function ReceiveModal({ activeProfile, isBusinessProfile, handle, displayName, onClose }) {
   const [copied, setCopied] = useState(false);
+  const [showProfileSwitcher, setShowProfileSwitcher] = useState(false);
+  const { session, setSession } = useSession();
   
+  // Generate the deep link URL for QR code
+  const payUrl = handle 
+    ? `${window.location.origin}/pay/@${handle}` 
+    : null;
+  
+  // Copy handle to clipboard
   const copyHandle = () => {
     if (handle) {
       navigator.clipboard.writeText(`@${handle}`);
@@ -403,15 +412,57 @@ function ReceiveModal({ activeProfile, isBusinessProfile, handle, displayName, o
     }
   };
   
+  // Copy full link to clipboard
+  const copyLink = () => {
+    if (payUrl) {
+      navigator.clipboard.writeText(payUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  // Share via system share sheet (if available)
+  const shareHandle = async () => {
+    if (navigator.share && handle) {
+      try {
+        await navigator.share({
+          title: `Pay @${handle} on PBX`,
+          text: `Send me PBX at @${handle}`,
+          url: payUrl,
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Share failed:', err);
+        }
+      }
+    } else {
+      copyLink();
+    }
+  };
+  
+  // Switch profile
+  const handleSwitchProfile = (profile) => {
+    setSession(prev => ({
+      ...prev,
+      activeProfile: profile,
+      activeProfileId: profile.profile_id,
+    }));
+    setShowProfileSwitcher(false);
+  };
+  
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-sm p-6" data-testid="receive-modal">
+      <div className="bg-white rounded-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto" data-testid="receive-modal">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-[#0A2540]">Receive PBX</h2>
+        <div className="flex items-center justify-between p-4 border-b border-gray-100">
+          <div>
+            <h2 className="text-xl font-bold text-[#0A2540]">Receive PBX</h2>
+            <p className="text-sm text-gray-500">Share your handle to receive money instantly</p>
+          </div>
           <button 
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full"
+            data-testid="receive-close-btn"
           >
             <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -419,80 +470,166 @@ function ReceiveModal({ activeProfile, isBusinessProfile, handle, displayName, o
           </button>
         </div>
         
-        {/* Profile Display */}
-        <div className="text-center mb-6">
-          <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 ${
-            isBusinessProfile 
-              ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
-              : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
-          }`}>
-            {displayName?.[0]?.toUpperCase() || "?"}
-          </div>
-          <div className="flex items-center justify-center gap-2">
-            <p className="font-semibold text-lg text-[#0A2540]">{displayName}</p>
-            {isBusinessProfile && (
-              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-bold rounded">
-                BUSINESS
-              </span>
-            )}
-          </div>
-          {handle && (
-            <p className="text-gray-500">@{handle}</p>
-          )}
-        </div>
-        
-        {/* Handle Copy Section */}
-        {handle ? (
-          <div className="bg-gray-50 rounded-xl p-4 mb-4">
-            <p className="text-sm text-gray-500 mb-2 text-center">Your PBX handle</p>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 bg-white border border-gray-200 rounded-lg px-4 py-3 font-mono text-lg text-center">
-                @{handle}
+        <div className="p-4">
+          {/* PRIMARY: Handle Block with Copy */}
+          {handle ? (
+            <div className="mb-4">
+              {/* Large Handle Display */}
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <span className="text-2xl font-bold text-[#0A2540]">@{handle}</span>
+                <span className={`px-2 py-0.5 text-xs font-bold rounded ${
+                  isBusinessProfile 
+                    ? 'bg-purple-100 text-purple-700' 
+                    : 'bg-blue-100 text-blue-700'
+                }`}>
+                  {isBusinessProfile ? "Business" : "Personal"}
+                </span>
               </div>
+              
+              {/* Primary Copy Button */}
               <button
                 onClick={copyHandle}
-                className={`p-3 rounded-lg transition ${
+                className={`w-full h-12 rounded-xl font-semibold flex items-center justify-center gap-2 transition ${
                   copied 
-                    ? 'bg-green-100 text-green-600' 
-                    : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-[#0A2540] text-white hover:bg-[#0A2540]/90'
                 }`}
                 data-testid="copy-handle-btn"
               >
                 {copied ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Copied!
+                  </>
                 ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                  </svg>
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                    </svg>
+                    Copy @{handle}
+                  </>
                 )}
               </button>
+              <p className="text-xs text-gray-500 text-center mt-2">
+                Share this handle so someone can send you PBX.
+              </p>
             </div>
+          ) : (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
+              <p className="text-sm text-yellow-800 text-center">
+                Set up your @handle in Settings to receive payments easily
+              </p>
+            </div>
+          )}
+          
+          {/* SECONDARY: QR Code Block */}
+          {handle && payUrl && (
+            <div className="bg-gray-50 rounded-xl p-4 mb-4">
+              <div className="flex justify-center mb-3">
+                <div className="bg-white p-3 rounded-xl shadow-sm">
+                  <QRCodeSVG 
+                    value={payUrl}
+                    size={180}
+                    level="M"
+                    includeMargin={false}
+                    data-testid="receive-qr-code"
+                  />
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 text-center mb-2">
+                Scan to pay @{handle}
+              </p>
+              <p className="text-xs text-gray-400 text-center">
+                Opens PBX if installed, otherwise opens web
+              </p>
+            </div>
+          )}
+          
+          {/* Share Button (if Web Share API available) */}
+          {handle && navigator.share && (
+            <button
+              onClick={shareHandle}
+              className="w-full h-10 bg-gray-100 text-[#0A2540] rounded-xl font-medium flex items-center justify-center gap-2 hover:bg-gray-200 transition mb-4"
+              data-testid="share-handle-btn"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+              Share
+            </button>
+          )}
+          
+          {/* Profile Context + Switch */}
+          <div className="border-t border-gray-100 pt-4">
+            <button
+              onClick={() => setShowProfileSwitcher(!showProfileSwitcher)}
+              className="w-full flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition"
+              data-testid="profile-switch-btn"
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                  isBusinessProfile 
+                    ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+                    : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
+                }`}>
+                  {displayName?.[0]?.toUpperCase() || "?"}
+                </div>
+                <div className="text-left">
+                  <p className="text-xs text-gray-500">Receiving as</p>
+                  <p className="text-sm font-medium text-[#0A2540]">
+                    @{handle || "no handle"} ({isBusinessProfile ? "Business" : "Personal"})
+                  </p>
+                </div>
+              </div>
+              <svg className={`w-5 h-5 text-gray-400 transition ${showProfileSwitcher ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            
+            {/* Profile Switcher Dropdown */}
+            {showProfileSwitcher && session?.profiles?.length > 1 && (
+              <div className="mt-2 p-2 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <p className="text-xs text-gray-500 px-2 py-1 mb-1">Switch profile to receive as:</p>
+                {session.profiles.map((profile) => {
+                  const isActive = profile.profile_id === activeProfile?.profile_id;
+                  const isBiz = profile.type === 'business';
+                  const name = isBiz ? profile.business_name : profile.display_name;
+                  
+                  return (
+                    <button
+                      key={profile.profile_id}
+                      onClick={() => !isActive && handleSwitchProfile(profile)}
+                      className={`w-full flex items-center gap-2 p-2 rounded-lg transition ${
+                        isActive 
+                          ? 'bg-gray-100 cursor-default' 
+                          : 'hover:bg-gray-50'
+                      }`}
+                      disabled={isActive}
+                    >
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                        isBiz 
+                          ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+                          : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
+                      }`}>
+                        {name?.[0]?.toUpperCase() || "?"}
+                      </div>
+                      <div className="flex-1 text-left">
+                        <p className="text-sm font-medium text-[#0A2540]">{name}</p>
+                        <p className="text-xs text-gray-500">@{profile.handle} • {isBiz ? "Business" : "Personal"}</p>
+                      </div>
+                      {isActive && (
+                        <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-4">
-            <p className="text-sm text-yellow-800 text-center">
-              Set up your @handle in Settings to receive payments easily
-            </p>
-          </div>
-        )}
-        
-        {/* Instructions */}
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Share your @handle to receive PBX instantly from anyone
-          </p>
-        </div>
-        
-        {/* QR Code placeholder for future */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-xl text-center">
-          <div className="w-24 h-24 mx-auto bg-white rounded-lg flex items-center justify-center mb-2">
-            <svg className="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h2M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-            </svg>
-          </div>
-          <p className="text-xs text-gray-400">QR Code coming soon</p>
         </div>
       </div>
     </div>
