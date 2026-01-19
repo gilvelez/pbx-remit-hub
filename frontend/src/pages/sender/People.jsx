@@ -54,13 +54,13 @@ export default function People() {
     }
   }, []);
 
-  // Fetch pending invites
+  // Fetch all invites (pending + converted)
   const fetchInvites = useCallback(async () => {
     try {
       const token = session?.token;
       if (!token) return;
       
-      const res = await fetch(`${API_BASE}/api/social/invites`, {
+      const res = await fetch(`${API_BASE}/api/social/invites/all`, {
         headers: {
           'Content-Type': 'application/json',
           'X-Session-Token': token,
