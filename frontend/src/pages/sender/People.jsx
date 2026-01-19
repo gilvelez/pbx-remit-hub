@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getFriendsList, handleFriendAction, sendFriendRequest, getFriendshipStatus } from "../../lib/socialApi";
 import { lookupPbxUser } from "../../lib/internalApi";
+import PhoneInputWithCountry from "../../components/PhoneInputWithCountry";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -32,7 +33,10 @@ export default function People() {
   
   // Quick Add Modal state
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddMethod, setQuickAddMethod] = useState("phone"); // 'phone' | 'email'
   const [quickAddContact, setQuickAddContact] = useState("");
+  const [quickAddPhoneData, setQuickAddPhoneData] = useState(null);
+  const [quickAddPhoneValid, setQuickAddPhoneValid] = useState(false);
   const [quickAddName, setQuickAddName] = useState("");
   const [quickAddLoading, setQuickAddLoading] = useState(false);
   const [quickAddResult, setQuickAddResult] = useState(null);
