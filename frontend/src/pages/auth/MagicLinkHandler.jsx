@@ -21,6 +21,11 @@ const DEEP_LINK_ROUTES = {
   'business_payment': (data) => `/sender/chat/${data.business_id || data.from_profile_id}?type=business`,
   'external_payout': () => '/recipient/transfers',
   'incoming_transfer': () => '/recipient/wallets',
+  // New dest-based routes
+  'chat': (data) => data.conversationId ? `/sender/chat/${data.conversationId}` : '/sender/people',
+  'people-requests': () => '/sender/people?tab=requests',
+  'businesses': () => '/sender/businesses',
+  'activity': () => '/sender/activity',
   'default': '/recipient/wallets',
 };
 
