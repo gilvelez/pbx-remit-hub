@@ -25,6 +25,8 @@ import Welcome from "./pages/onboarding/Welcome.jsx";
 import PhoneOTP from "./pages/onboarding/PhoneOTP.jsx";
 import ConnectBank from "./pages/onboarding/ConnectBank.jsx";
 import AddRecipient from "./pages/onboarding/AddRecipient.jsx";
+import OnboardingPeoplePicker from "./pages/onboarding/PeoplePicker.jsx";
+import OnboardingChat from "./pages/onboarding/OnboardingChat.jsx";
 
 // Sender Pages (for employers/businesses)
 import Home from "./pages/app/Home.jsx";
