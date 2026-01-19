@@ -140,6 +140,16 @@ export default function People() {
     setQuickAddLoading(true);
     setQuickAddResult(null);
     
+    // Get contact from either phone data or email input
+    const contactToSend = quickAddMethod === "phone"
+      ? quickAddPhoneData?.phone_e164
+      : quickAddContact.trim();
+    
+    if (!contactToSend) {
+      setQuickAddLoading(false);
+      return;
+    }
+    
     try {
       const res = await fetch(`${API_BASE}/api/social/quick-add`, {
         method: 'POST',
@@ -148,7 +158,7 @@ export default function People() {
           'X-Session-Token': session?.token || '',
         },
         body: JSON.stringify({
-          contact: quickAddContact.trim(),
+          contact: contactToSend,
           name: quickAddName.trim() || null,
         }),
       });
@@ -183,6 +193,8 @@ export default function People() {
         setShowQuickAdd(false);
         setQuickAddContact("");
         setQuickAddName("");
+        setQuickAddPhoneData(null);
+        setQuickAddPhoneValid(false);
         setQuickAddResult(null);
       }, 1500);
     } catch (error) {
