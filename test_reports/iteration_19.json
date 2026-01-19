@@ -1,0 +1,95 @@
+{
+  "summary": "Backend hardening Phase 1-3 testing complete. All 24 tests passed for idempotency, double-spend prevention, amount validation, self-transfer prevention, ledger integrity, health endpoint, and admin authentication.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "ledger.py",
+        "issue": "Fixed: idempotency_key field was being set to None explicitly, causing sparse index issues. Changed to only include field when value is provided.",
+        "status": "FIXED"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "A_idempotency_replay": {
+      "test": "Same request with same Idempotency-Key returns same tx_id",
+      "status": "PASS",
+      "details": "Second request returns is_duplicate=True with original tx_id"
+    },
+    "B_idempotency_collision": {
+      "test": "Same key with different params returns 409",
+      "status": "PASS",
+      "details": "Different amount or recipient with same key returns 409 Conflict"
+    },
+    "C_concurrent_double_spend": {
+      "test": "Two $800 transfers with $1000 balance - only one succeeds",
+      "status": "PASS",
+      "details": "Atomic balance check prevents race condition, one transfer fails with 'insufficient_balance (concurrent debit detected)'"
+    },
+    "D_amount_validation": {
+      "test": "0, negative, >$5000 all rejected",
+      "status": "PASS",
+      "details": "Pydantic validation (gt=0, le=5000) rejects invalid amounts with 422"
+    },
+    "E_self_transfer_prevention": {
+      "test": "Transfer to self returns 400",
+      "status": "PASS",
+      "details": "Returns 400 with 'Cannot send to yourself'"
+    },
+    "F_ledger_integrity": {
+      "test": "ledger_tx has header with tx_id, ledger has 2 entries (debit/credit), sum=0",
+      "status": "PASS",
+      "details": "Verified ledger_tx header exists, 2 ledger entries created, amounts sum to 0"
+    },
+    "G_health_endpoint": {
+      "test": "/api/health returns status, mongodb connectivity, feature flags",
+      "status": "PASS",
+      "details": "Returns status=healthy, mongodb=connected, features include ledger_transactions=True, admin_audit_logs=True"
+    },
+    "H_admin_auth": {
+      "test": "Admin endpoints require authentication (401 without admin)",
+      "status": "PASS",
+      "details": "All admin endpoints (/api/admin/roles, /users, /wallets, /ledger, /audit-logs) return 401 without auth"
+    },
+    "I_admin_roles": {
+      "test": "/api/admin/roles endpoint exists",
+      "status": "PASS",
+      "details": "Endpoint exists and requires admin authentication"
+    }
+  },
+  "test_report_links": [
+    "/app/tests/test_ledger_hardening.py",
+    "/app/test_reports/pytest/ledger_hardening_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Idempotency implementation is correct - uses unique sparse index on idempotency_key",
+    "Double-spend prevention uses atomic MongoDB update with $gte balance check in query",
+    "Ledger integrity maintained with ledger_tx header + 2 balanced ledger entries",
+    "Admin routes properly protected with require_admin() middleware",
+    "Health endpoint correctly reports service status without exposing secrets"
+  ],
+  "updated_files": [
+    "/app/backend/utils/ledger.py - Fixed idempotency_key field to only include when provided (sparse index fix)",
+    "/app/tests/test_ledger_hardening.py - Created comprehensive test suite for Phase 1-3"
+  ],
+  "success_rate": {
+    "backend": "100% (24/24 tests pass)",
+    "frontend": "N/A (backend only testing)"
+  },
+  "test_credentials": "Test users created dynamically with TEST_ prefix",
+  "seed_data_creation": "Test wallets created directly in MongoDB with exact balances for double-spend testing",
+  "mocked_apis": {
+    "Email_notifications": "MOCKED - Resend not configured",
+    "SMS_notifications": "MOCKED - Twilio not configured",
+    "FX_rates": "MOCKED - OpenExchangeRates not configured"
+  },
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend hardening Phase 1-3 fully tested and working. Key findings: 1) Idempotency uses Idempotency-Key header stored in ledger_tx with sparse unique index, 2) Double-spend prevention uses atomic MongoDB update with balance check in query, 3) Default wallet has $1500 USD - tests that need exact balance should create wallet directly in MongoDB, 4) Admin endpoints require is_admin=True user with admin_role field, 5) Health endpoint at /api/health reports service status and feature flags."
+}
