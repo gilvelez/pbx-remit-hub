@@ -39,6 +39,9 @@ import Businesses from "./pages/sender/Businesses.jsx";
 import SenderPeoplePicker from "./pages/sender/PeoplePicker.jsx";
 import SenderBills from "./pages/sender/Bills.jsx";
 
+// Public Pay Route (QR code deep link)
+import PayByHandle from "./pages/pay/PayByHandle.jsx";
+
 // Recipient Pages (for end users receiving payments)
 import RecipientDashboard from "./pages/recipient/Dashboard.jsx";
 import RecipientWallets from "./pages/recipient/Wallets.jsx";
