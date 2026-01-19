@@ -488,6 +488,15 @@ Dark theme: neutral-950, amber-400, red-600
   - MongoDB connectivity check
   - Feature flags reporting
   - No secrets exposed in responses
+- [x] **PBX Funding, Withdrawal & Bank Linking (P0)** ✅ Jan 2026
+  - Home page: Add Money / Withdraw buttons on balance card
+  - Add Money flow: /sender/add-money with bank check
+  - Withdraw flow: /sender/withdraw with balance display
+  - Bank Management: /sender/banks with list, link, unlink
+  - Settings: "Banks & Payment Methods" menu item
+  - Contextual fallbacks: "Link a bank" prompts when no banks
+  - Recurring Transfers: Coming Soon placeholder (Phase 6)
+  - Backend: /api/banks/* endpoints (linked, link, unlink, add-money, withdraw)
 
 ### P1 (High Priority)
 - [ ] Deploy to Netlify
