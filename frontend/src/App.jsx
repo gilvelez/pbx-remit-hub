@@ -37,6 +37,7 @@ import People from "./pages/sender/People.jsx";
 import Chat from "./pages/sender/Chat.jsx";
 import Businesses from "./pages/sender/Businesses.jsx";
 import SenderPeoplePicker from "./pages/sender/PeoplePicker.jsx";
+import SenderBills from "./pages/sender/Bills.jsx";
 
 // Recipient Pages (for end users receiving payments)
 import RecipientDashboard from "./pages/recipient/Dashboard.jsx";
