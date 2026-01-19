@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getConversations } from "../../lib/socialApi";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function Home() {
   const { session } = useSession();
