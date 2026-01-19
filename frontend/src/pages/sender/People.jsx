@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getFriendsList, handleFriendAction, sendFriendRequest, getFriendshipStatus } from "../../lib/socialApi";
 import { lookupPbxUser } from "../../lib/internalApi";
+import PhoneInputWithCountry from "../../components/PhoneInputWithCountry";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -32,7 +33,10 @@ export default function People() {
   
   // Quick Add Modal state
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddMethod, setQuickAddMethod] = useState("phone"); // 'phone' | 'email'
   const [quickAddContact, setQuickAddContact] = useState("");
+  const [quickAddPhoneData, setQuickAddPhoneData] = useState(null);
+  const [quickAddPhoneValid, setQuickAddPhoneValid] = useState(false);
   const [quickAddName, setQuickAddName] = useState("");
   const [quickAddLoading, setQuickAddLoading] = useState(false);
   const [quickAddResult, setQuickAddResult] = useState(null);
@@ -136,6 +140,16 @@ export default function People() {
     setQuickAddLoading(true);
     setQuickAddResult(null);
     
+    // Get contact from either phone data or email input
+    const contactToSend = quickAddMethod === "phone"
+      ? quickAddPhoneData?.phone_e164
+      : quickAddContact.trim();
+    
+    if (!contactToSend) {
+      setQuickAddLoading(false);
+      return;
+    }
+    
     try {
       const res = await fetch(`${API_BASE}/api/social/quick-add`, {
         method: 'POST',
@@ -144,7 +158,7 @@ export default function People() {
           'X-Session-Token': session?.token || '',
         },
         body: JSON.stringify({
-          contact: quickAddContact.trim(),
+          contact: contactToSend,
           name: quickAddName.trim() || null,
         }),
       });
@@ -179,6 +193,8 @@ export default function People() {
         setShowQuickAdd(false);
         setQuickAddContact("");
         setQuickAddName("");
+        setQuickAddPhoneData(null);
+        setQuickAddPhoneValid(false);
         setQuickAddResult(null);
       }, 1500);
     } catch (error) {
@@ -495,8 +511,14 @@ export default function People() {
       {/* Quick Add Modal */}
       {showQuickAdd && (
         <QuickAddModal
+          method={quickAddMethod}
+          setMethod={setQuickAddMethod}
           contact={quickAddContact}
           setContact={setQuickAddContact}
+          phoneData={quickAddPhoneData}
+          setPhoneData={setQuickAddPhoneData}
+          phoneValid={quickAddPhoneValid}
+          setPhoneValid={setQuickAddPhoneValid}
           name={quickAddName}
           setName={setQuickAddName}
           loading={quickAddLoading}
@@ -507,6 +529,8 @@ export default function People() {
             setShowQuickAdd(false);
             setQuickAddContact("");
             setQuickAddName("");
+            setQuickAddPhoneData(null);
+            setQuickAddPhoneValid(false);
             setQuickAddResult(null);
           }}
         />
@@ -515,14 +539,25 @@ export default function People() {
   );
 }
 
-// Quick Add Modal Component
-function QuickAddModal({ contact, setContact, name, setName, loading, result, onSubmit, onAddFriend, onClose }) {
+// Quick Add Modal Component - Enhanced with Phone Country Selector
+function QuickAddModal({ 
+  method, setMethod,
+  contact, setContact, 
+  phoneData, setPhoneData,
+  phoneValid, setPhoneValid,
+  name, setName, 
+  loading, result, 
+  onSubmit, onAddFriend, onClose 
+}) {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
       <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-bold text-[#0A2540]">Quick Add</h2>
+          <div>
+            <h2 className="text-lg font-bold text-[#0A2540]">Quick Add</h2>
+            <p className="text-sm text-gray-500">Find a PBX user or send an invite</p>
+          </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -534,22 +569,60 @@ function QuickAddModal({ contact, setContact, name, setName, loading, result, on
         <div className="p-4">
           {!result && (
             <>
-              <p className="text-sm text-gray-600 mb-4">
-                Enter a phone number or email to find a PBX user or send an invite.
-              </p>
+              {/* Method Toggle */}
+              <div className="flex gap-2 mb-4">
+                <button
+                  onClick={() => setMethod("phone")}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+                    method === "phone" 
+                      ? "bg-[#0A2540] text-white" 
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                  data-testid="quick-add-phone-tab"
+                >
+                  By Phone
+                </button>
+                <button
+                  onClick={() => setMethod("email")}
+                  className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+                    method === "email" 
+                      ? "bg-[#0A2540] text-white" 
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                  data-testid="quick-add-email-tab"
+                >
+                  By Email
+                </button>
+              </div>
               
               <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 mb-1 block">Phone or Email *</label>
-                  <input
-                    type="text"
-                    value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                    placeholder="email@example.com or +1234567890"
-                    className="w-full h-12 px-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
-                    data-testid="quick-add-contact-input"
-                  />
-                </div>
+                {/* Phone Input with Country Selector */}
+                {method === "phone" && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-2 block">Phone Number *</label>
+                    <PhoneInputWithCountry
+                      value={phoneData?.phone_e164}
+                      onChange={setPhoneData}
+                      onValidChange={setPhoneValid}
+                      disabled={loading}
+                    />
+                  </div>
+                )}
+                
+                {/* Email Input */}
+                {method === "email" && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-700 mb-1 block">Email Address *</label>
+                    <input
+                      type="email"
+                      value={contact}
+                      onChange={(e) => setContact(e.target.value)}
+                      placeholder="friend@example.com"
+                      className="w-full h-12 px-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
+                      data-testid="quick-add-email-input"
+                    />
+                  </div>
+                )}
                 
                 <div>
                   <label className="text-sm font-medium text-gray-700 mb-1 block">Name (optional)</label>
@@ -566,7 +639,11 @@ function QuickAddModal({ contact, setContact, name, setName, loading, result, on
 
               <button
                 onClick={onSubmit}
-                disabled={!contact.trim() || loading}
+                disabled={
+                  loading || 
+                  (method === "phone" && !phoneValid) ||
+                  (method === "email" && !contact.trim())
+                }
                 className="w-full mt-6 h-12 bg-[#0A2540] text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                 data-testid="quick-add-submit-btn"
               >

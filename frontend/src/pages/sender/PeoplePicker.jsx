@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
+import PhoneInputWithCountry from "../../components/PhoneInputWithCountry";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -21,11 +22,13 @@ export default function SenderPeoplePicker() {
   
   // Invite modal state
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteMethod, setInviteMethod] = useState(null);
+  const [inviteMethod, setInviteMethod] = useState(null); // 'phone' | 'email'
   const [inviteContact, setInviteContact] = useState("");
+  const [invitePhoneData, setInvitePhoneData] = useState(null);
   const [inviteName, setInviteName] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteResult, setInviteResult] = useState(null);
+  const [phoneIsValid, setPhoneIsValid] = useState(false);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -131,7 +134,15 @@ export default function SenderPeoplePicker() {
 
   // Handle invite
   const handleInvite = async () => {
-    if (!inviteContact.trim()) return;
+    // For phone invites, use E.164 format
+    const contactToSend = inviteMethod === 'phone' 
+      ? invitePhoneData?.phone_e164 
+      : inviteContact.trim();
+    
+    if (!contactToSend) return;
+    
+    // Validate phone if phone method
+    if (inviteMethod === 'phone' && !phoneIsValid) return;
     
     setInviteLoading(true);
     setInviteResult(null);
@@ -144,7 +155,7 @@ export default function SenderPeoplePicker() {
           'X-Session-Token': session?.token || '',
         },
         body: JSON.stringify({
-          contact: inviteContact.trim(),
+          contact: contactToSend,
           name: inviteName.trim() || null,
         }),
       });
@@ -290,13 +301,15 @@ export default function SenderPeoplePicker() {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => {
-                  setInviteMethod('sms');
+                  setInviteMethod('phone');
                   setShowInvite(true);
+                  setInvitePhoneData(null);
+                  setPhoneIsValid(false);
                 }}
                 className="px-4 py-2 bg-[#0A2540] text-white rounded-lg text-sm font-medium"
-                data-testid="invite-sms-btn"
+                data-testid="invite-phone-btn"
               >
-                Invite via SMS
+                Invite by Phone
               </button>
               <button
                 onClick={() => {
@@ -306,7 +319,7 @@ export default function SenderPeoplePicker() {
                 className="px-4 py-2 bg-gray-200 text-[#0A2540] rounded-lg text-sm font-medium"
                 data-testid="invite-email-btn"
               >
-                Invite via Email
+                Invite by Email
               </button>
             </div>
           </div>
@@ -318,15 +331,20 @@ export default function SenderPeoplePicker() {
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center p-4">
           <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-[#0A2540]">
-                Invite via {inviteMethod === 'sms' ? 'SMS' : 'Email'}
-              </h2>
+              <div>
+                <h2 className="text-lg font-bold text-[#0A2540]">
+                  Invite by {inviteMethod === 'phone' ? 'Phone' : 'Email'}
+                </h2>
+                <p className="text-sm text-gray-500">We&apos;ll send them a link to join PBX.</p>
+              </div>
               <button 
                 onClick={() => {
                   setShowInvite(false);
                   setInviteResult(null);
                   setInviteContact("");
                   setInviteName("");
+                  setInvitePhoneData(null);
+                  setPhoneIsValid(false);
                 }}
                 className="p-2 text-gray-400 hover:text-gray-600"
               >
@@ -340,19 +358,37 @@ export default function SenderPeoplePicker() {
               {!inviteResult && (
                 <>
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        {inviteMethod === 'sms' ? 'Phone Number' : 'Email Address'} *
-                      </label>
-                      <input
-                        type={inviteMethod === 'sms' ? 'tel' : 'email'}
-                        value={inviteContact}
-                        onChange={(e) => setInviteContact(e.target.value)}
-                        placeholder={inviteMethod === 'sms' ? '+1 234 567 8900' : 'friend@example.com'}
-                        className="w-full h-12 px-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
-                        data-testid="invite-contact-input"
-                      />
-                    </div>
+                    {/* Phone Input with Country Selector */}
+                    {inviteMethod === 'phone' && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Phone Number *
+                        </label>
+                        <PhoneInputWithCountry
+                          value={invitePhoneData?.phone_e164}
+                          onChange={setInvitePhoneData}
+                          onValidChange={setPhoneIsValid}
+                          disabled={inviteLoading}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Email Input */}
+                    {inviteMethod === 'email' && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          value={inviteContact}
+                          onChange={(e) => setInviteContact(e.target.value)}
+                          placeholder="friend@example.com"
+                          className="w-full h-12 px-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
+                          data-testid="invite-email-input"
+                        />
+                      </div>
+                    )}
                     
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">Name (optional)</label>
@@ -369,7 +405,11 @@ export default function SenderPeoplePicker() {
 
                   <button
                     onClick={handleInvite}
-                    disabled={!inviteContact.trim() || inviteLoading}
+                    disabled={
+                      inviteLoading || 
+                      (inviteMethod === 'phone' && !phoneIsValid) ||
+                      (inviteMethod === 'email' && !inviteContact.trim())
+                    }
                     className="w-full mt-6 h-12 bg-[#0A2540] text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                     data-testid="invite-submit-btn"
                   >
