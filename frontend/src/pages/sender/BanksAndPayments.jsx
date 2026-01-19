@@ -30,9 +30,12 @@ export default function BanksAndPayments() {
   const fetchBanks = useCallback(async () => {
     try {
       const banks = await getLinkedBanks(session?.token);
-      setLinkedBanks(banks);
+      // Ensure banks is always an array
+      setLinkedBanks(Array.isArray(banks) ? banks : []);
     } catch (err) {
       console.error("Failed to fetch banks:", err);
+      // Set empty array on error - don't crash the UI
+      setLinkedBanks([]);
     } finally {
       setLoading(false);
     }
