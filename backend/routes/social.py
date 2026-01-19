@@ -492,7 +492,7 @@ async def get_pending_invites(request: Request):
 
 @router.delete("/invites/{invite_id}")
 async def cancel_invite(request: Request, invite_id: str):
-    """Cancel a pending invite"""
+    """Cancel a pending invite (marks as canceled, doesn't delete)"""
     user_id = get_user_id_from_headers(request)
     if not user_id:
         raise HTTPException(status_code=401, detail="No session token provided")
@@ -500,19 +500,14 @@ async def cancel_invite(request: Request, invite_id: str):
     db = get_database()
     invites = db.invites
     
-    result = await invites.delete_one({
-        "invite_id": invite_id,
-        "inviter_user_id": user_id
-    })
-    
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="Invite not found")
-    
     # Update status to canceled instead of deleting
-    await invites.update_one(
-        {"invite_id": invite_id, "inviter_user_id": user_id},
+    result = await invites.update_one(
+        {"invite_id": invite_id, "inviter_user_id": user_id, "status": "pending"},
         {"$set": {"status": "canceled", "updated_at": utc_now()}}
     )
+    
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Invite not found or already processed")
     
     return {"success": True, "message": "Invite cancelled"}
 
