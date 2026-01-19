@@ -38,6 +38,7 @@ export default function Chat() {
     try {
       const convo = await getConversation(userId);
       setConversation(convo);
+      setOtherProfile(convo.other_user);
       
       const msgs = await getMessages(convo.conversation_id);
       setMessages(msgs.messages || []);
