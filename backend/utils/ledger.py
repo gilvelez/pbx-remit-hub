@@ -307,37 +307,46 @@ async def _create_transfer_sequential(
 ):
     """
     Fallback for environments without replica set.
-    Uses optimistic concurrency with balance check.
+    Uses optimistic concurrency with ATOMIC balance check.
+    The balance check is part of the update query itself - not a separate read.
     """
     try:
-        # Insert ledger_tx header first (idempotency protection)
+        # Insert ledger_tx header first (idempotency protection via unique index)
         await ledger_tx.insert_one(ledger_tx_doc)
         
-        # Update sender wallet with balance check
+        # ATOMIC: Update sender wallet ONLY IF balance is sufficient
+        # This is the authoritative balance check - not the pre-check above
         result = await wallets.update_one(
             {
                 "user_id": from_user_id,
-                f"{balance_field}": {"$gte": amount}
+                balance_field: {"$gte": amount}  # Atomic balance check
             },
-            {"$inc": {balance_field: -amount}, "$set": {"updated_at": now}}
+            {
+                "$inc": {balance_field: -amount},
+                "$set": {"updated_at": now}
+            }
         )
         
         if result.modified_count == 0:
-            # Rollback: mark ledger_tx as failed
+            # Balance was insufficient at the moment of atomic update
+            # This catches race conditions where balance changed between pre-check and now
             await ledger_tx.update_one(
                 {"tx_id": tx_id},
                 {"$set": {"status": "failed", "failure_reason": "insufficient_balance_concurrent", "updated_at": now}}
             )
             raise HTTPException(
                 status_code=400,
-                detail="Insufficient balance (concurrent modification)"
+                detail={
+                    "error": "insufficient_balance",
+                    "message": "Insufficient balance (concurrent debit detected)"
+                }
             )
         
         # Insert ledger entries
         await ledger.insert_one(debit_entry)
         await ledger.insert_one(credit_entry)
         
-        # Update recipient wallet
+        # Update recipient wallet (this is safe - only adds funds)
         await wallets.update_one(
             {"user_id": to_user_id},
             {"$inc": {balance_field: amount}, "$set": {"updated_at": now}}
