@@ -160,7 +160,15 @@ export default function PeoplePicker() {
 
   // Handle invite submission
   const handleInvite = async () => {
-    if (!inviteContact.trim()) return;
+    // For phone invites, use E.164 format
+    const contactToSend = inviteMethod === 'phone' 
+      ? invitePhoneData?.phone_e164 
+      : inviteContact.trim();
+    
+    if (!contactToSend) return;
+    
+    // Validate phone if phone method
+    if (inviteMethod === 'phone' && !phoneIsValid) return;
     
     setInviteLoading(true);
     setInviteResult(null);
@@ -173,7 +181,7 @@ export default function PeoplePicker() {
           'X-Session-Token': session?.token || '',
         },
         body: JSON.stringify({
-          contact: inviteContact.trim(),
+          contact: contactToSend,
           name: inviteName.trim() || null,
         }),
       });
