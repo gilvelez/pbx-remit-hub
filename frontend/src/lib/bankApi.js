@@ -7,9 +7,37 @@
  * - unlinkBank() - Remove a linked bank account
  * - initiateAddMoney() - Start ACH pull from bank to PBX
  * - initiateWithdrawal() - Start ACH push from PBX to bank
+ * 
+ * IMPORTANT: All functions handle response.json() safely to avoid
+ * "body stream already read" errors.
  */
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
+
+/**
+ * Safely parse JSON from response, handling empty bodies and errors
+ * @param {Response} res - Fetch response object
+ * @returns {Promise<Object>} - Parsed JSON or empty object
+ */
+async function safeParseJSON(res) {
+  try {
+    // Handle 204 No Content or empty responses
+    if (res.status === 204) {
+      return {};
+    }
+    
+    // Check if there's content to parse
+    const text = await res.text();
+    if (!text || text.trim() === '') {
+      return {};
+    }
+    
+    return JSON.parse(text);
+  } catch (err) {
+    console.warn("Failed to parse response JSON:", err);
+    return {};
+  }
+}
 
 /**
  * Get all linked bank accounts for the current user
@@ -23,21 +51,30 @@ export async function getLinkedBanks(sessionToken) {
       },
     });
     
-    if (!res.ok) {
-      // If endpoint doesn't exist yet, return mock data for development
-      if (res.status === 404) {
-        console.warn("Bank API not implemented yet, returning mock data");
-        return getMockLinkedBanks();
-      }
-      throw new Error('Failed to fetch linked banks');
+    // Handle 204 No Content
+    if (res.status === 204) {
+      return [];
     }
     
-    const data = await res.json();
+    // Handle 404 - API not implemented
+    if (res.status === 404) {
+      console.warn("Bank API not implemented yet, returning empty array");
+      return [];
+    }
+    
+    // Parse response once
+    const data = await safeParseJSON(res);
+    
+    if (!res.ok) {
+      console.error("getLinkedBanks API error:", data);
+      return [];
+    }
+    
     return data.banks || [];
   } catch (err) {
     console.error("getLinkedBanks error:", err);
-    // Return mock data for development
-    return getMockLinkedBanks();
+    // Return empty array on error - don't crash the UI
+    return [];
   }
 }
 
@@ -66,21 +103,22 @@ export async function linkBank(sessionToken, { public_token, institution, accoun
       }),
     });
     
+    // Parse response once
+    const data = await safeParseJSON(res);
+    
     if (!res.ok) {
-      // Mock success for development
+      // Handle 404 - API not implemented, simulate success
       if (res.status === 404) {
         console.warn("Bank link API not implemented yet, simulating success");
         return { success: true, bank_id: `mock_${Date.now()}` };
       }
-      const data = await res.json();
-      throw new Error(data.detail || 'Failed to link bank');
+      throw new Error(data.detail || data.error || 'Failed to link bank');
     }
     
-    return await res.json();
+    return data;
   } catch (err) {
     console.error("linkBank error:", err);
-    // Simulate success for development
-    return { success: true, bank_id: `mock_${Date.now()}` };
+    throw err; // Re-throw so UI can show error
   }
 }
 
@@ -97,27 +135,32 @@ export async function unlinkBank(sessionToken, bankId) {
       },
     });
     
-    if (!res.ok) {
-      // Mock success for development
-      if (res.status === 404) {
-        console.warn("Bank unlink API not implemented yet, simulating success");
-        return { success: true };
-      }
-      const data = await res.json();
-      throw new Error(data.detail || 'Failed to unlink bank');
+    // Handle 204 No Content (successful delete with no body)
+    if (res.status === 204) {
+      return { success: true };
     }
     
-    return await res.json();
+    // Parse response once
+    const data = await safeParseJSON(res);
+    
+    if (!res.ok) {
+      // Handle 404 - bank not found or API not implemented
+      if (res.status === 404) {
+        console.warn("Bank not found or API not implemented");
+        return { success: true }; // Treat as success (already removed)
+      }
+      throw new Error(data.detail || data.error || 'Failed to unlink bank');
+    }
+    
+    return data.success !== undefined ? data : { success: true };
   } catch (err) {
     console.error("unlinkBank error:", err);
-    // Simulate success for development
-    return { success: true };
+    throw err;
   }
 }
 
 /**
  * Initiate ACH pull (add money from bank to PBX wallet)
- * TODO: Wire to actual backend endpoint when ready
  */
 export async function initiateAddMoney(sessionToken, { amount, bank_id }) {
   try {
@@ -130,8 +173,11 @@ export async function initiateAddMoney(sessionToken, { amount, bank_id }) {
       body: JSON.stringify({ amount, bank_id }),
     });
     
+    // Parse response once
+    const data = await safeParseJSON(res);
+    
     if (!res.ok) {
-      // Mock success for development
+      // Handle 404 - API not implemented
       if (res.status === 404) {
         console.warn("Add money API not implemented yet, simulating success");
         return { 
@@ -142,27 +188,18 @@ export async function initiateAddMoney(sessionToken, { amount, bank_id }) {
           message: 'Transfer initiated (MOCK - backend not implemented)'
         };
       }
-      const data = await res.json();
-      throw new Error(data.detail || 'Failed to initiate transfer');
+      throw new Error(data.detail || data.error || 'Failed to initiate transfer');
     }
     
-    return await res.json();
+    return data;
   } catch (err) {
     console.error("initiateAddMoney error:", err);
-    // Simulate success for development
-    return { 
-      success: true, 
-      transfer_id: `ach_${Date.now()}`,
-      status: 'pending',
-      estimated_arrival: '1-3 business days',
-      message: 'Transfer initiated (MOCK - backend not implemented)'
-    };
+    throw err;
   }
 }
 
 /**
  * Initiate ACH push (withdraw from PBX wallet to bank)
- * TODO: Wire to actual backend endpoint when ready
  */
 export async function initiateWithdrawal(sessionToken, { amount, bank_id }) {
   try {
@@ -175,8 +212,11 @@ export async function initiateWithdrawal(sessionToken, { amount, bank_id }) {
       body: JSON.stringify({ amount, bank_id }),
     });
     
+    // Parse response once
+    const data = await safeParseJSON(res);
+    
     if (!res.ok) {
-      // Mock success for development
+      // Handle 404 - API not implemented
       if (res.status === 404) {
         console.warn("Withdrawal API not implemented yet, simulating success");
         return { 
@@ -187,68 +227,42 @@ export async function initiateWithdrawal(sessionToken, { amount, bank_id }) {
           message: 'Withdrawal initiated (MOCK - backend not implemented)'
         };
       }
-      const data = await res.json();
-      throw new Error(data.detail || 'Failed to initiate withdrawal');
+      throw new Error(data.detail || data.error || 'Failed to initiate withdrawal');
     }
     
-    return await res.json();
+    return data;
   } catch (err) {
     console.error("initiateWithdrawal error:", err);
-    // Simulate success for development
-    return { 
-      success: true, 
-      transfer_id: `wd_${Date.now()}`,
-      status: 'pending',
-      estimated_arrival: '1-3 business days',
-      message: 'Withdrawal initiated (MOCK - backend not implemented)'
-    };
+    throw err;
   }
 }
 
 /**
- * Mock linked banks for development
- * Returns empty array by default - banks must be linked via Plaid
+ * Get transfer history
  */
-function getMockLinkedBanks() {
-  // Check localStorage for any mock banks added during this session
-  const storedBanks = localStorage.getItem('pbx_mock_linked_banks');
-  if (storedBanks) {
-    try {
-      return JSON.parse(storedBanks);
-    } catch (e) {
+export async function getTransferHistory(sessionToken, limit = 20) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/banks/transfers?limit=${limit}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Session-Token': sessionToken || '',
+      },
+    });
+    
+    if (res.status === 204 || res.status === 404) {
       return [];
     }
+    
+    const data = await safeParseJSON(res);
+    
+    if (!res.ok) {
+      console.error("getTransferHistory API error:", data);
+      return [];
+    }
+    
+    return data.transfers || [];
+  } catch (err) {
+    console.error("getTransferHistory error:", err);
+    return [];
   }
-  
-  // By default, no banks are linked - user must link one
-  return [];
-}
-
-/**
- * Add a mock bank to localStorage (for testing without backend)
- */
-export function addMockBank(bank) {
-  const existing = getMockLinkedBanks();
-  const newBank = {
-    id: `mock_${Date.now()}`,
-    institution_name: bank.institution_name || 'Test Bank',
-    account_type: bank.account_type || 'Checking',
-    last4: bank.last4 || '1234',
-    status: 'verified',
-    linked_at: new Date().toISOString(),
-    ...bank,
-  };
-  
-  existing.push(newBank);
-  localStorage.setItem('pbx_mock_linked_banks', JSON.stringify(existing));
-  return newBank;
-}
-
-/**
- * Remove a mock bank from localStorage (for testing without backend)
- */
-export function removeMockBank(bankId) {
-  const existing = getMockLinkedBanks();
-  const filtered = existing.filter(b => b.id !== bankId);
-  localStorage.setItem('pbx_mock_linked_banks', JSON.stringify(filtered));
 }
