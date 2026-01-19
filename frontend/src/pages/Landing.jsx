@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { LiveFXTicker } from "../components/LiveFXRate";
@@ -6,6 +6,8 @@ import { LiveFXTicker } from "../components/LiveFXRate";
 import heroBg from "../assets/landing/hero-bg.png";
 
 export default function Landing() {
+  const [showAuthMenu, setShowAuthMenu] = useState(false);
+  
   return (
     <div className="min-h-screen bg-neutral-950 text-gray-100">
       {/* HERO */}
@@ -29,7 +31,8 @@ export default function Landing() {
               </div>
             </div>
 
-            <div className="hidden md:flex items-center gap-8 text-sm text-gray-300">
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-6 text-sm text-gray-300">
               <Link to="/pricing" className="hover:text-amber-400 transition">
                 Pricing
               </Link>
@@ -39,6 +42,42 @@ export default function Landing() {
               <Link to="/business" className="hover:text-amber-400 transition">
                 Business
               </Link>
+              
+              {/* Auth Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowAuthMenu(!showAuthMenu)}
+                  className="hover:text-amber-400 transition flex items-center gap-1"
+                  data-testid="nav-login-btn"
+                >
+                  Log in
+                  <svg className={`w-4 h-4 transition ${showAuthMenu ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                {showAuthMenu && (
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-neutral-900 border border-neutral-700 rounded-xl shadow-xl overflow-hidden z-50">
+                    <Link
+                      to="/login"
+                      className="block px-4 py-3 text-sm text-gray-200 hover:bg-neutral-800 hover:text-amber-400 transition"
+                      onClick={() => setShowAuthMenu(false)}
+                      data-testid="nav-login-dropdown"
+                    >
+                      Log in
+                    </Link>
+                    <Link
+                      to="/welcome"
+                      className="block px-4 py-3 text-sm text-gray-200 hover:bg-neutral-800 hover:text-amber-400 transition border-t border-neutral-700"
+                      onClick={() => setShowAuthMenu(false)}
+                      data-testid="nav-create-account-dropdown"
+                    >
+                      Create account
+                    </Link>
+                  </div>
+                )}
+              </div>
+              
               <Link
                 to="/welcome"
                 className="rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 font-bold text-white shadow transition"
@@ -47,8 +86,34 @@ export default function Landing() {
                 Get Started
               </Link>
             </div>
+            
+            {/* Mobile Nav */}
+            <div className="flex md:hidden items-center gap-3">
+              <Link
+                to="/login"
+                className="text-sm text-gray-300 hover:text-amber-400 transition"
+                data-testid="mobile-login-btn"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/welcome"
+                className="rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2 font-bold text-white text-sm shadow transition"
+                data-testid="mobile-get-started"
+              >
+                Get Started
+              </Link>
+            </div>
           </div>
         </nav>
+
+        {/* Click outside to close dropdown */}
+        {showAuthMenu && (
+          <div 
+            className="fixed inset-0 z-0" 
+            onClick={() => setShowAuthMenu(false)}
+          />
+        )}
 
         {/* HERO BODY */}
         <div className="relative z-10 mx-auto max-w-5xl px-6 pb-20 pt-12 text-center">
