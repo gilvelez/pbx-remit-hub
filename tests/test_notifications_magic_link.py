@@ -7,7 +7,7 @@ import requests
 import os
 import time
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://philippine-bayani.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://pinoy-payments.preview.emergentagent.com').rstrip('/')
 
 # Test user IDs
 TEST_USER_ID = "notif-test-user-001"

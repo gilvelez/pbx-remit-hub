@@ -2,7 +2,7 @@
   "@context": "https://schema.org",
   "@type": "Organization",
   "name": "Philippine Bayani Exchange",
-  "url": "https://philippine-bayani.preview.emergentagent.com/",
-  "logo": "https://philippine-bayani.preview.emergentagent.com/favicon.png",
+  "url": "https://pinoy-payments.preview.emergentagent.com/",
+  "logo": "https://pinoy-payments.preview.emergentagent.com/favicon.png",
   "description": "Fast, secure USD→PHP remittances built for OFWs and their families."
 }

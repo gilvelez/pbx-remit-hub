@@ -13,7 +13,7 @@ All Plaid secrets have been removed from the frontend code and properly secured 
 - ✅ **Backup file removed**: `Landing.backup.jsx` deleted to prevent build conflicts
 - ✅ **Frontend .env** only contains safe, non-secret values:
   ```
-  REACT_APP_BACKEND_URL=https://philippine-bayani.preview.emergentagent.com
+  REACT_APP_BACKEND_URL=https://pinoy-payments.preview.emergentagent.com
   WDS_SOCKET_PORT=443
   REACT_APP_ENABLE_VISUAL_EDITS=false
   ENABLE_HEALTH_CHECK=false
