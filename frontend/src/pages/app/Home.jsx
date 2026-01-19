@@ -161,7 +161,7 @@ export default function Home() {
         <div className="text-3xl font-bold mb-4">{formatUSD(wallet.usd_balance)}</div>
         
         {/* ADD MONEY / WITHDRAW BUTTONS - Always visible */}
-        <div className="flex gap-3 mb-4">
+        <div className="flex gap-3 mb-3">
           <button
             onClick={() => navigate('/sender/add-money')}
             className="flex-1 h-11 bg-[#F6C94B] text-[#0A2540] font-semibold rounded-xl hover:bg-[#F6C94B]/90 transition flex items-center justify-center gap-2"
@@ -173,9 +173,15 @@ export default function Home() {
             Add Money
           </button>
           <button
-            onClick={() => navigate('/sender/withdraw')}
-            className="flex-1 h-11 bg-white/10 text-white font-semibold rounded-xl hover:bg-white/20 transition flex items-center justify-center gap-2 border border-white/20"
+            onClick={() => wallet.usd_balance > 0 ? navigate('/sender/withdraw') : null}
+            disabled={wallet.usd_balance <= 0}
+            className={`flex-1 h-11 font-semibold rounded-xl transition flex items-center justify-center gap-2 border ${
+              wallet.usd_balance > 0 
+                ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 cursor-pointer' 
+                : 'bg-white/5 text-white/40 border-white/10 cursor-not-allowed'
+            }`}
             data-testid="withdraw-btn"
+            title={wallet.usd_balance <= 0 ? "No available balance to withdraw" : ""}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
@@ -183,6 +189,46 @@ export default function Home() {
             Withdraw
           </button>
         </div>
+
+        {/* TASK 3: Wallet Context Clarity */}
+        <p className="text-xs text-white/50 mb-3">Add Money funds your USD wallet</p>
+
+        {/* TASK 1: Inline Linked Bank Display */}
+        <div className="flex items-center justify-between text-xs py-2 border-t border-b border-white/10 mb-3">
+          {linkedBanks.length > 0 ? (
+            <>
+              <span className="text-white/60">
+                Funds from: {linkedBanks[0].institution_name} ••••{linkedBanks[0].last4}
+              </span>
+              <button
+                onClick={() => navigate('/sender/banks')}
+                className="text-[#F6C94B] font-medium hover:underline"
+              >
+                Change
+              </button>
+            </>
+          ) : (
+            <>
+              <span className="text-white/60">No bank linked</span>
+              <button
+                onClick={() => navigate('/sender/banks')}
+                className="text-[#F6C94B] font-medium hover:underline"
+              >
+                Link a bank
+              </button>
+            </>
+          )}
+        </div>
+        
+        {/* TASK 2: Zero balance message */}
+        {wallet.usd_balance <= 0 && (
+          <div className="text-xs text-amber-300/80 mb-3 flex items-center gap-1.5">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            No available balance to withdraw
+          </div>
+        )}
         
         <div className="flex gap-4 pt-3 border-t border-white/20">
           <div>
