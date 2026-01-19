@@ -66,9 +66,11 @@ export default function Home() {
       if (!session?.token) return;
       try {
         const banks = await getLinkedBanks(session.token);
-        setLinkedBanks(banks || []);
+        // Ensure banks is always an array
+        setLinkedBanks(Array.isArray(banks) ? banks : []);
       } catch (err) {
         console.error("Failed to fetch linked banks:", err);
+        setLinkedBanks([]); // Set empty array on error
       }
     };
     fetchBanks();
