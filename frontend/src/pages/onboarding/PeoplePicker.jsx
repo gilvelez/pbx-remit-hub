@@ -368,13 +368,15 @@ export default function PeoplePicker() {
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={() => {
-                    setInviteMethod('sms');
+                    setInviteMethod('phone');
                     setShowInvite(true);
+                    setInvitePhoneData(null);
+                    setPhoneIsValid(false);
                   }}
                   className="px-4 py-2 bg-[#0A2540] text-white rounded-lg text-sm font-medium"
-                  data-testid="invite-sms-btn"
+                  data-testid="invite-phone-btn"
                 >
-                  Invite via SMS
+                  Invite by Phone
                 </button>
                 <button
                   onClick={() => {
@@ -384,7 +386,7 @@ export default function PeoplePicker() {
                   className="px-4 py-2 bg-gray-200 text-[#0A2540] rounded-lg text-sm font-medium"
                   data-testid="invite-email-btn"
                 >
-                  Invite via Email
+                  Invite by Email
                 </button>
               </div>
             </div>
@@ -406,15 +408,20 @@ export default function PeoplePicker() {
           <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b">
-              <h2 className="text-lg font-bold text-[#0A2540]">
-                Invite via {inviteMethod === 'sms' ? 'SMS' : 'Email'}
-              </h2>
+              <div>
+                <h2 className="text-lg font-bold text-[#0A2540]">
+                  Invite by {inviteMethod === 'phone' ? 'Phone' : 'Email'}
+                </h2>
+                <p className="text-sm text-gray-500">We&apos;ll send them a link to join PBX.</p>
+              </div>
               <button 
                 onClick={() => {
                   setShowInvite(false);
                   setInviteResult(null);
                   setInviteContact("");
                   setInviteName("");
+                  setInvitePhoneData(null);
+                  setPhoneIsValid(false);
                 }}
                 className="p-2 text-gray-400 hover:text-gray-600"
               >
