@@ -7,6 +7,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getConversations } from "../../lib/socialApi";
+import { getLinkedBanks } from "../../lib/bankApi";
 import { QRCodeSVG } from "qrcode.react";
 
 export default function Home() {
@@ -16,6 +17,7 @@ export default function Home() {
   const [recentActivity, setRecentActivity] = useState([]);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [linkedBanks, setLinkedBanks] = useState([]);
   
   // Send Sheet state
   const [showSendSheet, setShowSendSheet] = useState(false);
@@ -56,6 +58,20 @@ export default function Home() {
     };
     
     fetchWallet();
+  }, [session?.token]);
+
+  // Fetch linked banks for inline display
+  useEffect(() => {
+    const fetchBanks = async () => {
+      if (!session?.token) return;
+      try {
+        const banks = await getLinkedBanks(session.token);
+        setLinkedBanks(banks || []);
+      } catch (err) {
+        console.error("Failed to fetch linked banks:", err);
+      }
+    };
+    fetchBanks();
   }, [session?.token]);
 
   // Fetch recent activity
