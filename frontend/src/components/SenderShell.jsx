@@ -1,16 +1,16 @@
 /**
  * SenderShell - Layout wrapper for sender dashboard
- * For employers, businesses, and payers
+ * UI MERGE: Same navigation for Personal and Business profiles
  * Shows: Home, Send, People, Businesses, Activity, Settings
  * 
- * Supports both Personal and Business profiles
+ * HEADER: Shows Active Profile indicator (avatar + handle + type)
  */
 import React, { useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useSession } from "../contexts/SessionContext";
 import ProfileSwitcher from "./ProfileSwitcher";
 
-// Navigation items for sender dashboard - 6 tabs
+// Navigation items for sender dashboard - 6 tabs (SAME FOR BOTH PROFILES)
 const navItems = [
   { 
     to: "/sender/dashboard", 
