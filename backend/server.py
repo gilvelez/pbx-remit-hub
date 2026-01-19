@@ -657,10 +657,19 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Connect to MongoDB on startup."""
+    """Connect to MongoDB on startup and setup indexes."""
     try:
-        await connect_to_mongo()
-        logger.info("PBX API started successfully")
+        db = await connect_to_mongo()
+        logger.info("PBX API connected to MongoDB")
+        
+        # Setup ledger and audit indexes
+        from utils.ledger import setup_ledger_indexes
+        from utils.admin import setup_audit_indexes
+        
+        await setup_ledger_indexes(db)
+        await setup_audit_indexes(db)
+        
+        logger.info("PBX API started successfully with ledger hardening enabled")
     except Exception as e:
         logger.error(f"Failed to start PBX API: {e}")
         raise
