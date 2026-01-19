@@ -511,8 +511,14 @@ export default function People() {
       {/* Quick Add Modal */}
       {showQuickAdd && (
         <QuickAddModal
+          method={quickAddMethod}
+          setMethod={setQuickAddMethod}
           contact={quickAddContact}
           setContact={setQuickAddContact}
+          phoneData={quickAddPhoneData}
+          setPhoneData={setQuickAddPhoneData}
+          phoneValid={quickAddPhoneValid}
+          setPhoneValid={setQuickAddPhoneValid}
           name={quickAddName}
           setName={setQuickAddName}
           loading={quickAddLoading}
@@ -523,6 +529,8 @@ export default function People() {
             setShowQuickAdd(false);
             setQuickAddContact("");
             setQuickAddName("");
+            setQuickAddPhoneData(null);
+            setQuickAddPhoneValid(false);
             setQuickAddResult(null);
           }}
         />
