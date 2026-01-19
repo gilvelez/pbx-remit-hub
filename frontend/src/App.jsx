@@ -151,6 +151,9 @@ function AppRoutes() {
         <Route path="activity" element={<Activity />} />
         <Route path="settings" element={<Manage />} />
         <Route path="recipients" element={<Manage />} />
+        <Route path="add-money" element={<AddMoney />} />
+        <Route path="withdraw" element={<Withdraw />} />
+        <Route path="banks" element={<BanksAndPayments />} />
         <Route path="*" element={<Navigate to="/sender/dashboard" replace />} />
       </Route>
 
