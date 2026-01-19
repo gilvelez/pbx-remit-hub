@@ -317,10 +317,24 @@ export default function Chat() {
             </div>
             
             <div className="text-center mb-6">
-              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-[#0A2540] to-[#1a4a7c] flex items-center justify-center text-white font-bold text-2xl mb-3">
-                {(otherUser?.display_name || "?")?.[0]?.toUpperCase()}
+              <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 ${
+                isBusinessProfile 
+                  ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+                  : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
+              }`}>
+                {displayName?.[0]?.toUpperCase() || "?"}
               </div>
-              <p className="font-semibold text-[#0A2540]">{otherUser?.display_name || "PBX User"}</p>
+              <div className="flex items-center justify-center gap-2">
+                <p className="font-semibold text-[#0A2540]">{displayName}</p>
+                {isBusinessProfile && (
+                  <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded">
+                    BUSINESS
+                  </span>
+                )}
+              </div>
+              {handle && (
+                <p className="text-sm text-gray-500">@{handle}</p>
+              )}
             </div>
             
             <div className="mb-4">
