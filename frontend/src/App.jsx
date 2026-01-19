@@ -135,6 +135,7 @@ function AppRoutes() {
         <Route path="people" element={<People />} />
         <Route path="people/picker" element={<SenderPeoplePicker />} />
         <Route path="businesses" element={<Businesses />} />
+        <Route path="bills" element={<SenderBills />} />
         <Route path="chat/:userId" element={<Chat />} />
         <Route path="activity" element={<Activity />} />
         <Route path="settings" element={<Manage />} />
