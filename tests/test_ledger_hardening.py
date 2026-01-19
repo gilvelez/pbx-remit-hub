@@ -407,8 +407,34 @@ class TestConcurrentDoubleSpend:
     
     def test_concurrent_double_spend_only_one_succeeds(self):
         """Two $800 transfers with $1000 balance - only one should succeed"""
+        import pymongo
+        from datetime import datetime, timezone
+        
         sender_id = generate_user_id()
         recipient_id = generate_user_id()
+        
+        # Connect to MongoDB to set up exact balance (bypass default wallet creation)
+        mongo_client = pymongo.MongoClient(os.environ.get('MONGO_URL', 'mongodb://localhost:27017'))
+        db = mongo_client['pbx_database']
+        now = datetime.now(timezone.utc)
+        
+        # Create sender wallet with EXACTLY $1000 (not using default $1500)
+        db.wallets.insert_one({
+            'user_id': sender_id,
+            'usd_balance': 1000.0,
+            'php_balance': 0.0,
+            'created_at': now,
+            'updated_at': now
+        })
+        
+        # Create recipient wallet with $0
+        db.wallets.insert_one({
+            'user_id': recipient_id,
+            'usd_balance': 0.0,
+            'php_balance': 0.0,
+            'created_at': now,
+            'updated_at': now
+        })
         
         # Create friendship
         headers = {"X-Session-Token": sender_id}
@@ -426,14 +452,7 @@ class TestConcurrentDoubleSpend:
                 headers=accept_headers
             )
         
-        # Fund sender wallet with exactly $1000
-        fund_response = requests.post(
-            f"{BASE_URL}/api/recipient/wallet/fund",
-            json={"amount": 1000},
-            headers=headers
-        )
-        assert fund_response.status_code == 200, f"Failed to fund wallet: {fund_response.text}"
-        print(f"✓ Funded wallet with $1000")
+        print(f"✓ Set up sender with exactly $1000 balance")
         
         # Function to send $800
         def send_800():
@@ -458,10 +477,18 @@ class TestConcurrentDoubleSpend:
         print(f"Response 1: {response1.status_code} - {response1.text[:200]}")
         print(f"Response 2: {response2.status_code} - {response2.text[:200]}")
         
+        # Verify final balance
+        final_wallet = db.wallets.find_one({'user_id': sender_id})
+        final_balance = final_wallet.get('usd_balance', 0) if final_wallet else 0
+        print(f"Final sender balance: ${final_balance}")
+        
+        mongo_client.close()
+        
         # Only one should succeed (double-spend prevention)
         assert success_count == 1, f"Expected exactly 1 success, got {success_count}"
         assert failure_count == 1, f"Expected exactly 1 failure, got {failure_count}"
-        print(f"✓ Double-spend prevention: 1 success, 1 failure")
+        assert final_balance == 200.0, f"Expected final balance $200, got ${final_balance}"
+        print(f"✓ Double-spend prevention: 1 success, 1 failure, final balance $200")
 
 
 class TestLedgerIntegrity:
