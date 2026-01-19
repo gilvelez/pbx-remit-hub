@@ -6,6 +6,7 @@ import { getRecipients, getPaymentMethods, DELIVERY_METHODS } from "../../lib/mo
 const SECTIONS = {
   MAIN: 'main',
   PROFILE: 'profile',
+  BANKS: 'banks',
   PAYMENTS: 'payments',
   RECIPIENTS: 'recipients',
   SECURITY: 'security',
