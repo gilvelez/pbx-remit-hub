@@ -574,3 +574,51 @@ class TestExistingTestData:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
+
+
+class TestSourceFieldInFriendsList:
+    """Tests for source field in friends/list endpoint"""
+    
+    def test_source_field_returned_in_incoming_requests(self):
+        """Test that source field is returned in incoming_requests"""
+        # Create inviter
+        inviter_id = f"inviter_{uuid.uuid4().hex[:8]}"
+        create_test_user(inviter_id, f"{inviter_id}@test.com")
+        
+        # Create invite
+        new_user_email = f"sourcefield_{uuid.uuid4().hex[:12]}@test.com"
+        requests.post(
+            f"{BASE_URL}/api/social/quick-add",
+            headers={"X-Session-Token": inviter_id},
+            json={"contact": new_user_email}
+        )
+        
+        # New user signs up and processes
+        new_user_id = f"newuser_{uuid.uuid4().hex[:8]}"
+        create_test_user(new_user_id, new_user_email)
+        
+        requests.post(
+            f"{BASE_URL}/api/social/invites/process-on-signup",
+            headers={"X-Session-Token": new_user_id}
+        )
+        
+        # Get friends list for new user
+        response = requests.get(
+            f"{BASE_URL}/api/social/friends/list",
+            headers={"X-Session-Token": new_user_id}
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        incoming = data.get("incoming_requests", [])
+        
+        # Find the request from inviter
+        matching = [r for r in incoming if r.get("user_id") == inviter_id]
+        assert len(matching) >= 1
+        
+        # Verify source field is present and correct
+        request_data = matching[0]
+        assert "source" in request_data
+        assert request_data.get("source") == "invite_auto"
+        assert "invite_id" in request_data
+        print(f"✓ source='invite_auto' and invite_id returned in friends/list incoming_requests")
