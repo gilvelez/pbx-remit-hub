@@ -508,7 +508,185 @@ async def cancel_invite(request: Request, invite_id: str):
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Invite not found")
     
+    # Update status to canceled instead of deleting
+    await invites.update_one(
+        {"invite_id": invite_id, "inviter_user_id": user_id},
+        {"$set": {"status": "canceled", "updated_at": utc_now()}}
+    )
+    
     return {"success": True, "message": "Invite cancelled"}
+
+
+@router.get("/invites/all")
+async def get_all_invites(request: Request):
+    """Get all invites (pending, converted, canceled) for UI display"""
+    user_id = get_user_id_from_headers(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No session token provided")
+    
+    db = get_database()
+    invites_coll = db.invites
+    
+    cursor = invites_coll.find({
+        "inviter_user_id": user_id
+    }, {"_id": 0}).sort("created_at", -1).limit(100)
+    
+    all_invites = await cursor.to_list(100)
+    
+    # Separate by status
+    pending = [i for i in all_invites if i.get("status") == "pending"]
+    converted = [i for i in all_invites if i.get("status") == "converted"]
+    
+    return {
+        "invites": all_invites,
+        "pending": pending,
+        "converted": converted,
+        "pending_count": len(pending),
+        "converted_count": len(converted)
+    }
+
+
+@router.post("/invites/process-on-signup")
+async def process_invites_on_signup(request: Request, background_tasks: BackgroundTasks):
+    """
+    Called when a new user signs up to check for matching invites.
+    Creates friend requests from inviters automatically.
+    
+    Phase 1.5: Viral loop - invited users auto-receive friend request from inviter
+    """
+    user_id = get_user_id_from_headers(request)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No session token provided")
+    
+    db = get_database()
+    users = db.users
+    invites_coll = db.invites
+    friendships = db.friendships
+    
+    # Get new user's info
+    new_user = await users.find_one({"user_id": user_id}, {"_id": 0})
+    if not new_user:
+        return {"processed": 0, "message": "User not found"}
+    
+    new_email = (new_user.get("email") or "").lower().strip()
+    new_phone = (new_user.get("phone") or "").replace("-", "").replace(" ", "").strip()
+    
+    if not new_email and not new_phone:
+        return {"processed": 0, "message": "No email or phone to match"}
+    
+    # Find matching pending invites (within 30 days)
+    thirty_days_ago = utc_now() - timedelta(days=30)
+    
+    query = {
+        "status": "pending",
+        "created_at": {"$gte": thirty_days_ago},
+        "$or": []
+    }
+    
+    if new_email:
+        query["$or"].append({"contact": new_email, "contact_type": "email"})
+    if new_phone:
+        query["$or"].append({"contact": new_phone, "contact_type": "phone"})
+        # Also check with + prefix for phone
+        query["$or"].append({"contact": f"+{new_phone}", "contact_type": "phone"})
+    
+    if not query["$or"]:
+        return {"processed": 0, "message": "No contacts to match"}
+    
+    cursor = invites_coll.find(query, {"_id": 0})
+    matching_invites = await cursor.to_list(50)
+    
+    if not matching_invites:
+        return {"processed": 0, "message": "No matching invites found"}
+    
+    processed = 0
+    friend_requests_created = []
+    
+    # Rate limit check per inviter (max 20 auto-requests per day)
+    today_start = utc_now().replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    for invite in matching_invites:
+        inviter_user_id = invite.get("inviter_user_id")
+        
+        # Skip if inviter is the new user (shouldn't happen but safety check)
+        if inviter_user_id == user_id:
+            continue
+        
+        # Check rate limit for inviter
+        daily_count = await friendships.count_documents({
+            "requester_user_id": inviter_user_id,
+            "created_at": {"$gte": today_start},
+            "source": "invite_auto"
+        })
+        
+        if daily_count >= 20:
+            logger.warning(f"Rate limit reached for inviter {inviter_user_id}")
+            continue
+        
+        # Check if already friends or pending
+        existing = await friendships.find_one({
+            "$or": [
+                {"requester_user_id": inviter_user_id, "addressee_user_id": user_id},
+                {"requester_user_id": user_id, "addressee_user_id": inviter_user_id}
+            ]
+        })
+        
+        if existing:
+            # Already have a friendship record, skip
+            continue
+        
+        # Check if new user has blocked the inviter
+        blocked = await friendships.find_one({
+            "requester_user_id": user_id,
+            "addressee_user_id": inviter_user_id,
+            "status": "blocked"
+        })
+        
+        if blocked:
+            continue
+        
+        # Create friend request from inviter to new user
+        now = utc_now()
+        friendship_id = f"fr_{uuid.uuid4().hex[:12]}"
+        
+        await friendships.insert_one({
+            "friendship_id": friendship_id,
+            "requester_user_id": inviter_user_id,
+            "addressee_user_id": user_id,
+            "status": "pending",
+            "source": "invite_auto",  # Mark as auto-created from invite
+            "invite_id": invite.get("invite_id"),
+            "created_at": now,
+            "updated_at": now
+        })
+        
+        # Mark invite as converted
+        await invites_coll.update_one(
+            {"invite_id": invite.get("invite_id")},
+            {
+                "$set": {
+                    "status": "converted",
+                    "converted_user_id": user_id,
+                    "converted_at": now,
+                    "updated_at": now
+                }
+            }
+        )
+        
+        processed += 1
+        friend_requests_created.append({
+            "inviter_user_id": inviter_user_id,
+            "friendship_id": friendship_id,
+            "invite_id": invite.get("invite_id")
+        })
+        
+        logger.info(f"Auto-created friend request from invite: {inviter_user_id} -> {user_id}")
+    
+    return {
+        "processed": processed,
+        "friend_requests_created": friend_requests_created,
+        "message": f"Processed {processed} matching invites"
+    }
 
 
 # ============================================================
