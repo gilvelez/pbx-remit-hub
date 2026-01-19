@@ -385,7 +385,7 @@ export default function People() {
           }`}
           data-testid="tab-invited"
         >
-          Invited ({invitedCount})
+          Invited ({invites.length})
         </button>
       </div>
 
