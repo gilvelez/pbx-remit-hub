@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
+import PhoneInputWithCountry from "../../components/PhoneInputWithCountry";
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -21,11 +22,13 @@ export default function SenderPeoplePicker() {
   
   // Invite modal state
   const [showInvite, setShowInvite] = useState(false);
-  const [inviteMethod, setInviteMethod] = useState(null);
+  const [inviteMethod, setInviteMethod] = useState(null); // 'phone' | 'email'
   const [inviteContact, setInviteContact] = useState("");
+  const [invitePhoneData, setInvitePhoneData] = useState(null);
   const [inviteName, setInviteName] = useState("");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteResult, setInviteResult] = useState(null);
+  const [phoneIsValid, setPhoneIsValid] = useState(false);
 
   useEffect(() => {
     inputRef.current?.focus();
