@@ -494,7 +494,7 @@ Dark theme: neutral-950, amber-400, red-600
 - [ ] Enable real FX rates (OPENEXCHANGERATES_API_KEY)
 - [ ] Enable email notifications (RESEND_API_KEY)
 - [ ] Enable SMS notifications (TWILIO credentials)
-- [ ] Plaid integration for sender flow
+- [ ] Plaid integration for live ACH (requires Plaid Auth product)
 - [ ] Stripe subscription billing
 - [ ] Rate lock backend with TTL (Redis)
 
