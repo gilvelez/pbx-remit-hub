@@ -53,6 +53,8 @@ export default function MagicLinkHandler() {
       const notificationType = searchParams.get("type");
       const contextData = searchParams.get("data");
       const explicitRedirect = searchParams.get("redirect");
+      const dest = searchParams.get("dest"); // New dest parameter
+      const conversationId = searchParams.get("conversationId");
       
       // Parse context data if provided
       let parsedData = {};
@@ -64,10 +66,18 @@ export default function MagicLinkHandler() {
         }
       }
       
-      // Determine redirect path based on notification type
+      // Add conversationId to parsed data if provided
+      if (conversationId) {
+        parsedData.conversationId = conversationId;
+      }
+      
+      // Determine redirect path based on dest or notification type
       let targetPath;
       if (explicitRedirect) {
         targetPath = explicitRedirect;
+      } else if (dest) {
+        // Handle dest parameter
+        targetPath = getDeepLinkRoute(dest, parsedData);
       } else if (notificationType) {
         targetPath = getDeepLinkRoute(notificationType, parsedData);
       } else {
