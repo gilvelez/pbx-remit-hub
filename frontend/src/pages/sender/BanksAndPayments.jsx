@@ -308,7 +308,7 @@ export default function BanksAndPayments() {
               </div>
               <h3 className="text-lg font-semibold text-[#0A2540]">Remove Bank Account?</h3>
               <p className="text-sm text-gray-500 mt-1">
-                You won't be able to add or withdraw money using this account.
+                You will not be able to add or withdraw money using this account.
               </p>
             </div>
             
