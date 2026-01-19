@@ -44,6 +44,10 @@ export function SessionProvider({ children }) {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      // Also persist activeProfileId separately for easy access
+      if (session.activeProfileId) {
+        localStorage.setItem(ACTIVE_PROFILE_KEY, session.activeProfileId);
+      }
     } catch (e) {
       console.error('Failed to save session to storage:', e);
     }
