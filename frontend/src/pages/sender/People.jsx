@@ -378,14 +378,17 @@ export default function People() {
         </button>
         <button
           onClick={() => setActiveTab("invited")}
-          className={`flex-1 py-3 text-sm font-medium border-b-2 transition ${
+          className={`flex-1 py-3 text-sm font-medium border-b-2 transition relative ${
             activeTab === "invited"
               ? "text-[#0A2540] border-[#0A2540]"
               : "text-gray-500 border-transparent"
           }`}
           data-testid="tab-invited"
         >
-          Invited ({invites.length})
+          Invited ({pendingInvitesCount})
+          {convertedInvitesCount > 0 && (
+            <span className="ml-1 text-green-600 text-xs">+{convertedInvitesCount} joined</span>
+          )}
         </button>
       </div>
 
