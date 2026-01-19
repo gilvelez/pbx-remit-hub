@@ -212,7 +212,10 @@ export default function Businesses() {
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
-        <h1 className="text-2xl font-bold text-[#0A2540]">Businesses</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-[#0A2540]">Businesses</h1>
+          <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs font-medium rounded-full">Beta</span>
+        </div>
         <p className="text-sm text-gray-500 mt-1">Discover and pay businesses</p>
       </div>
 
