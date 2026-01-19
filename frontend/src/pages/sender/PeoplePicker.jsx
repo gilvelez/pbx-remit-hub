@@ -301,13 +301,15 @@ export default function SenderPeoplePicker() {
             <div className="flex gap-3 justify-center">
               <button
                 onClick={() => {
-                  setInviteMethod('sms');
+                  setInviteMethod('phone');
                   setShowInvite(true);
+                  setInvitePhoneData(null);
+                  setPhoneIsValid(false);
                 }}
                 className="px-4 py-2 bg-[#0A2540] text-white rounded-lg text-sm font-medium"
-                data-testid="invite-sms-btn"
+                data-testid="invite-phone-btn"
               >
-                Invite via SMS
+                Invite by Phone
               </button>
               <button
                 onClick={() => {
@@ -317,7 +319,7 @@ export default function SenderPeoplePicker() {
                 className="px-4 py-2 bg-gray-200 text-[#0A2540] rounded-lg text-sm font-medium"
                 data-testid="invite-email-btn"
               >
-                Invite via Email
+                Invite by Email
               </button>
             </div>
           </div>
