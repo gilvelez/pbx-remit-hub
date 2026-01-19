@@ -522,6 +522,31 @@ Dark theme: neutral-950, amber-400, red-600
 
 ## Change Log
 
+### January 19, 2026 - Backend Hardening Phase 1-3 (P0 COMPLETE) ✅
+- ✅ **Phase 1: Ledger Hardening**
+  - Idempotency keys via `Idempotency-Key` HTTP header
+  - `ledger_tx` collection for journal headers (one per transfer)
+  - `ledger` collection entries linked via `ledger_tx_id`
+  - Atomic MongoDB transactions with balance check in update query
+  - Double-spend prevention (concurrent race protection)
+  - Unique sparse index on `idempotency_key`
+  - Amount validation (0, negative, >$5000 rejected)
+  - Self-transfer prevention
+- ✅ **Phase 2: Admin + Audit**
+  - Admin roles: `admin_read`, `admin_ops`, `admin_compliance`, `admin_finance`, `admin_super`
+  - `audit_log` collection (immutable append-only)
+  - Read-only admin endpoints: `/api/admin/users`, `/api/admin/wallets`, `/api/admin/ledger`, `/api/admin/audit-logs`
+  - Wallet reconciliation endpoint: `/api/admin/reconciliation/wallet/{user_id}`
+  - Transfer integrity verification: `/api/admin/integrity/transfer/{tx_id}`
+  - Balance adjustment with audit trail (admin_super only)
+- ✅ **Phase 3: Health + Safety**
+  - `/api/health` endpoint returns service status, MongoDB connectivity, feature flags
+  - No secrets exposed in responses
+  - All credentials loaded from environment variables
+- ✅ Tests: 24/24 backend tests passed
+- ✅ New files: `/app/backend/utils/ledger.py`, `/app/backend/utils/admin.py`, `/app/backend/routes/admin.py`
+- ✅ Test report: `/app/test_reports/iteration_19.json`
+
 ### January 17, 2026 - Phase 1: Business Profiles (P0 COMPLETE) ✅
 - ✅ Implemented User → Profile abstraction (one login, multiple profiles)
 - ✅ Personal Account: @username, display_name, avatar, friends system
