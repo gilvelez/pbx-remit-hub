@@ -251,7 +251,8 @@ export default function People() {
   };
 
   const pendingCount = incomingRequests.length;
-  const invitedCount = invites.length;
+  const pendingInvitesCount = invites.filter(i => i.status === "pending").length;
+  const convertedInvitesCount = invites.filter(i => i.status === "converted").length;
   const showSetupBanner = session?.skippedExternalPayee;
 
   return (
