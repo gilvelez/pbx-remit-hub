@@ -732,9 +732,10 @@ function FriendCard({ friend, onMessage }) {
   );
 }
 
-// Request Card
+// Request Card - Updated to show "Invited you to PBX" badge
 function RequestCard({ request, type, loading, onAccept, onDecline }) {
   const user = type === "incoming" ? request.requester : request.addressee;
+  const isFromInvite = request.source === "invite_auto";
   
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
@@ -743,8 +744,19 @@ function RequestCard({ request, type, loading, onAccept, onDecline }) {
           {user?.display_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "?"}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[#0A2540] truncate">{user?.display_name || user?.email?.split("@")[0] || "PBX User"}</p>
-          <p className="text-sm text-gray-500">{type === "incoming" ? "wants to be friends" : "Pending..."}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-[#0A2540] truncate">{user?.display_name || user?.email?.split("@")[0] || "PBX User"}</p>
+            {isFromInvite && type === "incoming" && (
+              <span className="px-2 py-0.5 bg-[#F6C94B]/20 text-[#0A2540] text-[10px] font-bold rounded-full whitespace-nowrap">
+                Invited you
+              </span>
+            )}
+          </div>
+          <p className="text-sm text-gray-500">
+            {type === "incoming" 
+              ? (isFromInvite ? "invited you to PBX — friend request received" : "wants to be friends")
+              : "Pending..."}
+          </p>
         </div>
       </div>
       {type === "incoming" && (
