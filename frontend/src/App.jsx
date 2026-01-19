@@ -130,7 +130,9 @@ function AppRoutes() {
         <Route index element={<Navigate to="/sender/dashboard" replace />} />
         <Route path="dashboard" element={<Home />} />
         <Route path="send" element={<Send />} />
+        <Route path="send-external" element={<Send />} />
         <Route path="people" element={<People />} />
+        <Route path="people/picker" element={<SenderPeoplePicker />} />
         <Route path="businesses" element={<Businesses />} />
         <Route path="chat/:userId" element={<Chat />} />
         <Route path="activity" element={<Activity />} />
