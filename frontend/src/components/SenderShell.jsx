@@ -79,15 +79,21 @@ export default function SenderShell() {
     navigate("/");
   };
 
-  // Check if user is on a business profile
-  const isBusinessProfile = session?.activeProfile?.type === "business";
+  // Active profile info
+  const activeProfile = session?.activeProfile;
+  const isBusinessProfile = activeProfile?.type === "business";
+  const displayName = isBusinessProfile 
+    ? (activeProfile?.business_name || "Business")
+    : (activeProfile?.display_name || session?.user?.email?.split("@")[0] || "User");
+  const handle = activeProfile?.handle;
 
   return (
     <div className="min-h-screen bg-[#F6F8FB] flex flex-col">
-      {/* Top Header */}
+      {/* Top Header - Shows Active Profile Indicator */}
       <header className="bg-[#0A2540] border-b border-[#F6C94B]/20 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          {/* Left: Logo + Active Profile Indicator */}
+          <div className="flex items-center gap-3">
             {/* Mobile menu button */}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -99,20 +105,35 @@ export default function SenderShell() {
               </svg>
             </button>
             
+            {/* Active Profile Indicator - Left side */}
             <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-[#F6C94B]/20 border border-[#F6C94B]/40 flex items-center justify-center">
-                <span className="text-[#F6C94B] font-bold text-xs">PBX</span>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                isBusinessProfile 
+                  ? 'bg-purple-500 text-white' 
+                  : 'bg-[#F6C94B]/20 text-[#F6C94B] border border-[#F6C94B]/40'
+              }`}>
+                {displayName?.[0]?.toUpperCase() || "?"}
               </div>
-              {isBusinessProfile && (
-                <span className="hidden sm:inline-block px-2 py-0.5 bg-[#F6C94B]/20 text-[#F6C94B] text-xs font-medium rounded border border-[#F6C94B]/40">
-                  Business
-                </span>
-              )}
+              <div className="hidden sm:block">
+                <div className="flex items-center gap-1.5">
+                  {handle && (
+                    <span className="text-white/90 text-sm font-medium">@{handle}</span>
+                  )}
+                  <span className={`px-1.5 py-0.5 text-[10px] font-bold rounded ${
+                    isBusinessProfile 
+                      ? 'bg-purple-500/30 text-purple-200' 
+                      : 'bg-[#F6C94B]/20 text-[#F6C94B]'
+                  }`}>
+                    {isBusinessProfile ? "Business" : "Personal"}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
           
+          {/* Right: Profile Switcher + Logout */}
           <div className="flex items-center gap-3">
-            {/* Profile Switcher */}
+            {/* Profile Switcher Dropdown */}
             <ProfileSwitcher />
             
             <button
