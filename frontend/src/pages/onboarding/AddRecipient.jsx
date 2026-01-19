@@ -169,23 +169,14 @@ export default function AddRecipient() {
             Find a PBX user or add an external payee.
           </p>
 
-          {/* PBX Friends CTA - Primary Option */}
+          {/* Find People CTA - Primary Option */}
           <div 
             onClick={() => {
-              // Mark onboarding as complete and set sender role before navigating
-              setSession(prev => ({
-                ...prev,
-                exists: true,
-                verified: true,
-                role: prev.role || 'sender', // Preserve existing role or default to sender
-                onboardingComplete: true,
-                skippedExternalPayee: true, // Track that user skipped external payee setup
-              }));
-              // Navigate to People page
-              navigate('/sender/people');
+              // Navigate to People Picker in onboarding mode
+              navigate('/onboarding/people');
             }}
             className="mb-6 p-4 bg-gradient-to-r from-[#0A2540] to-[#1a4a7c] rounded-xl cursor-pointer hover:opacity-95 transition relative overflow-hidden"
-            data-testid="pbx-friends-cta"
+            data-testid="find-people-cta"
           >
             <div className="absolute top-2 right-2">
               <span className="px-2 py-1 bg-[#F6C94B] text-[#0A2540] text-[10px] font-bold rounded-full">
@@ -195,13 +186,13 @@ export default function AddRecipient() {
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-[#F6C94B]/20 flex items-center justify-center flex-shrink-0">
                 <svg className="w-6 h-6 text-[#F6C94B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
               <div className="flex-1 text-white">
-                <h3 className="font-bold text-lg mb-1">Send to PBX Friends</h3>
+                <h3 className="font-bold text-lg mb-1">Find people or add a person</h3>
                 <p className="text-sm text-white/80">
-                  Instant & free. Send money through chat.
+                  Search PBX users or invite someone to join
                 </p>
                 <div className="flex gap-2 mt-2">
                   <span className="px-2 py-0.5 bg-white/20 text-white text-xs rounded">⚡ Instant</span>

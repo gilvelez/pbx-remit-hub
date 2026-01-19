@@ -5,6 +5,7 @@ const SessionContext = createContext(null);
 
 // Storage key for session data - using localStorage for persistence across tabs/sessions
 const STORAGE_KEY = 'pbx_session';
+const ACTIVE_PROFILE_KEY = 'pbx_active_profile_id';
 
 export function SessionProvider({ children }) {
   // CRITICAL: Initialize state with function to avoid reading storage multiple times
@@ -12,8 +13,14 @@ export function SessionProvider({ children }) {
   const [session, setSession] = useState(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      const savedActiveProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
       if (raw) {
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        // Restore activeProfileId from dedicated storage
+        if (savedActiveProfileId && !parsed.activeProfileId) {
+          parsed.activeProfileId = savedActiveProfileId;
+        }
+        return parsed;
       }
     } catch (e) {
       console.error('Failed to parse session from storage:', e);
@@ -37,6 +44,10 @@ export function SessionProvider({ children }) {
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      // Also persist activeProfileId separately for easy access
+      if (session.activeProfileId) {
+        localStorage.setItem(ACTIVE_PROFILE_KEY, session.activeProfileId);
+      }
     } catch (e) {
       console.error('Failed to save session to storage:', e);
     }
@@ -168,6 +179,7 @@ export function SessionProvider({ children }) {
 
   const logout = () => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(ACTIVE_PROFILE_KEY);
     setSession({ 
       exists: false, 
       verified: false, 

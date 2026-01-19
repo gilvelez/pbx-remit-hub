@@ -80,7 +80,7 @@ async def resend_magic_link(data: MagicLinkResendRequest):
     # In production, send email here
     # For now, log the link (mock mode)
     import os
-    app_url = os.environ.get("APP_URL", "https://philippine-bayani.preview.emergentagent.com")
+    app_url = os.environ.get("APP_URL", "https://pinoy-payments.preview.emergentagent.com")
     magic_url = f"{app_url}/auth/magic?token={magic_link_data['token']}"
     
     logger.info(f"Magic link resend for {email}: {magic_url}")

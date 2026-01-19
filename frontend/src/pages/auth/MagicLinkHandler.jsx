@@ -21,6 +21,11 @@ const DEEP_LINK_ROUTES = {
   'business_payment': (data) => `/sender/chat/${data.business_id || data.from_profile_id}?type=business`,
   'external_payout': () => '/recipient/transfers',
   'incoming_transfer': () => '/recipient/wallets',
+  // New dest-based routes
+  'chat': (data) => data.conversationId ? `/sender/chat/${data.conversationId}` : '/sender/people',
+  'people-requests': () => '/sender/people?tab=requests',
+  'businesses': () => '/sender/businesses',
+  'activity': () => '/sender/activity',
   'default': '/recipient/wallets',
 };
 
@@ -48,6 +53,8 @@ export default function MagicLinkHandler() {
       const notificationType = searchParams.get("type");
       const contextData = searchParams.get("data");
       const explicitRedirect = searchParams.get("redirect");
+      const dest = searchParams.get("dest"); // New dest parameter
+      const conversationId = searchParams.get("conversationId");
       
       // Parse context data if provided
       let parsedData = {};
@@ -59,10 +66,18 @@ export default function MagicLinkHandler() {
         }
       }
       
-      // Determine redirect path based on notification type
+      // Add conversationId to parsed data if provided
+      if (conversationId) {
+        parsedData.conversationId = conversationId;
+      }
+      
+      // Determine redirect path based on dest or notification type
       let targetPath;
       if (explicitRedirect) {
         targetPath = explicitRedirect;
+      } else if (dest) {
+        // Handle dest parameter
+        targetPath = getDeepLinkRoute(dest, parsedData);
       } else if (notificationType) {
         targetPath = getDeepLinkRoute(notificationType, parsedData);
       } else {

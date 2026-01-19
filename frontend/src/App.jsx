@@ -25,6 +25,8 @@ import Welcome from "./pages/onboarding/Welcome.jsx";
 import PhoneOTP from "./pages/onboarding/PhoneOTP.jsx";
 import ConnectBank from "./pages/onboarding/ConnectBank.jsx";
 import AddRecipient from "./pages/onboarding/AddRecipient.jsx";
+import OnboardingPeoplePicker from "./pages/onboarding/PeoplePicker.jsx";
+import OnboardingChat from "./pages/onboarding/OnboardingChat.jsx";
 
 // Sender Pages (for employers/businesses)
 import Home from "./pages/app/Home.jsx";
@@ -34,6 +36,7 @@ import Manage from "./pages/app/Manage.jsx";
 import People from "./pages/sender/People.jsx";
 import Chat from "./pages/sender/Chat.jsx";
 import Businesses from "./pages/sender/Businesses.jsx";
+import SenderPeoplePicker from "./pages/sender/PeoplePicker.jsx";
 
 // Recipient Pages (for end users receiving payments)
 import RecipientDashboard from "./pages/recipient/Dashboard.jsx";
@@ -93,6 +96,8 @@ function AppRoutes() {
       <Route path="/onboarding/phone" element={<PhoneOTP />} />
       <Route path="/onboarding/bank" element={<ConnectBank />} />
       <Route path="/onboarding/recipient" element={<AddRecipient />} />
+      <Route path="/onboarding/people" element={<OnboardingPeoplePicker />} />
+      <Route path="/onboarding/chat/:conversationId" element={<OnboardingChat />} />
       
       {/* Redirect old routes */}
       <Route path="/onboarding/personal" element={<Navigate to="/welcome" replace />} />
@@ -125,7 +130,9 @@ function AppRoutes() {
         <Route index element={<Navigate to="/sender/dashboard" replace />} />
         <Route path="dashboard" element={<Home />} />
         <Route path="send" element={<Send />} />
+        <Route path="send-external" element={<Send />} />
         <Route path="people" element={<People />} />
+        <Route path="people/picker" element={<SenderPeoplePicker />} />
         <Route path="businesses" element={<Businesses />} />
         <Route path="chat/:userId" element={<Chat />} />
         <Route path="activity" element={<Activity />} />

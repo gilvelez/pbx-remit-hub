@@ -1,23 +1,20 @@
 /**
- * Chat Page - iMessage/Messenger-style 1:1 chat
- * Supports text messages and in-chat PBX payments
- * Updated: Shows business badge and handle
+ * OnboardingChat - Chat screen in onboarding mode
+ * Same functionality as sender/Chat but with onboarding navigation
  */
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
-import { getConversation, getMessages, sendMessage, sendPaymentInChat } from "../../lib/socialApi";
+import { tw } from "../../lib/theme";
 
-export default function Chat() {
-  const { userId } = useParams();
-  const [searchParams] = useSearchParams();
+const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
+
+export default function OnboardingChat() {
+  const { conversationId } = useParams();
   const navigate = useNavigate();
-  const { session } = useSession();
+  const { session, setSession } = useSession();
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  
-  // Check if this is a business chat
-  const isBusiness = searchParams.get('type') === 'business';
   
   // State
   const [loading, setLoading] = useState(true);
@@ -25,7 +22,6 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [otherProfile, setOtherProfile] = useState(null);
   
   // Payment modal state
   const [showPayment, setShowPayment] = useState(false);
@@ -36,37 +32,33 @@ export default function Chat() {
   // Fetch conversation and messages
   const fetchData = useCallback(async () => {
     try {
-      const convo = await getConversation(userId);
-      setConversation(convo);
-      setOtherProfile(convo.other_user);
+      // Get messages for conversation
+      const msgRes = await fetch(`${API_BASE}/api/social/messages/${conversationId}?limit=50`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': session?.token || '',
+        },
+      });
       
-      const msgs = await getMessages(convo.conversation_id);
-      setMessages(msgs.messages || []);
+      if (msgRes.ok) {
+        const msgData = await msgRes.json();
+        setMessages(msgData.messages || []);
+        setConversation({ conversation_id: conversationId });
+      }
     } catch (error) {
       console.error("Failed to load chat:", error);
-      // If not friends, redirect back
-      if (error.message.includes("friends")) {
-        navigate("/sender/people");
-      }
     } finally {
       setLoading(false);
     }
-  }, [userId, navigate]);
+  }, [conversationId, session?.token]);
 
   useEffect(() => {
     fetchData();
     
-    // Poll for new messages every 3 seconds
-    const interval = setInterval(() => {
-      if (conversation?.conversation_id) {
-        getMessages(conversation.conversation_id).then(data => {
-          setMessages(data.messages || []);
-        }).catch(console.error);
-      }
-    }, 3000);
-    
+    // Poll for new messages
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
-  }, [fetchData, conversation?.conversation_id]);
+  }, [fetchData]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -76,16 +68,25 @@ export default function Chat() {
   // Send text message
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || sending || !conversation) return;
+    if (!newMessage.trim() || sending) return;
     
     setSending(true);
     try {
-      await sendMessage(conversation.conversation_id, newMessage.trim());
-      setNewMessage("");
+      await fetch(`${API_BASE}/api/social/messages/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': session?.token || '',
+        },
+        body: JSON.stringify({
+          conversation_id: conversationId,
+          text: newMessage.trim(),
+          message_type: 'text',
+        }),
+      });
       
-      // Refresh messages
-      const msgs = await getMessages(conversation.conversation_id);
-      setMessages(msgs.messages || []);
+      setNewMessage("");
+      await fetchData();
     } catch (error) {
       console.error("Failed to send message:", error);
     } finally {
@@ -101,16 +102,31 @@ export default function Chat() {
     
     setPaymentSending(true);
     try {
-      await sendPaymentInChat(userId, amount, paymentNote || null);
+      // Get the other user ID from conversation
+      // For now, we'll need to extract from messages or conversation data
+      const otherUserId = messages.find(m => m.sender_user_id !== session?.token)?.sender_user_id;
       
-      // Close modal and reset
+      if (!otherUserId) {
+        throw new Error("Cannot determine recipient");
+      }
+      
+      await fetch(`${API_BASE}/api/social/payments/send-in-chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Session-Token': session?.token || '',
+        },
+        body: JSON.stringify({
+          recipient_user_id: otherUserId,
+          amount_usd: amount,
+          note: paymentNote || null,
+        }),
+      });
+      
       setShowPayment(false);
       setPaymentAmount("");
       setPaymentNote("");
-      
-      // Refresh messages
-      const msgs = await getMessages(conversation.conversation_id);
-      setMessages(msgs.messages || []);
+      await fetchData();
     } catch (error) {
       console.error("Failed to send payment:", error);
       alert(error.message || "Failed to send payment");
@@ -129,32 +145,40 @@ export default function Chat() {
 
   // Format time
   const formatTime = (isoString) => {
+    if (!isoString) return "";
     const date = new Date(isoString);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  // Complete onboarding
+  const completeOnboarding = () => {
+    setSession(prev => ({
+      ...prev,
+      exists: true,
+      verified: true,
+      role: prev.role || 'sender',
+      onboardingComplete: true,
+    }));
+    navigate(`/sender/chat/${conversationId.split('_')[1]}`);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className={`min-h-screen ${tw.shellBg} flex items-center justify-center`}>
         <svg className="animate-spin h-8 w-8 text-gray-400" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
       </div>
     );
   }
-
-  const otherUser = otherProfile || conversation?.other_user;
-  const displayName = otherUser?.business_name || otherUser?.display_name || "PBX User";
-  const handle = otherUser?.handle || otherUser?.username;
-  const isBusinessProfile = otherUser?.type === 'business' || isBusiness;
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
         <button
-          onClick={() => navigate("/sender/people")}
+          onClick={() => navigate('/onboarding/people')}
           className="p-2 -ml-2 hover:bg-gray-100 rounded-full"
           data-testid="back-btn"
         >
@@ -163,32 +187,21 @@ export default function Chat() {
           </svg>
         </button>
         
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-          isBusinessProfile 
-            ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
-            : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
-        }`}>
-          {displayName?.[0]?.toUpperCase() || "?"}
+        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#0A2540] to-[#1a4a7c] flex items-center justify-center text-white font-bold">
+          ?
         </div>
         
         <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <p className="font-semibold text-[#0A2540]">{displayName}</p>
-            {isBusinessProfile && (
-              <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded">
-                BUSINESS
-              </span>
-            )}
-            {otherUser?.verified && (
-              <svg className="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            )}
-          </div>
-          {handle && (
-            <p className="text-sm text-gray-500">@{handle}</p>
-          )}
+          <p className="font-semibold text-[#0A2540]">Chat</p>
+          <p className="text-xs text-gray-500">Onboarding</p>
         </div>
+        
+        <button
+          onClick={completeOnboarding}
+          className="px-3 py-1.5 bg-[#F6C94B] text-[#0A2540] text-sm font-medium rounded-lg"
+        >
+          Done
+        </button>
       </div>
 
       {/* Messages */}
@@ -210,10 +223,7 @@ export default function Chat() {
           
           if (isPayment) {
             return (
-              <div
-                key={msg.message_id}
-                className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-              >
+              <div key={msg.message_id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
                 <div
                   className={`max-w-[80%] rounded-2xl p-4 ${
                     isMe
@@ -232,19 +242,15 @@ export default function Chat() {
                     <p className="text-sm text-gray-600 mb-2">&ldquo;{msg.text}&rdquo;</p>
                   )}
                   <p className="text-xs text-gray-400">
-                    Ref: {msg.payment?.tx_id} • {formatTime(msg.created_at)}
+                    {formatTime(msg.created_at)}
                   </p>
                 </div>
               </div>
             );
           }
           
-          // Text message
           return (
-            <div
-              key={msg.message_id}
-              className={`flex ${isMe ? "justify-end" : "justify-start"}`}
-            >
+            <div key={msg.message_id} className={`flex ${isMe ? "justify-end" : "justify-start"}`}>
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-2.5 ${
                   isMe
@@ -306,35 +312,11 @@ export default function Chat() {
           <div className="bg-white rounded-2xl w-full max-w-sm p-6" data-testid="payment-modal">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-[#0A2540]">Send PBX</h2>
-              <button
-                onClick={() => setShowPayment(false)}
-                className="p-2 hover:bg-gray-100 rounded-full"
-              >
+              <button onClick={() => setShowPayment(false)} className="p-2 hover:bg-gray-100 rounded-full">
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </div>
-            
-            <div className="text-center mb-6">
-              <div className={`w-16 h-16 mx-auto rounded-full flex items-center justify-center text-white font-bold text-2xl mb-3 ${
-                isBusinessProfile 
-                  ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
-                  : 'bg-gradient-to-br from-[#0A2540] to-[#1a4a7c]'
-              }`}>
-                {displayName?.[0]?.toUpperCase() || "?"}
-              </div>
-              <div className="flex items-center justify-center gap-2">
-                <p className="font-semibold text-[#0A2540]">{displayName}</p>
-                {isBusinessProfile && (
-                  <span className="px-1.5 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded">
-                    BUSINESS
-                  </span>
-                )}
-              </div>
-              {handle && (
-                <p className="text-sm text-gray-500">@{handle}</p>
-              )}
             </div>
             
             <div className="mb-4">
@@ -378,7 +360,7 @@ export default function Chat() {
                 <>
                   <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
                   Sending...
                 </>

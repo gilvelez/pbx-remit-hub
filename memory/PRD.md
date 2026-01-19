@@ -10,15 +10,26 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 ## 🔒 HARD RULES (Locked In)
 
 ### Phase 0 Cleanup (P0 - COMPLETE ✅ Jan 2026)
-- **Onboarding Step 4**: Shows "Send to PBX Friends" as RECOMMENDED primary option with "Instant & free" badges
+- **Onboarding Step 4**: Shows "Find people or add a person" as RECOMMENDED primary option with "Instant & free" badges
 - **External Payees Secondary**: GCash, Maya, Bank, Cash Pickup shown below divider "or add external payee"
 - **Send Page External-Only**: `/sender/send` only shows external delivery methods (NO PBX→PBX)
 - **PBX→PBX via Chat Only**: All PBX-to-PBX transfers initiated from Chat (social flow)
 - **Deep Link Routing**: Magic links route to correct screen (chat for transfers, people for friend requests)
 - **X-Active-Profile Header**: All social API requests include active profile ID
 - **No Dead Routes**: Navigation consistent, no blank pages
-- **CTA Click Handler Fixed**: "Send to PBX Friends" sets session.exists, session.verified, session.role='sender', session.onboardingComplete=true before navigating
+- **CTA Click Handler Fixed**: "Find people or add a person" navigates to /onboarding/people (NOT Dashboard)
 - **Setup Banner**: People page shows optional banner "External payee setup is optional" with link to Send → External
+
+### Social Send/Receive Flow (P0 - COMPLETE ✅ Jan 2026)
+- **Onboarding Routes**: `/onboarding/people` (People Picker), `/onboarding/chat/:conversationId` (Chat in onboarding mode)
+- **App Routes**: `/sender/people/picker` (People Picker in app mode), `/sender/chat/:userId`, `/sender/send-external`
+- **Find People CTA**: On AddRecipient page, navigates to /onboarding/people (NOT Dashboard)
+- **People Picker**: Search returns BOTH people and businesses with correct labels
+- **Business Badge**: Purple avatar + "BUSINESS" badge for business profiles in search results
+- **No Results State**: Shows "No PBX user found" with "Invite via SMS" and "Invite via Email" buttons
+- **Invite Flow**: Creates pending invite, shows toast "Invite saved — delivery pending"
+- **Profile Switcher**: Persists activeProfileId in localStorage under key `pbx_active_profile_id`
+- **Magic Link Deep Linking**: Supports `dest=chat`, `dest=people-requests`, `dest=businesses`, `dest=activity`
 
 ### Account Types - Phase 1 (P0 - COMPLETE ✅ Jan 2026)
 - **Personal Account (People)**: @username, display name, avatar, friends system, social chat
@@ -92,10 +103,19 @@ Build a **social payments platform** (PBX) for cross-border money transfers betw
 
 ### Route Structure
 ```
+/onboarding/*       - Onboarding routes
+  /onboarding/recipient - Add first friend or payee
+  /onboarding/people    - People Picker (search + invite) - NEW Jan 2026
+  /onboarding/chat/:id  - Chat in onboarding mode - NEW Jan 2026
+
 /sender/*           - Sender (employer/business) routes
   /sender/dashboard - Sender home with transfer stats
-  /sender/send      - Initiate transfers
-  /sender/recipients - Manage recipients
+  /sender/send      - External transfers only (GCash, Maya, Bank, Cash)
+  /sender/send-external - Same as /sender/send - NEW Jan 2026
+  /sender/people    - Friends management (personal profiles)
+  /sender/people/picker - People Picker (search + invite) - NEW Jan 2026
+  /sender/businesses - Business discovery
+  /sender/chat/:id  - 1:1 chat with payments
   /sender/activity  - Transfer history
   /sender/settings  - Account settings
 
