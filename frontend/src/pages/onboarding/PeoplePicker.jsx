@@ -436,19 +436,37 @@ export default function PeoplePicker() {
               {!inviteResult && (
                 <>
                   <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1 block">
-                        {inviteMethod === 'sms' ? 'Phone Number' : 'Email Address'} *
-                      </label>
-                      <input
-                        type={inviteMethod === 'sms' ? 'tel' : 'email'}
-                        value={inviteContact}
-                        onChange={(e) => setInviteContact(e.target.value)}
-                        placeholder={inviteMethod === 'sms' ? '+1 234 567 8900' : 'friend@example.com'}
-                        className="w-full h-12 px-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
-                        data-testid="invite-contact-input"
-                      />
-                    </div>
+                    {/* Phone Input with Country Selector */}
+                    {inviteMethod === 'phone' && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-2 block">
+                          Phone Number *
+                        </label>
+                        <PhoneInputWithCountry
+                          value={invitePhoneData?.phone_e164}
+                          onChange={setInvitePhoneData}
+                          onValidChange={setPhoneIsValid}
+                          disabled={inviteLoading}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Email Input */}
+                    {inviteMethod === 'email' && (
+                      <div>
+                        <label className="text-sm font-medium text-gray-700 mb-1 block">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          value={inviteContact}
+                          onChange={(e) => setInviteContact(e.target.value)}
+                          placeholder="friend@example.com"
+                          className="w-full h-12 px-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-2 focus:ring-[#0A2540]/10 outline-none"
+                          data-testid="invite-email-input"
+                        />
+                      </div>
+                    )}
                     
                     <div>
                       <label className="text-sm font-medium text-gray-700 mb-1 block">Name (optional)</label>
@@ -465,7 +483,11 @@ export default function PeoplePicker() {
 
                   <button
                     onClick={handleInvite}
-                    disabled={!inviteContact.trim() || inviteLoading}
+                    disabled={
+                      inviteLoading || 
+                      (inviteMethod === 'phone' && !phoneIsValid) ||
+                      (inviteMethod === 'email' && !inviteContact.trim())
+                    }
                     className="w-full mt-6 h-12 bg-[#0A2540] text-white rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
                     data-testid="invite-submit-btn"
                   >
