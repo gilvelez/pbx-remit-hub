@@ -152,7 +152,10 @@ async def create_transfer_atomic(
     ledger = db.ledger
     ledger_tx = db.ledger_tx
     
-    # Get sender wallet and validate balance
+    # DO NOT check balance here - do it atomically in the update operation
+    # This prevents race conditions where balance changes between check and update
+    
+    # Ensure sender wallet exists (but don't check balance yet)
     sender_wallet = await wallets.find_one({"user_id": from_user_id})
     if not sender_wallet:
         # Auto-create wallet with 0 balance
@@ -164,17 +167,20 @@ async def create_transfer_atomic(
             "updated_at": now
         }
         await wallets.insert_one(sender_wallet)
+        # New wallet has 0 balance - will fail balance check below
+        sender_wallet = await wallets.find_one({"user_id": from_user_id})
     
     balance_field = "usd_balance" if currency == "USD" else "php_balance"
-    sender_balance = sender_wallet.get(balance_field, 0)
     
-    if sender_balance < amount:
+    # Quick pre-check for user feedback (not authoritative - atomic check is in update)
+    current_balance = sender_wallet.get(balance_field, 0)
+    if current_balance < amount:
         raise HTTPException(
             status_code=400,
             detail={
                 "error": "insufficient_balance",
-                "message": f"Insufficient balance. Available: {currency} {sender_balance:.2f}, Required: {currency} {amount:.2f}",
-                "available": sender_balance,
+                "message": f"Insufficient balance. Available: {currency} {current_balance:.2f}, Required: {currency} {amount:.2f}",
+                "available": current_balance,
                 "required": amount,
                 "currency": currency
             }
