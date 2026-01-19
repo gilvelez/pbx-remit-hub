@@ -96,6 +96,8 @@ function AppRoutes() {
       <Route path="/onboarding/phone" element={<PhoneOTP />} />
       <Route path="/onboarding/bank" element={<ConnectBank />} />
       <Route path="/onboarding/recipient" element={<AddRecipient />} />
+      <Route path="/onboarding/people" element={<OnboardingPeoplePicker />} />
+      <Route path="/onboarding/chat/:conversationId" element={<OnboardingChat />} />
       
       {/* Redirect old routes */}
       <Route path="/onboarding/personal" element={<Navigate to="/welcome" replace />} />
