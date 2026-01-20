@@ -30,9 +30,12 @@ export default function BanksAndPayments() {
   const fetchBanks = useCallback(async () => {
     try {
       const banks = await getLinkedBanks(session?.token);
-      setLinkedBanks(banks);
+      // Ensure banks is always an array
+      setLinkedBanks(Array.isArray(banks) ? banks : []);
     } catch (err) {
       console.error("Failed to fetch banks:", err);
+      // Set empty array on error - don't crash the UI
+      setLinkedBanks([]);
     } finally {
       setLoading(false);
     }
@@ -57,9 +60,23 @@ export default function BanksAndPayments() {
         body: JSON.stringify({ client_user_id: session?.token || "pbx-user" }),
       });
       
-      const data = await res.json();
-      if (!res.ok || !data.link_token) {
-        throw new Error(data.error || "Failed to create link token");
+      // Safely parse JSON response once
+      let data = {};
+      try {
+        const text = await res.text();
+        if (text && text.trim()) {
+          data = JSON.parse(text);
+        }
+      } catch (parseErr) {
+        console.warn("Failed to parse Plaid link-token response:", parseErr);
+      }
+      
+      if (!res.ok) {
+        throw new Error(data.error || data.detail || "Failed to create link token");
+      }
+      
+      if (!data.link_token) {
+        throw new Error("No link token received from server");
       }
       
       setLinkToken(data.link_token);
