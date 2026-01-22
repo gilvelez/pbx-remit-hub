@@ -497,6 +497,13 @@ Dark theme: neutral-950, amber-400, red-600
   - Contextual fallbacks: "Link a bank" prompts when no banks
   - Recurring Transfers: Coming Soon placeholder (Phase 6)
   - Backend: /api/banks/* endpoints (linked, link, unlink, add-money, withdraw)
+- [x] **Plaid Link Two-Tap Fix (P0)** ✅ Jan 2026
+  - Fixed Plaid Link modal not opening on production
+  - Implemented two-tap mechanism for mobile browser compatibility
+  - First tap: Prepares link token with "Ready to link" message
+  - Second tap: Opens Plaid modal when SDK is ready
+  - Background token prefetch for verified sessions
+  - Proper session verification before bank linking
 
 ### P1 (High Priority)
 - [ ] Deploy to Netlify
