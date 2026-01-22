@@ -26,6 +26,26 @@ def get_plaid_mode() -> str:
     return os.environ.get('PLAID_MODE', 'MOCK').upper()
 
 
+def log_plaid_config():
+    """Log Plaid configuration (without exposing secrets) for debugging."""
+    client_id = os.environ.get('PLAID_CLIENT_ID', '')
+    secret = os.environ.get('PLAID_SECRET', '')
+    env = os.environ.get('PLAID_ENV', 'sandbox')
+    mode = get_plaid_mode()
+    
+    logger.info(f"[PLAID DEBUG] PLAID_MODE={mode}")
+    logger.info(f"[PLAID DEBUG] has_PLAID_CLIENT_ID={bool(client_id)}")
+    logger.info(f"[PLAID DEBUG] has_PLAID_SECRET={bool(secret)}")
+    logger.info(f"[PLAID DEBUG] PLAID_ENV={env}")
+    
+    return {
+        "mode": mode,
+        "has_client_id": bool(client_id),
+        "has_secret": bool(secret),
+        "env": env
+    }
+
+
 def get_plaid_client():
     """
     Get Plaid client based on PLAID_MODE.
@@ -36,6 +56,7 @@ def get_plaid_client():
     mode = get_plaid_mode()
     
     if mode == 'MOCK':
+        logger.info("[PLAID] Running in MOCK mode - no real Plaid client needed")
         return None
     
     if mode == 'SANDBOX' and _plaid_client is None:
@@ -49,8 +70,13 @@ def get_plaid_client():
             secret = os.environ.get('PLAID_SECRET')
             env = os.environ.get('PLAID_ENV', 'sandbox')
             
+            # Log config for debugging (without secrets)
+            log_plaid_config()
+            
             if not client_id or not secret:
-                raise ValueError("PLAID_CLIENT_ID and PLAID_SECRET must be set for SANDBOX mode")
+                error_msg = "PLAID_CLIENT_ID and PLAID_SECRET must be set for SANDBOX mode"
+                logger.error(f"[PLAID ERROR] {error_msg}")
+                raise ValueError(error_msg)
             
             # Map environment string to Plaid environment
             plaid_env_map = {
@@ -70,13 +96,13 @@ def get_plaid_client():
             api_client = plaid.ApiClient(configuration)
             _plaid_client = plaid_api.PlaidApi(api_client)
             
-            logger.info(f"Initialized Plaid client in {env} mode")
+            logger.info(f"[PLAID] Initialized Plaid client in {env} mode")
             
-        except ImportError:
-            logger.error("Plaid SDK not installed. Install with: pip install plaid-python")
-            raise
+        except ImportError as e:
+            logger.error(f"[PLAID ERROR] Plaid SDK not installed: {e}")
+            raise ImportError("Plaid SDK not installed. Install with: pip install plaid-python")
         except Exception as e:
-            logger.error(f"Failed to initialize Plaid client: {e}")
+            logger.error(f"[PLAID ERROR] Failed to initialize Plaid client: {e}")
             raise
     
     return _plaid_client
@@ -91,14 +117,18 @@ class PlaidService:
     def __init__(self):
         self.mode = get_plaid_mode()
         self.client = get_plaid_client()
-        logger.info(f"PlaidService initialized in {self.mode} mode")
+        logger.info(f"[PLAID] PlaidService initialized in {self.mode} mode")
     
     async def create_link_token(self, user_id: str) -> Dict[str, Any]:
         """
         Create a link token for Plaid Link.
         Returns: { link_token: str, expiration: str }
         """
+        # Log config for debugging
+        config = log_plaid_config()
+        
         if self.mode == 'MOCK':
+            logger.info("[PLAID] Creating mock link token")
             return generate_link_token()
         
         try:
@@ -106,6 +136,8 @@ class PlaidService:
             from plaid.model.link_token_create_request_user import LinkTokenCreateRequestUser
             from plaid.model.products import Products
             from plaid.model.country_code import CountryCode
+            
+            logger.info(f"[PLAID] Creating link token for user: {user_id}")
             
             request = LinkTokenCreateRequest(
                 user=LinkTokenCreateRequestUser(client_user_id=user_id),
@@ -117,13 +149,39 @@ class PlaidService:
             
             response = self.client.link_token_create(request)
             
+            logger.info("[PLAID] Successfully created link token")
+            
             return {
                 "link_token": response['link_token'],
                 "expiration": response['expiration']
             }
         except Exception as e:
-            logger.error(f"Error creating link token: {e}")
-            raise
+            # Extract Plaid error details if available
+            error_details = {
+                "error_type": getattr(e, 'error_type', 'UNKNOWN'),
+                "error_code": getattr(e, 'error_code', 'UNKNOWN'),
+                "error_message": str(e),
+                "display_message": getattr(e, 'display_message', str(e)),
+            }
+            
+            # Check for ApiException which has more details
+            if hasattr(e, 'body'):
+                try:
+                    import json
+                    error_body = json.loads(e.body) if isinstance(e.body, str) else e.body
+                    error_details.update({
+                        "error_type": error_body.get('error_type', error_details['error_type']),
+                        "error_code": error_body.get('error_code', error_details['error_code']),
+                        "error_message": error_body.get('error_message', error_details['error_message']),
+                        "display_message": error_body.get('display_message', error_details['display_message']),
+                    })
+                except:
+                    pass
+            
+            logger.error(f"[PLAID ERROR] Error creating link token: {error_details}")
+            
+            # Raise with detailed message
+            raise Exception(f"Plaid error: {error_details['error_message']} (code: {error_details['error_code']}, type: {error_details['error_type']})")
     
     async def exchange_public_token(self, public_token: str) -> Dict[str, Any]:
         """
@@ -147,7 +205,7 @@ class PlaidService:
                 "item_id": response['item_id']
             }
         except Exception as e:
-            logger.error(f"Error exchanging public token: {e}")
+            logger.error(f"[PLAID ERROR] Error exchanging public token: {e}")
             raise
     
     async def get_accounts(self, access_token: str) -> Dict[str, Any]:
@@ -184,7 +242,7 @@ class PlaidService:
             
             return {"accounts": accounts}
         except Exception as e:
-            logger.error(f"Error getting accounts: {e}")
+            logger.error(f"[PLAID ERROR] Error getting accounts: {e}")
             raise
     
     async def get_transactions(self, access_token: str, limit: int = 10) -> Dict[str, Any]:
@@ -229,7 +287,7 @@ class PlaidService:
             
             return {"transactions": formatted_transactions}
         except Exception as e:
-            logger.error(f"Error getting transactions: {e}")
+            logger.error(f"[PLAID ERROR] Error getting transactions: {e}")
             raise
 
 
