@@ -23,7 +23,7 @@ function PlaidLinkLauncher({
   onError,
   sessionToken 
 }) {
-  const [hasOpened, setHasOpened] = useState(false);
+  const hasOpenedRef = React.useRef(false);
 
   const config = {
     token: linkToken,
@@ -47,14 +47,14 @@ function PlaidLinkLauncher({
 
   // Open Plaid Link when ready (only once)
   useEffect(() => {
-    console.log("[PlaidLink] State - ready:", ready, "hasOpened:", hasOpened, "token:", !!linkToken);
+    console.log("[PlaidLink] State - ready:", ready, "hasOpened:", hasOpenedRef.current, "token:", !!linkToken);
     
-    if (ready && linkToken && !hasOpened) {
+    if (ready && linkToken && !hasOpenedRef.current) {
       console.log("[PlaidLink] Opening Plaid Link UI...");
-      setHasOpened(true);
+      hasOpenedRef.current = true;
       open();
     }
-  }, [ready, linkToken, hasOpened, open]);
+  }, [ready, linkToken, open]);
 
   // Handle Plaid SDK errors
   useEffect(() => {
