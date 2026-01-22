@@ -2,17 +2,71 @@
  * BanksAndPayments.jsx - Manage linked bank accounts
  * Phase 4: Bank Management
  * 
- * Features:
- * - List linked banks with institution name, last 4 digits, status
- * - Link new bank via Plaid
- * - Remove bank with confirmation
- * - Recurring Transfers placeholder (Phase 6)
+ * FIXED: Plaid Link initialization - now properly waits for link token
+ * before calling open(). Uses conditional rendering to ensure usePlaidLink
+ * is only mounted when we have a valid token.
  */
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getLinkedBanks, unlinkBank, linkBank } from "../../lib/bankApi";
 import { usePlaidLink } from "react-plaid-link";
+
+/**
+ * PlaidLinkLauncher - Component that handles Plaid Link
+ * Only mounted when we have a valid linkToken
+ */
+function PlaidLinkLauncher({ 
+  linkToken, 
+  onSuccess, 
+  onExit, 
+  onError,
+  sessionToken 
+}) {
+  const [hasOpened, setHasOpened] = useState(false);
+
+  const config = {
+    token: linkToken,
+    onSuccess: (public_token, metadata) => {
+      console.log("[PlaidLink] Success - got public_token");
+      onSuccess(public_token, metadata);
+    },
+    onExit: (err, metadata) => {
+      console.log("[PlaidLink] Exit", err ? `with error: ${err.error_message}` : "by user");
+      if (err) {
+        onError(err.error_message || "Plaid Link was closed");
+      }
+      onExit();
+    },
+    onEvent: (eventName, metadata) => {
+      console.log("[PlaidLink] Event:", eventName);
+    },
+  };
+
+  const { open, ready, error } = usePlaidLink(config);
+
+  // Open Plaid Link when ready (only once)
+  useEffect(() => {
+    console.log("[PlaidLink] State - ready:", ready, "hasOpened:", hasOpened, "token:", !!linkToken);
+    
+    if (ready && linkToken && !hasOpened) {
+      console.log("[PlaidLink] Opening Plaid Link UI...");
+      setHasOpened(true);
+      open();
+    }
+  }, [ready, linkToken, hasOpened, open]);
+
+  // Handle Plaid SDK errors
+  useEffect(() => {
+    if (error) {
+      console.error("[PlaidLink] SDK Error:", error);
+      onError(error.message || "Failed to initialize Plaid");
+    }
+  }, [error, onError]);
+
+  // Show loading while Plaid initializes
+  return null;
+}
 
 export default function BanksAndPayments() {
   const navigate = useNavigate();
@@ -30,11 +84,9 @@ export default function BanksAndPayments() {
   const fetchBanks = useCallback(async () => {
     try {
       const banks = await getLinkedBanks(session?.token);
-      // Ensure banks is always an array
       setLinkedBanks(Array.isArray(banks) ? banks : []);
     } catch (err) {
       console.error("Failed to fetch banks:", err);
-      // Set empty array on error - don't crash the UI
       setLinkedBanks([]);
     } finally {
       setLoading(false);
@@ -45,12 +97,17 @@ export default function BanksAndPayments() {
     fetchBanks();
   }, [fetchBanks]);
 
-  // Get Plaid Link token
-  const getLinkToken = async () => {
+  // Handle button click - fetch link token
+  const handleLinkBankClick = async () => {
+    console.log("[BanksAndPayments] Link Bank clicked");
     setError("");
     setLinkingBank(true);
+    setLinkToken(null); // Reset any previous token
+    
     try {
       const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+      console.log("[BanksAndPayments] Fetching link token from:", `${backendUrl}/api/plaid/link-token`);
+      
       const res = await fetch(`${backendUrl}/api/plaid/link-token`, {
         method: "POST",
         headers: {
@@ -61,70 +118,80 @@ export default function BanksAndPayments() {
         body: JSON.stringify({ client_user_id: session?.token || "pbx-user" }),
       });
       
-      // Safely parse JSON response once
+      // Safely parse JSON response
       let data = {};
       try {
         const text = await res.text();
+        console.log("[BanksAndPayments] Response text:", text.substring(0, 200));
         if (text && text.trim()) {
           data = JSON.parse(text);
         }
       } catch (parseErr) {
-        console.warn("Failed to parse Plaid link-token response:", parseErr);
+        console.error("[BanksAndPayments] JSON parse error:", parseErr);
+        throw new Error("Invalid response from server");
       }
       
       if (!res.ok) {
-        throw new Error(data.error || data.detail || "Failed to create link token");
+        const errorMsg = data.detail?.message || data.detail || data.error || "Failed to create link token";
+        console.error("[BanksAndPayments] API error:", errorMsg);
+        throw new Error(errorMsg);
       }
       
       if (!data.link_token) {
+        console.error("[BanksAndPayments] No link_token in response:", data);
         throw new Error("No link token received from server");
       }
       
+      console.log("[BanksAndPayments] Got link token:", data.link_token.substring(0, 20) + "...");
       setLinkToken(data.link_token);
+      // Note: Don't stop spinner here - Plaid Link will handle it
+      
     } catch (err) {
+      console.error("[BanksAndPayments] Error:", err);
       setError(err.message || "Failed to initialize bank linking");
       setLinkingBank(false);
+      setLinkToken(null);
     }
   };
 
-  // Plaid Link success handler
-  const onPlaidSuccess = useCallback(async (public_token, metadata) => {
+  // Plaid success handler
+  const handlePlaidSuccess = useCallback(async (public_token, metadata) => {
+    console.log("[BanksAndPayments] Plaid success, linking bank...");
+    
     try {
-      const result = await linkBank(session?.token, {
+      await linkBank(session?.token, {
         public_token,
         institution: metadata.institution,
         accounts: metadata.accounts,
       });
       
       setSuccess("Bank account linked successfully!");
-      setLinkToken(null);
       fetchBanks();
-      
-      // Clear success message after 3s
       setTimeout(() => setSuccess(""), 3000);
+      
     } catch (err) {
+      console.error("[BanksAndPayments] Link bank error:", err);
       setError(err.message || "Failed to link bank account");
     } finally {
+      setLinkToken(null);
       setLinkingBank(false);
     }
   }, [session?.token, fetchBanks]);
 
-  // Plaid Link config
-  const { open: openPlaid, ready: plaidReady } = usePlaidLink({
-    token: linkToken,
-    onSuccess: onPlaidSuccess,
-    onExit: () => {
-      setLinkingBank(false);
-      setLinkToken(null);
-    },
-  });
+  // Plaid exit handler
+  const handlePlaidExit = useCallback(() => {
+    console.log("[BanksAndPayments] Plaid exit");
+    setLinkToken(null);
+    setLinkingBank(false);
+  }, []);
 
-  // Open Plaid when token is ready
-  useEffect(() => {
-    if (linkToken && plaidReady) {
-      openPlaid();
-    }
-  }, [linkToken, plaidReady, openPlaid]);
+  // Plaid error handler
+  const handlePlaidError = useCallback((errorMsg) => {
+    console.error("[BanksAndPayments] Plaid error:", errorMsg);
+    setError(errorMsg);
+    setLinkToken(null);
+    setLinkingBank(false);
+  }, []);
 
   // Handle unlink bank
   const handleUnlinkBank = async (bankId) => {
@@ -155,6 +222,17 @@ export default function BanksAndPayments() {
 
   return (
     <div className="max-w-lg mx-auto">
+      {/* Plaid Link Launcher - only mounted when we have a token */}
+      {linkToken && (
+        <PlaidLinkLauncher
+          linkToken={linkToken}
+          onSuccess={handlePlaidSuccess}
+          onExit={handlePlaidExit}
+          onError={handlePlaidError}
+          sessionToken={session?.token}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
@@ -262,7 +340,7 @@ export default function BanksAndPayments() {
         {/* Link Another Bank Button */}
         <div className="p-4 border-t border-gray-100">
           <button
-            onClick={getLinkToken}
+            onClick={handleLinkBankClick}
             disabled={linkingBank}
             className="w-full h-12 bg-[#0A2540] text-white font-semibold rounded-xl hover:bg-[#0A2540]/90 transition flex items-center justify-center gap-2 disabled:opacity-50"
             data-testid="link-new-bank-btn"
@@ -270,7 +348,7 @@ export default function BanksAndPayments() {
             {linkingBank ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                Connecting...
+                {linkToken ? "Opening Plaid..." : "Connecting..."}
               </>
             ) : (
               <>
