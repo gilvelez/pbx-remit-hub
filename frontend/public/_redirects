@@ -1,1 +1,12 @@
+/api/plaid/link-token   /.netlify/functions/create-link-token   200
+/api/plaid/status       /.netlify/functions/plaid-status        200
+/api/circle/status      /.netlify/functions/circle-status       200
+
+/api/banks/linked       /.netlify/functions/banks-linked        200
+/api/banks/link         /.netlify/functions/banks-link          200
+/api/banks/add-money    /.netlify/functions/banks-add-money     200
+/api/banks/withdraw     /.netlify/functions/banks-withdraw      200
+/api/banks/*            /.netlify/functions/banks-delete?bank_id=:splat  200
+
+
 /*  /index.html  200
