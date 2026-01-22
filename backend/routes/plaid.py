@@ -14,6 +14,21 @@ logger = logging.getLogger(__name__)
 class LinkTokenRequest(BaseModel):
     client_user_id: str = "pbx-demo-user"
 
+@router.get("/api/plaid/config")
+async def get_plaid_config():
+    """
+    Debug endpoint to check Plaid configuration (no secrets exposed).
+    Returns: mode, has_client_id, has_secret, env
+    """
+    config = log_plaid_config()
+    return {
+        "plaid_mode": config["mode"],
+        "has_client_id": config["has_client_id"],
+        "has_secret": config["has_secret"],
+        "plaid_env": config["env"],
+        "status": "ready" if (config["mode"] == "MOCK" or (config["has_client_id"] and config["has_secret"])) else "missing_credentials"
+    }
+
 @router.post("/api/plaid/link-token")
 async def create_link_token(request: LinkTokenRequest):
     """
