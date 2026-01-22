@@ -56,6 +56,7 @@ export default function BanksAndPayments() {
         headers: {
           "Content-Type": "application/json",
           "X-Session-Token": session?.token || "",
+          "X-Session-Verified": session?.verified ? "true" : "false",
         },
         body: JSON.stringify({ client_user_id: session?.token || "pbx-user" }),
       });

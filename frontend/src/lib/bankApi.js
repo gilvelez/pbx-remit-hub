@@ -14,6 +14,25 @@
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || '';
 
+function getSessionFromStorage() {
+  try {
+    const raw = localStorage.getItem('pbx_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function baseHeaders(sessionToken) {
+  const s = getSessionFromStorage();
+  const verified = s?.verified ? 'true' : 'false';
+  return {
+    'Content-Type': 'application/json',
+    'X-Session-Token': sessionToken || '',
+    'X-Session-Verified': verified,
+  };
+}
+
 /**
  * Safely parse JSON from response, handling empty bodies and errors
  * @param {Response} res - Fetch response object
@@ -45,10 +64,7 @@ async function safeParseJSON(res) {
 export async function getLinkedBanks(sessionToken) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/banks/linked`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-Token': sessionToken || '',
-      },
+      headers: baseHeaders(sessionToken),
     });
     
     // Handle 204 No Content
@@ -85,10 +101,7 @@ export async function linkBank(sessionToken, { public_token, institution, accoun
   try {
     const res = await fetch(`${BACKEND_URL}/api/banks/link`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-Token': sessionToken || '',
-      },
+      headers: baseHeaders(sessionToken),
       body: JSON.stringify({
         public_token,
         institution_id: institution?.institution_id,
@@ -129,10 +142,7 @@ export async function unlinkBank(sessionToken, bankId) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/banks/${bankId}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-Token': sessionToken || '',
-      },
+      headers: baseHeaders(sessionToken),
     });
     
     // Handle 204 No Content (successful delete with no body)
@@ -166,10 +176,7 @@ export async function initiateAddMoney(sessionToken, { amount, bank_id }) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/banks/add-money`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-Token': sessionToken || '',
-      },
+      headers: baseHeaders(sessionToken),
       body: JSON.stringify({ amount, bank_id }),
     });
     
@@ -205,10 +212,7 @@ export async function initiateWithdrawal(sessionToken, { amount, bank_id }) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/banks/withdraw`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-Token': sessionToken || '',
-      },
+      headers: baseHeaders(sessionToken),
       body: JSON.stringify({ amount, bank_id }),
     });
     
@@ -243,10 +247,7 @@ export async function initiateWithdrawal(sessionToken, { amount, bank_id }) {
 export async function getTransferHistory(sessionToken, limit = 20) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/banks/transfers?limit=${limit}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-Token': sessionToken || '',
-      },
+      headers: baseHeaders(sessionToken),
     });
     
     if (res.status === 204 || res.status === 404) {
