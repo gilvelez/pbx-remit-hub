@@ -3,7 +3,8 @@
  * Phase 4: Bank Management
  * 
  * FIXED: Plaid Link initialization - now properly waits for link token
- * before calling open(). Uses two-tap mechanism for mobile compatibility.
+ * before calling open(). Uses conditional rendering to ensure usePlaidLink
+ * is only mounted when we have a valid token.
  */
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -23,62 +24,6 @@ export default function BanksAndPayments() {
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // Fetch linked banks
-  const fetchBanks = useCallback(async () => {
-    try {
-      const banks = await getLinkedBanks(session?.token);
-      setLinkedBanks(Array.isArray(banks) ? banks : []);
-    } catch (err) {
-      console.error("Failed to fetch banks:", err);
-      setLinkedBanks([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.token]);
-
-  useEffect(() => {
-    fetchBanks();
-  }, [fetchBanks]);
-
-  // Plaid success handler
-  const handlePlaidSuccess = useCallback(async (public_token, metadata) => {
-    console.log("[BanksAndPayments] Plaid success, linking bank...");
-    
-    try {
-      await linkBank(session?.token, {
-        public_token,
-        institution: metadata.institution,
-        accounts: metadata.accounts,
-      });
-      
-      setSuccess("Bank account linked successfully!");
-      fetchBanks();
-      setTimeout(() => setSuccess(""), 3000);
-      
-    } catch (err) {
-      console.error("[BanksAndPayments] Link bank error:", err);
-      setError(err.message || "Failed to link bank account");
-    } finally {
-      setLinkToken(null);
-      setLinkingBank(false);
-    }
-  }, [session?.token, fetchBanks]);
-
-  // Plaid exit handler
-  const handlePlaidExit = useCallback(() => {
-    console.log("[BanksAndPayments] Plaid exit");
-    setLinkToken(null);
-    setLinkingBank(false);
-  }, []);
-
-  // Plaid error handler
-  const handlePlaidError = useCallback((errorMsg) => {
-    console.error("[BanksAndPayments] Plaid error:", errorMsg);
-    setError(errorMsg);
-    setLinkToken(null);
-    setLinkingBank(false);
-  }, []);
 
   /**
    * IMPORTANT (mobile):
@@ -123,7 +68,25 @@ export default function BanksAndPayments() {
       console.error("[PlaidLink] SDK Error:", plaidSdkError);
       handlePlaidError(plaidSdkError.message || "Failed to initialize Plaid");
     }
-  }, [plaidSdkError, handlePlaidError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plaidSdkError]);
+
+  // Fetch linked banks
+  const fetchBanks = useCallback(async () => {
+    try {
+      const banks = await getLinkedBanks(session?.token);
+      setLinkedBanks(Array.isArray(banks) ? banks : []);
+    } catch (err) {
+      console.error("Failed to fetch banks:", err);
+      setLinkedBanks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.token]);
+
+  useEffect(() => {
+    fetchBanks();
+  }, [fetchBanks]);
 
   // Prefetch a Plaid link token once the user is verified
   const prefetchLinkToken = useCallback(async () => {
@@ -176,9 +139,7 @@ export default function BanksAndPayments() {
     if (!session?.verified) {
       try {
         setLinkingBank(true);
-        if (verify) {
-          await verify();
-        }
+        await verify();
       } catch (e) {
         console.error("[BanksAndPayments] Session verification failed:", e);
         setError("Please verify your session before linking a bank. Try logging out and back in.");
@@ -199,7 +160,7 @@ export default function BanksAndPayments() {
     // If we already have a token, don't fetch a new one; just open when ready.
     if (linkToken) {
       if (!plaidReady) {
-        setError("Still preparing Plaid… please tap 'Link a Bank' again in a moment.");
+        setError("Still preparing Plaid… please tap ‘Link a Bank’ again in a moment.");
         setLinkingBank(false);
         return;
       }
@@ -259,7 +220,7 @@ export default function BanksAndPayments() {
       // IMPORTANT: we do NOT call open() in the same click that fetched the token.
       // React state updates are async; opening immediately often results in `ready=false`.
       // User taps once to prepare, then taps again to open.
-      setError("Ready to link. Tap 'Link a Bank' again to open Plaid.");
+      setError("Ready to link. Tap ‘Link a Bank’ again to open Plaid.");
       setLinkingBank(false);
     } catch (err) {
       console.error("[BanksAndPayments] Error:", err);
@@ -268,6 +229,45 @@ export default function BanksAndPayments() {
       // keep linkToken as-is (if any) so user can retry
     }
   };
+
+  // Plaid success handler
+  const handlePlaidSuccess = useCallback(async (public_token, metadata) => {
+    console.log("[BanksAndPayments] Plaid success, linking bank...");
+    
+    try {
+      await linkBank(session?.token, {
+        public_token,
+        institution: metadata.institution,
+        accounts: metadata.accounts,
+      });
+      
+      setSuccess("Bank account linked successfully!");
+      fetchBanks();
+      setTimeout(() => setSuccess(""), 3000);
+      
+    } catch (err) {
+      console.error("[BanksAndPayments] Link bank error:", err);
+      setError(err.message || "Failed to link bank account");
+    } finally {
+      setLinkToken(null);
+      setLinkingBank(false);
+    }
+  }, [session?.token, fetchBanks]);
+
+  // Plaid exit handler
+  const handlePlaidExit = useCallback(() => {
+    console.log("[BanksAndPayments] Plaid exit");
+    setLinkToken(null);
+    setLinkingBank(false);
+  }, []);
+
+  // Plaid error handler
+  const handlePlaidError = useCallback((errorMsg) => {
+    console.error("[BanksAndPayments] Plaid error:", errorMsg);
+    setError(errorMsg);
+    setLinkToken(null);
+    setLinkingBank(false);
+  }, []);
 
   // Handle unlink bank
   const handleUnlinkBank = async (bankId) => {
@@ -298,6 +298,17 @@ export default function BanksAndPayments() {
 
   return (
     <div className="max-w-lg mx-auto">
+      {/* Plaid Link Launcher - only mounted when we have a token */}
+      {linkToken && (
+        <PlaidLinkLauncher
+          linkToken={linkToken}
+          onSuccess={handlePlaidSuccess}
+          onExit={handlePlaidExit}
+          onError={handlePlaidError}
+          sessionToken={session?.token}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button

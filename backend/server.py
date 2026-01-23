@@ -627,28 +627,24 @@ app.include_router(businesses_router)
 app.include_router(admin_router)
 app.include_router(banks_router)
 
-# CORS middleware - only allow specific origins when using credentials
+# CORS middleware - allow specific origins or wildcard
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
 
 if cors_origins_env == '*':
-    # For development with credentials, we need to be more specific
-    # Allow localhost and common development ports
-    cors_origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000"
-    ]
-    logger.warning("CORS_ORIGINS set to wildcard - using localhost only for development")
+    # For wildcard, allow all origins but disable credentials
+    cors_origins = ['*']
+    allow_credentials_flag = False
+    logger.info("CORS configured for all origins (credentials disabled)")
 else:
-    # Production: use explicit origins from env
+    # Production: use explicit origins from env with credentials enabled
     cors_origins = [origin.strip() for origin in cors_origins_env.split(',')]
+    allow_credentials_flag = True
     logger.info(f"CORS configured for origins: {cors_origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_credentials=True,
+    allow_credentials=allow_credentials_flag,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
     max_age=3600,  # Cache preflight requests for 1 hour
