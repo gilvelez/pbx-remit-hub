@@ -504,6 +504,14 @@ Dark theme: neutral-950, amber-400, red-600
   - Second tap: Opens Plaid modal when SDK is ready
   - Background token prefetch for verified sessions
   - Proper session verification before bank linking
+- [x] **Funding Flow Fix (P0)** ✅ Jan 2026
+  - Applied pbx-remit-hub-main-fund-fix.zip patch
+  - banks-add-money.js: Credits user's USD wallet in MongoDB, records treasury backing
+  - banks-withdraw.js: Debits user's USD wallet with balance check
+  - recipient-wallet.js: Fetches wallet balance from MongoDB (with mock fallback)
+  - Added _redirects for /api/recipient/* endpoints
+  - UI labels: USD/PHP only (Circle logic internal, no USDC exposed)
+  - Fixed deployment blockers: .gitignore, CORS, hardcoded URLs
 
 ### P1 (High Priority)
 - [ ] Deploy to Netlify
