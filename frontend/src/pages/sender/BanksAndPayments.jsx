@@ -297,17 +297,6 @@ export default function BanksAndPayments() {
 
   return (
     <div className="max-w-lg mx-auto">
-      {/* Plaid Link Launcher - only mounted when we have a token */}
-      {linkToken && (
-        <PlaidLinkLauncher
-          linkToken={linkToken}
-          onSuccess={handlePlaidSuccess}
-          onExit={handlePlaidExit}
-          onError={handlePlaidError}
-          sessionToken={session?.token}
-        />
-      )}
-
       {/* Header */}
       <div className="flex items-center gap-3 mb-6">
         <button
