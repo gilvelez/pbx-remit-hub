@@ -1,54 +1,154 @@
 /**
  * ConnectBank - Plaid bank connection step in onboarding
  * Part of the progressive Remitly-style onboarding flow
- * Moved earlier in onboarding per user requirements
+ * 
+ * FIXED: Now uses real Plaid Link flow instead of mock auto-connect
  */
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { tw } from "../../lib/theme";
-import { savePaymentMethod } from "../../lib/mockApi";
+import { usePlaidLink } from "react-plaid-link";
 
 export default function ConnectBank() {
   const navigate = useNavigate();
   const { session, setSession } = useSession();
   const [loading, setLoading] = useState(false);
   const [connected, setConnected] = useState(false);
+  const [error, setError] = useState("");
+  const [linkToken, setLinkToken] = useState(null);
+  const [connectedBank, setConnectedBank] = useState(null);
 
-  const handleConnectPlaid = async () => {
+  // Plaid Link success handler
+  const handlePlaidSuccess = useCallback(async (public_token, metadata) => {
+    console.log("[ConnectBank] Plaid success, exchanging token...");
     setLoading(true);
+    setError("");
     
-    // Simulate Plaid connection
-    // In production, this would call create-link-token and open Plaid Link
-    setTimeout(() => {
-      const mockBank = {
-        institution: 'Chase Bank',
-        accountType: 'Checking',
-        last4: '4567',
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+      
+      // Exchange public token for access token
+      const res = await fetch(`${backendUrl}/api/banks/link`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": session?.token || "",
+        },
+        body: JSON.stringify({
+          public_token,
+          institution: metadata.institution,
+          accounts: metadata.accounts,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Failed to link bank");
+      }
+
+      const bankData = {
+        institution: metadata.institution?.name || "Bank",
+        accountType: metadata.accounts?.[0]?.subtype || "Checking",
+        last4: metadata.accounts?.[0]?.mask || "****",
         linked: true,
       };
-      
-      // Save to local storage
-      savePaymentMethod(mockBank);
-      
+
+      setConnectedBank(bankData);
       setSession(prev => ({
         ...prev,
         bankConnected: true,
-        bank: mockBank
+        bank: bankData
       }));
       
       setConnected(true);
+    } catch (err) {
+      console.error("[ConnectBank] Link error:", err);
+      setError(err.message || "Failed to connect bank. Please try again.");
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
+  }, [session?.token, setSession]);
+
+  // Plaid Link exit handler
+  const handlePlaidExit = useCallback((err) => {
+    if (err) {
+      console.error("[ConnectBank] Plaid exit with error:", err);
+      setError(err.error_message || "Bank connection was cancelled");
+    }
+    setLoading(false);
+    setLinkToken(null);
+  }, []);
+
+  // Plaid Link configuration
+  const plaidConfig = linkToken ? {
+    token: linkToken,
+    onSuccess: handlePlaidSuccess,
+    onExit: handlePlaidExit,
+  } : { token: null };
+
+  const { open: openPlaid, ready: plaidReady } = usePlaidLink(plaidConfig);
+
+  // Handle connect button click - fetch link token then open Plaid
+  const handleConnectPlaid = async () => {
+    setLoading(true);
+    setError("");
+    
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+      console.log("[ConnectBank] Fetching link token...");
+      
+      const res = await fetch(`${backendUrl}/api/plaid/link-token`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Session-Token": session?.token || "",
+          "X-Session-Verified": session?.verified ? "true" : "false",
+        },
+        body: JSON.stringify({ 
+          client_user_id: session?.user?.email || session?.token || "pbx-user" 
+        }),
+      });
+
+      const text = await res.text();
+      const data = text && text.trim() ? JSON.parse(text) : {};
+
+      if (!res.ok) {
+        throw new Error(data.detail || data.error || "Failed to initialize bank connection");
+      }
+
+      if (!data.link_token) {
+        throw new Error("No link token received from server");
+      }
+
+      console.log("[ConnectBank] Got link token, opening Plaid...");
+      setLinkToken(data.link_token);
+      
+      // Small delay to allow usePlaidLink to reinitialize with new token
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+      
+    } catch (err) {
+      console.error("[ConnectBank] Error:", err);
+      setError(err.message || "Failed to connect. Please try again.");
+      setLoading(false);
+    }
   };
 
+  // Open Plaid when token is ready
+  React.useEffect(() => {
+    if (linkToken && plaidReady && !loading) {
+      console.log("[ConnectBank] Opening Plaid Link...");
+      openPlaid();
+    }
+  }, [linkToken, plaidReady, loading, openPlaid]);
+
   const handleContinue = () => {
-    // Next step: Add Recipient
     navigate('/onboarding/recipient');
   };
 
   const handleSkip = () => {
-    // Allow skipping, user can connect later
     navigate('/onboarding/recipient');
   };
 
@@ -101,6 +201,13 @@ export default function ConnectBank() {
                 </p>
               </div>
 
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
+
               {/* Benefits */}
               <div className="space-y-3 mb-6">
                 <BenefitItem 
@@ -142,7 +249,7 @@ export default function ConnectBank() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                       </svg>
-                      Connecting...
+                      {linkToken ? "Opening Plaid..." : "Connecting..."}
                     </>
                   ) : (
                     'Connect Bank Account'
@@ -172,7 +279,7 @@ export default function ConnectBank() {
                 </div>
                 <h2 className={`text-xl font-bold ${tw.textOnLight} mb-2`}>Bank Connected!</h2>
                 <p className={`${tw.textOnLightMuted} mb-6`}>
-                  {session.bank?.institution} •••• {session.bank?.last4}
+                  {connectedBank?.institution || session.bank?.institution} •••• {connectedBank?.last4 || session.bank?.last4}
                 </p>
 
                 <button
