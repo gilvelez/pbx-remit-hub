@@ -1,5 +1,9 @@
 # PBX API Routes -> Netlify Functions
 
+# Auth endpoints
+/api/auth/login         /.netlify/functions/auth-login          200
+/api/auth/me            /.netlify/functions/auth-me             200
+
 # Plaid endpoints
 /api/plaid/link-token       /.netlify/functions/create-link-token       200
 /api/plaid/exchange-token   /.netlify/functions/exchange-public-token   200
@@ -16,11 +20,10 @@
 /api/banks/*                /.netlify/functions/banks-delete?bank_id=:splat  200
 
 # Wallet endpoints
-/api/wallet/balances        /.netlify/functions/recipient-wallet        200
-/api/wallet/fund            /.netlify/functions/recipient-wallet        200
-/api/wallet/convert         /.netlify/functions/fx-convert              200
+/api/wallet/balance         /.netlify/functions/wallet-balance          200
+/api/wallet/balances        /.netlify/functions/wallet-balance          200
 
-# Recipient endpoints (legacy support)
+# Legacy recipient endpoints
 /api/recipient/wallet       /.netlify/functions/recipient-wallet        200
 /api/recipient/statements   /.netlify/functions/recipient-statements    200
 /api/recipient/transfers    /.netlify/functions/recipient-transfers     200
