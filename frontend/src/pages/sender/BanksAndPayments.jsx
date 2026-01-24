@@ -2,11 +2,9 @@
  * BanksAndPayments.jsx - Manage linked bank accounts
  * Phase 4: Bank Management
  * 
- * FIXED: Plaid Link initialization - now properly waits for link token
- * before calling open(). Uses conditional rendering to ensure usePlaidLink
- * is only mounted when we have a valid token.
+ * FIXED: Plaid Link initialization - handlers defined before use
  */
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getLinkedBanks, unlinkBank, linkBank } from "../../lib/bankApi";
@@ -24,24 +22,70 @@ export default function BanksAndPayments() {
   const [showUnlinkConfirm, setShowUnlinkConfirm] = useState(null);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  
+  // Use ref for fetchBanks to avoid circular dependency
+  const fetchBanksRef = useRef(null);
 
-  /**
-   * IMPORTANT (mobile):
-   * Plaid Link opening should be tied to a direct user gesture.
-   * Auto-calling open() inside a useEffect after an async token fetch
-   * can be blocked on mobile browsers.
-   *
-   * So we:
-   * 1) Prefetch a link token in the background (after session verified)
-   * 2) Only call open() from the button onClick when `ready` is true.
-   */
+  // Define fetchBanks first
+  const fetchBanks = useCallback(async () => {
+    try {
+      const banks = await getLinkedBanks(session?.token);
+      setLinkedBanks(Array.isArray(banks) ? banks : []);
+    } catch (err) {
+      console.error("Failed to fetch banks:", err);
+      setLinkedBanks([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.token]);
+
+  // Store fetchBanks in ref
+  fetchBanksRef.current = fetchBanks;
+
+  // Plaid success handler - defined before plaidConfig
+  const handlePlaidSuccess = useCallback(async (public_token, metadata) => {
+    console.log("[BanksAndPayments] Plaid success, linking bank...");
+    
+    try {
+      await linkBank(session?.token, {
+        public_token,
+        institution: metadata.institution,
+        accounts: metadata.accounts,
+      });
+      
+      setSuccess("Bank account linked successfully!");
+      if (fetchBanksRef.current) fetchBanksRef.current();
+      setTimeout(() => setSuccess(""), 3000);
+      
+    } catch (err) {
+      console.error("[BanksAndPayments] Link bank error:", err);
+      setError(err.message || "Failed to link bank account");
+    } finally {
+      setLinkToken(null);
+      setLinkingBank(false);
+    }
+  }, [session?.token]);
+
+  // Plaid exit handler - defined before plaidConfig
+  const handlePlaidExit = useCallback(() => {
+    console.log("[BanksAndPayments] Plaid exit");
+    setLinkToken(null);
+    setLinkingBank(false);
+  }, []);
+
+  // Plaid error handler - defined before plaidConfig
+  const handlePlaidError = useCallback((errorMsg) => {
+    console.error("[BanksAndPayments] Plaid error:", errorMsg);
+    setError(errorMsg);
+    setLinkToken(null);
+    setLinkingBank(false);
+  }, []);
+
+  // Now define plaidConfig AFTER handlers are defined
   const plaidConfig = linkToken
     ? {
         token: linkToken,
-        onSuccess: (public_token, metadata) => {
-          console.log("[PlaidLink] Success - got public_token");
-          handlePlaidSuccess(public_token, metadata);
-        },
+        onSuccess: handlePlaidSuccess,
         onExit: (err, metadata) => {
           console.log(
             "[PlaidLink] Exit",
@@ -63,33 +107,22 @@ export default function BanksAndPayments() {
     plaidConfig || { token: null }
   );
 
+  // Handle SDK errors
   useEffect(() => {
     if (plaidSdkError) {
       console.error("[PlaidLink] SDK Error:", plaidSdkError);
-      handlePlaidError(plaidSdkError.message || "Failed to initialize Plaid");
+      // Don't call handlePlaidError here to avoid hook issues
+      setError(plaidSdkError.message || "Failed to initialize Plaid");
     }
-  }, [plaidSdkError, handlePlaidError]);
+  }, [plaidSdkError]);
 
-  // Fetch linked banks
-  const fetchBanks = useCallback(async () => {
-    try {
-      const banks = await getLinkedBanks(session?.token);
-      setLinkedBanks(Array.isArray(banks) ? banks : []);
-    } catch (err) {
-      console.error("Failed to fetch banks:", err);
-      setLinkedBanks([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.token]);
-
+  // Fetch banks on mount
   useEffect(() => {
     fetchBanks();
   }, [fetchBanks]);
 
-  // Prefetch a Plaid link token once the user is verified
+  // Prefetch link token
   const prefetchLinkToken = useCallback(async () => {
-    // Only attempt if verified; otherwise Plaid function will 403
     if (!session?.token || !session?.verified) return;
 
     try {
@@ -108,7 +141,6 @@ export default function BanksAndPayments() {
       const data = text && text.trim() ? JSON.parse(text) : {};
 
       if (!res.ok) {
-        // Don't spam error UI on background prefetch, just log
         console.warn("[BanksAndPayments] Prefetch link token failed:", data);
         return;
       }
@@ -126,19 +158,18 @@ export default function BanksAndPayments() {
     prefetchLinkToken();
   }, [prefetchLinkToken]);
 
-  // Handle button click - open Plaid (or fetch token if missing)
+  // Handle button click
   const handleLinkBankClick = async () => {
     console.log("[BanksAndPayments] Link Bank clicked");
     setError("");
     setSuccess("");
 
-    // If the user hasn't completed verification yet, do it now.
-    // This is required because the backend blocks Plaid link token creation
-    // unless the session is verified.
     if (!session?.verified) {
       try {
         setLinkingBank(true);
-        await verify();
+        if (verify) {
+          await verify();
+        }
       } catch (e) {
         console.error("[BanksAndPayments] Session verification failed:", e);
         setError("Please verify your session before linking a bank. Try logging out and back in.");
@@ -147,27 +178,24 @@ export default function BanksAndPayments() {
       }
     }
 
-    // If we are in MOCK mode, we cannot open the real Plaid Link UI.
-    // A mock token won't initialize Plaid.
     if ((plaidMode || "").toUpperCase() === "MOCK") {
-      setError(
-        "Plaid Link UI is disabled in MOCK mode. Switch PLAID_MODE to SANDBOX to open Plaid."
-      );
+      setError("Plaid Link UI is disabled in MOCK mode. Switch PLAID_MODE to SANDBOX to open Plaid.");
       return;
     }
 
-    // If we already have a token, don't fetch a new one; just open when ready.
     if (linkToken) {
       if (!plaidReady) {
-        setError("Still preparing Plaid… please tap ‘Link a Bank’ again in a moment.");
+        setError("Still preparing Plaid… please tap 'Link a Bank' again in a moment.");
         setLinkingBank(false);
         return;
       }
       try {
         console.log("[BanksAndPayments] Opening Plaid (existing token)…");
         openPlaid();
-      } finally {
-        // keep linkingBank true while Plaid is open; it will be cleared on exit/success
+      } catch (e) {
+        console.error("[BanksAndPayments] Error opening Plaid:", e);
+        setError("Failed to open Plaid. Please try again.");
+        setLinkingBank(false);
       }
       return;
     }
@@ -188,7 +216,6 @@ export default function BanksAndPayments() {
         body: JSON.stringify({ client_user_id: session?.token || "pbx-user" }),
       });
 
-      // Safely parse JSON response
       let data = {};
       try {
         const text = await res.text();
@@ -216,57 +243,14 @@ export default function BanksAndPayments() {
       setLinkToken(data.link_token);
       setPlaidMode(data.mode || null);
 
-      // IMPORTANT: we do NOT call open() in the same click that fetched the token.
-      // React state updates are async; opening immediately often results in `ready=false`.
-      // User taps once to prepare, then taps again to open.
-      setError("Ready to link. Tap ‘Link a Bank’ again to open Plaid.");
+      setError("Ready to link. Tap 'Link a Bank' again to open Plaid.");
       setLinkingBank(false);
     } catch (err) {
       console.error("[BanksAndPayments] Error:", err);
       setError(err.message || "Failed to initialize bank linking");
       setLinkingBank(false);
-      // keep linkToken as-is (if any) so user can retry
     }
   };
-
-  // Plaid success handler
-  const handlePlaidSuccess = useCallback(async (public_token, metadata) => {
-    console.log("[BanksAndPayments] Plaid success, linking bank...");
-    
-    try {
-      await linkBank(session?.token, {
-        public_token,
-        institution: metadata.institution,
-        accounts: metadata.accounts,
-      });
-      
-      setSuccess("Bank account linked successfully!");
-      fetchBanks();
-      setTimeout(() => setSuccess(""), 3000);
-      
-    } catch (err) {
-      console.error("[BanksAndPayments] Link bank error:", err);
-      setError(err.message || "Failed to link bank account");
-    } finally {
-      setLinkToken(null);
-      setLinkingBank(false);
-    }
-  }, [session?.token, fetchBanks]);
-
-  // Plaid exit handler
-  const handlePlaidExit = useCallback(() => {
-    console.log("[BanksAndPayments] Plaid exit");
-    setLinkToken(null);
-    setLinkingBank(false);
-  }, []);
-
-  // Plaid error handler
-  const handlePlaidError = useCallback((errorMsg) => {
-    console.error("[BanksAndPayments] Plaid error:", errorMsg);
-    setError(errorMsg);
-    setLinkToken(null);
-    setLinkingBank(false);
-  }, []);
 
   // Handle unlink bank
   const handleUnlinkBank = async (bankId) => {
@@ -426,7 +410,7 @@ export default function BanksAndPayments() {
         </div>
       </div>
 
-      {/* Recurring Transfers Section - Phase 6 Placeholder */}
+      {/* Recurring Transfers Section */}
       <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
         <div className="p-4 border-b border-gray-100">
           <h2 className="font-semibold text-[#0A2540]">Recurring Transfers</h2>
@@ -452,7 +436,7 @@ export default function BanksAndPayments() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
         </svg>
         <span>
-          Bank connections are secured with bank-grade 256-bit encryption. PBX never stores your login credentials.
+          Bank connections are secured with bank-grade 256-bit encryption. PBX never stores your bank credentials.
         </span>
       </div>
 
