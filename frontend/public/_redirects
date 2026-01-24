@@ -1,17 +1,34 @@
-/api/plaid/link-token   /.netlify/functions/create-link-token   200
-/api/plaid/status       /.netlify/functions/plaid-status        200
-/api/circle/status      /.netlify/functions/circle-status       200
+# PBX API Routes -> Netlify Functions
 
-/api/banks/linked       /.netlify/functions/banks-linked        200
-/api/banks/link         /.netlify/functions/banks-link          200
-/api/banks/add-money    /.netlify/functions/banks-add-money     200
-/api/banks/withdraw     /.netlify/functions/banks-withdraw      200
-/api/banks/*            /.netlify/functions/banks-delete?bank_id=:splat  200
+# Plaid endpoints
+/api/plaid/link-token       /.netlify/functions/create-link-token       200
+/api/plaid/exchange-token   /.netlify/functions/exchange-public-token   200
+/api/plaid/status           /.netlify/functions/plaid-status            200
 
-/api/recipient/wallet       /.netlify/functions/recipient-wallet      200
-/api/recipient/statements   /.netlify/functions/recipient-statements  200
-/api/recipient/transfers    /.netlify/functions/recipient-transfers   200
-/api/recipient/convert      /.netlify/functions/recipient-convert     200
-/api/recipient/bills        /.netlify/functions/recipient-bills       200
+# Circle endpoints
+/api/circle/status          /.netlify/functions/circle-status           200
 
+# Bank management
+/api/banks/linked           /.netlify/functions/banks-linked            200
+/api/banks/link             /.netlify/functions/banks-link              200
+/api/banks/add-money        /.netlify/functions/banks-add-money         200
+/api/banks/withdraw         /.netlify/functions/banks-withdraw          200
+/api/banks/*                /.netlify/functions/banks-delete?bank_id=:splat  200
+
+# Wallet endpoints
+/api/wallet/balances        /.netlify/functions/recipient-wallet        200
+/api/wallet/fund            /.netlify/functions/recipient-wallet        200
+/api/wallet/convert         /.netlify/functions/fx-convert              200
+
+# Recipient endpoints (legacy support)
+/api/recipient/wallet       /.netlify/functions/recipient-wallet        200
+/api/recipient/statements   /.netlify/functions/recipient-statements    200
+/api/recipient/transfers    /.netlify/functions/recipient-transfers     200
+/api/recipient/convert      /.netlify/functions/recipient-convert       200
+/api/recipient/bills        /.netlify/functions/recipient-bills         200
+
+# FX conversion
+/api/fx/convert             /.netlify/functions/fx-convert              200
+
+# SPA fallback - must be last
 /*  /index.html  200
