@@ -8,5 +8,10 @@
 /api/banks/withdraw     /.netlify/functions/banks-withdraw      200
 /api/banks/*            /.netlify/functions/banks-delete?bank_id=:splat  200
 
+/api/recipient/wallet       /.netlify/functions/recipient-wallet      200
+/api/recipient/statements   /.netlify/functions/recipient-statements  200
+/api/recipient/transfers    /.netlify/functions/recipient-transfers   200
+/api/recipient/convert      /.netlify/functions/recipient-convert     200
+/api/recipient/bills        /.netlify/functions/recipient-bills       200
 
 /*  /index.html  200

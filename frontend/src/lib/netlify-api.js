@@ -1,7 +1,7 @@
 // === PBX Unified API Bridge ===
 // Works for all Netlify functions (Plaid, Circle, etc.)
 
-const API_BASE = process.env.REACT_APP_NETLIFY_URL || "https://YOUR-NETLIFY-SITE.netlify.app";
+const API_BASE = process.env.REACT_APP_NETLIFY_URL || process.env.REACT_APP_BACKEND_URL || '';
 
 export async function api(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
