@@ -62,14 +62,15 @@ BANKS = [
     {"code": "eastwest", "name": "EastWest Bank"},
 ]
 
-# === Default wallet for new users ===
+# === Default wallet for NEW users - starts at $0 ===
+# NO HARDCODED DEMO BALANCES - users start with $0
 DEFAULT_WALLET = {
-    "usd_balance": 1500.00,
-    "php_balance": 25000.00,
+    "usd_balance": 0.00,
+    "php_balance": 0.00,
     "sub_wallets": {
-        "bills": 5000.00,
-        "savings": 10000.00,
-        "family": 2500.00,
+        "bills": 0.00,
+        "savings": 0.00,
+        "family": 0.00,
     }
 }
 
