@@ -37,8 +37,8 @@ export default function Home() {
       if (!session?.token) return;
       
       try {
-        const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-        const res = await fetch(`${backendUrl}/api/recipient/wallet`, {
+        // Use Netlify wallet-balance function for consistent data
+        const res = await fetch('/.netlify/functions/wallet-balance', {
           headers: {
             'Content-Type': 'application/json',
             'X-Session-Token': session.token,
@@ -48,8 +48,8 @@ export default function Home() {
         if (res.ok) {
           const data = await res.json();
           setWallet({
-            usd_balance: data.usd_balance || 0,
-            php_balance: data.php_balance || 0,
+            usd_balance: Number(data.usd || 0),
+            php_balance: Number(data.php || 0),
           });
         }
       } catch (err) {
