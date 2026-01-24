@@ -1,231 +1,93 @@
-/**
- * Link Bank - Exchange Plaid public_token and store linked bank
- * 
- * Flow:
- * 1. Receive public_token + metadata from Plaid Link
- * 2. Exchange for access_token (if not MOCK mode)
- * 3. Store bank in MongoDB with user_id
- * 4. Return success with bank details (no access_token)
- */
-const { Configuration, PlaidApi, PlaidEnvironments } = require('plaid');
-const { addBank, getUserId } = require('./bankStore');
+const { getDb } = require("./_mongoClient");
+const { Configuration, PlaidApi, PlaidEnvironments } = require("plaid");
 
-const PLAID_MODE = (process.env.PLAID_MODE || 'SANDBOX').toUpperCase();
-
-// MongoDB connection
-let MongoClient = null;
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
-const DB_NAME = process.env.DB_NAME || 'pbx_database';
-
-if (MONGODB_URI) {
-  try {
-    MongoClient = require('mongodb').MongoClient;
-  } catch (e) {
-    console.warn('[banks-link] MongoDB not available');
-  }
+function json(statusCode, body) {
+  return {
+    statusCode,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  };
 }
 
-async function getDb() {
-  if (!MongoClient || !MONGODB_URI) return null;
-  const client = new MongoClient(MONGODB_URI);
-  await client.connect();
-  return { client, db: client.db(DB_NAME) };
-}
-
-function makeId() {
-  return `bank_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-}
-
-function plaidClient() {
-  const config = new Configuration({
-    basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
-    baseOptions: {
-      headers: {
-        'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID,
-        'PLAID-SECRET': process.env.PLAID_SECRET,
-      },
-    },
-  });
-  return new PlaidApi(config);
+async function requireSession(db, event) {
+  const token = event.headers["x-session-token"] || event.headers["X-Session-Token"];
+  if (!token) throw new Error("Missing session token");
+  const session = await db.collection("sessions").findOne({ token });
+  if (!session) throw new Error("Invalid session");
+  return session;
 }
 
 exports.handler = async (event) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Session-Token, X-Session-Verified',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  };
-
-  if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 200, headers, body: '' };
-  }
-
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
-  }
-
-  const token = event.headers['x-session-token'] || '';
-  const verifiedHeader = (event.headers['x-session-verified'] || '').toLowerCase() === 'true';
-  const user_id = getUserId(token);
-
-  // In production, verify session from DB
-  // For now, trust the header if passed
-  if (!token) {
-    return { statusCode: 403, headers, body: JSON.stringify({ error: 'Session token required' }) };
-  }
-
-  let body = {};
-  try { body = JSON.parse(event.body || '{}'); } catch (_) {}
-
-  // Extract metadata from Plaid Link callback
-  const public_token = body.public_token;
-  const institution = body.institution || {};
-  const institution_name = body.institution_name || institution.name || 'Linked Bank';
-  const institution_id = body.institution_id || institution.institution_id || '';
-  const accounts = Array.isArray(body.accounts) ? body.accounts : [];
-  const firstAccount = accounts[0] || {};
-  const mask = firstAccount.mask || '0000';
-  const account_type = firstAccount.subtype || firstAccount.type || 'checking';
-  const account_name = firstAccount.name || '';
-
-  console.log('[banks-link] Linking bank:', { 
-    user_id, 
-    institution_name, 
-    mode: PLAID_MODE,
-    hasPublicToken: !!public_token 
-  });
-
-  // Build bank record
-  const bankRecord = {
-    id: makeId(),
-    user_id,
-    institution_name,
-    institution_id,
-    mask,
-    last4: mask,
-    account_type,
-    account_name,
-    status: 'linked',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  };
-
-  // MOCK mode - skip Plaid exchange, just store
-  if (PLAID_MODE === 'MOCK') {
-    console.log('[banks-link] MOCK mode - storing without Plaid exchange');
-    
-    // Store in MongoDB
-    const connection = await getDb();
-    if (connection) {
-      const { client, db } = connection;
-      try {
-        await db.collection('linked_banks').insertOne(bankRecord);
-      } finally {
-        await client.close();
-      }
-    }
-    
-    // Also use addBank for fallback
-    await addBank(token, bankRecord);
-    
-    return { 
-      statusCode: 200, 
-      headers, 
-      body: JSON.stringify({ 
-        success: true, 
-        bank: {
-          id: bankRecord.id,
-          institution_name: bankRecord.institution_name,
-          mask: bankRecord.mask,
-          account_type: bankRecord.account_type,
-          status: 'linked',
-        },
-        mode: 'MOCK'
-      }) 
-    };
-  }
-
-  // SANDBOX/PRODUCTION - require public_token
-  if (!public_token) {
-    return { 
-      statusCode: 400, 
-      headers, 
-      body: JSON.stringify({ error: 'public_token required for bank linking' }) 
-    };
-  }
-
   try {
-    const client = plaidClient();
+    if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
 
-    // Exchange public_token for access_token
-    console.log('[banks-link] Exchanging public_token...');
-    const exchangeResp = await client.itemPublicTokenExchange({ public_token });
-    const access_token = exchangeResp.data.access_token;
-    const item_id = exchangeResp.data.item_id;
+    const db = await getDb();
+    const session = await requireSession(db, event);
 
-    // Get account details for better display
-    let resolvedMask = mask;
-    let resolvedType = account_type;
-    try {
-      const acctResp = await client.accountsGet({ access_token });
-      const acc = (acctResp.data.accounts || [])[0];
-      if (acc) {
-        resolvedMask = acc.mask || mask;
-        resolvedType = acc.subtype || acc.type || account_type;
-      }
-    } catch (e) {
-      console.warn('[banks-link] Could not fetch account details:', e.message);
-    }
+    const body = JSON.parse(event.body || "{}");
+    const public_token = body.public_token;
+    const metadata = body.metadata || {};
+    
+    // Also support direct institution/accounts from frontend
+    const institution = metadata.institution || body.institution || {};
+    const accounts = metadata.accounts || body.accounts || [];
+    
+    if (!public_token) return json(400, { error: "Missing public_token" });
 
-    // Update bank record with Plaid data
-    bankRecord.mask = resolvedMask;
-    bankRecord.last4 = resolvedMask;
-    bankRecord.account_type = resolvedType;
-    bankRecord.access_token = access_token; // Stored securely in DB
-    bankRecord.item_id = item_id;
-    bankRecord.status = 'verified';
-
-    // Store in MongoDB
-    const connection = await getDb();
-    if (connection) {
-      const { db: database, client: mongoClient } = connection;
-      try {
-        await database.collection('linked_banks').insertOne(bankRecord);
-        console.log('[banks-link] Bank stored in MongoDB');
-      } finally {
-        await mongoClient.close();
-      }
-    }
-
-    // Also use addBank for fallback
-    await addBank(token, bankRecord);
-
-    return { 
-      statusCode: 200, 
-      headers, 
-      body: JSON.stringify({ 
-        success: true, 
-        bank: {
-          id: bankRecord.id,
-          institution_name: bankRecord.institution_name,
-          mask: bankRecord.mask,
-          account_type: bankRecord.account_type,
-          status: 'verified',
+    const config = new Configuration({
+      basePath: PlaidEnvironments[process.env.PLAID_ENV || "sandbox"],
+      baseOptions: {
+        headers: {
+          "PLAID-CLIENT-ID": process.env.PLAID_CLIENT_ID,
+          "PLAID-SECRET": process.env.PLAID_SECRET,
         },
-        mode: 'SANDBOX'
-      }) 
-    };
+      },
+    });
+
+    const plaid = new PlaidApi(config);
+
+    // Exchange public token for access token
+    const exchange = await plaid.itemPublicTokenExchange({ public_token });
+    const access_token = exchange.data.access_token;
+    const item_id = exchange.data.item_id;
+
+    // Create a stable bank_id for UI
+    const bank_id = `${institution.institution_id || "inst"}_${item_id}`;
+
+    // Best-effort mask + name for the UI
+    const primaryAccount = accounts[0] || {};
+    const mask = primaryAccount.mask || "----";
+    const name = primaryAccount.name || institution.name || "Bank Account";
+
+    await db.collection("banks").updateOne(
+      { userId: session.userId, bank_id },
+      {
+        $set: {
+          userId: session.userId,
+          bank_id,
+          plaid_item_id: item_id,
+          plaid_access_token: access_token,
+          institution_id: institution.institution_id || null,
+          institution_name: institution.name || null,
+          name,
+          mask,
+          accounts,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: { createdAt: new Date() },
+      },
+      { upsert: true }
+    );
+
+    return json(200, {
+      ok: true,
+      bank: { bank_id, name, mask, institution_name: institution.name || null, accounts },
+    });
 
   } catch (err) {
-    console.error('[banks-link] Error:', err.response?.data || err.message);
-    return { 
-      statusCode: 500, 
-      headers, 
-      body: JSON.stringify({ 
-        error: 'Failed to link bank', 
-        detail: err.response?.data?.error_message || err.message 
-      }) 
-    };
+    console.error("banks-link error:", err);
+    const msg = String(err.message || err);
+    const status = msg.includes("session") ? 401 : 500;
+    return json(status, { error: msg });
   }
 };
