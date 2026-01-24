@@ -35,10 +35,9 @@ function getUserId(token) {
 }
 
 async function getFxRate() {
-  // Try to get live rate
+  // Try to get live rate using built-in fetch (Node 18+)
   if (OXR_API_KEY) {
     try {
-      const fetch = require('node-fetch');
       const resp = await fetch(`https://openexchangerates.org/api/latest.json?app_id=${OXR_API_KEY}&symbols=PHP`);
       const data = await resp.json();
       if (data.rates?.PHP) {
