@@ -68,8 +68,7 @@ export default function BanksAndPayments() {
       console.error("[PlaidLink] SDK Error:", plaidSdkError);
       handlePlaidError(plaidSdkError.message || "Failed to initialize Plaid");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [plaidSdkError]);
+  }, [plaidSdkError, handlePlaidError]);
 
   // Fetch linked banks
   const fetchBanks = useCallback(async () => {
