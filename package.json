@@ -2,6 +2,9 @@
   "name": "pbx-root",
   "private": true,
   "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "mongodb": "^6.3.0",
     "plaid": "^24.0.0"

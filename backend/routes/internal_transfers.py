@@ -15,10 +15,11 @@ from services.notifications import send_transfer_notifications
 router = APIRouter(prefix="/api/internal", tags=["internal"])
 logger = logging.getLogger(__name__)
 
-# Default wallet for new users
+# Default wallet for NEW users - starts at $0
+# NO HARDCODED DEMO BALANCES
 DEFAULT_WALLET = {
-    "usd_balance": 1500.00,
-    "php_balance": 25000.00,
+    "usd_balance": 0.00,
+    "php_balance": 0.00,
 }
 
 # Mock user directory for demo mode (when MONGODB_URI is missing)

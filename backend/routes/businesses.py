@@ -319,7 +319,7 @@ async def pay_business(request: Request, background_tasks: BackgroundTasks, data
     # Check sender wallet
     sender_wallet = await wallets.find_one({"user_id": user_id})
     if not sender_wallet:
-        sender_wallet = {"user_id": user_id, "usd_balance": 1500.0, "php_balance": 0.0}
+        sender_wallet = {"user_id": user_id, "usd_balance": 0.0, "php_balance": 0.0}
         await wallets.insert_one(sender_wallet)
     
     if sender_wallet.get("usd_balance", 0) < data.amount_usd:

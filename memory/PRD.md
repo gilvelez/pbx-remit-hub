@@ -512,6 +512,26 @@ Dark theme: neutral-950, amber-400, red-600
   - Added _redirects for /api/recipient/* endpoints
   - UI labels: USD/PHP only (Circle logic internal, no USDC exposed)
   - Fixed deployment blockers: .gitignore, CORS, hardcoded URLs
+- [x] **Production Parity Fix (P0)** ✅ Jan 2026
+  - **Removed ALL hardcoded demo balances** - new users start with $0
+  - **MongoDB-backed stores** - bankStore.js and sessionStore.js now persist to MongoDB
+  - **ErrorBoundary added** - no more blank screens on runtime errors
+  - **ConnectBank.jsx fixed** - now uses real Plaid Link flow, no auto-linked "Chase"
+  - **FX Convert endpoint** - /api/fx/convert for USD<->PHP internal exchange
+  - **Identity standardized** - user_id derived from email consistently
+  - Files changed:
+    - `/app/netlify/functions/bankStore.js` - MongoDB persistence for linked banks
+    - `/app/netlify/functions/sessionStore.js` - MongoDB persistence for sessions
+    - `/app/netlify/functions/banks-link.js` - Proper Plaid exchange + MongoDB storage
+    - `/app/netlify/functions/banks-linked.js` - Fetch from MongoDB
+    - `/app/netlify/functions/recipient-wallet.js` - $0 initial balance, MongoDB persistence
+    - `/app/netlify/functions/fx-convert.js` - NEW: USD<->PHP conversion
+    - `/app/frontend/src/components/ErrorBoundary.jsx` - NEW: Crash protection
+    - `/app/frontend/src/pages/onboarding/ConnectBank.jsx` - Real Plaid flow
+    - `/app/backend/routes/recipient.py` - Removed hardcoded $1500
+    - `/app/backend/routes/internal_transfers.py` - Removed hardcoded balances
+    - `/app/backend/routes/businesses.py` - Removed hardcoded balances
+    - `/app/frontend/public/_redirects` - Added /api/fx/convert route
 
 ### P1 (High Priority)
 - [ ] Deploy to Netlify
