@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { SessionProvider, useSession } from "./contexts/SessionContext.jsx";
 import { injectThemeVariables } from "./lib/theme";
+import { ErrorBoundary } from "./components/ErrorBoundary.jsx";
 
 // Layouts
 import SenderShell from "./components/SenderShell.jsx";
@@ -70,11 +71,13 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <SessionProvider>
-        <AppRoutes />
-      </SessionProvider>
-    </BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
+        <SessionProvider>
+          <AppRoutes />
+        </SessionProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

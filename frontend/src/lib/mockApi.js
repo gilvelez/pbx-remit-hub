@@ -80,14 +80,20 @@ export async function createTransfer(transferData) {
  * @returns {Promise<{linked: boolean, accountId: string, institution: string}>}
  */
 export async function linkFundingSource(plaidToken) {
+  // NOTE: This function is deprecated. Real Plaid linking should be done through
+  // the backend /api/banks/link endpoint. This mock is kept for backwards compatibility
+  // but should NOT be used in production flows.
   await delay(800);
   
+  console.warn('[mockApi] linkFundingSource is deprecated - use real Plaid flow');
+  
   return {
-    linked: true,
-    accountId: `acc_${Date.now()}`,
-    institution: 'Chase Bank',
-    accountType: 'checking',
-    last4: '4567',
+    linked: false,
+    accountId: null,
+    institution: null,
+    accountType: null,
+    last4: null,
+    error: 'Mock mode disabled - use real Plaid Link',
   };
 }
 
