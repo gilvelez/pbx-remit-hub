@@ -1,4 +1,5 @@
 const { getDb } = require("./_mongoClient");
+const { getWallet } = require("./walletStore");
 
 function json(statusCode, body) {
   return {
@@ -21,14 +22,11 @@ exports.handler = async (event) => {
     const db = await getDb();
     const session = await requireSession(db, event);
 
-    const bank_id = event.queryStringParameters?.bank_id;
-    if (!bank_id) return json(400, { error: "Missing bank_id" });
-
-    await db.collection("banks").deleteOne({ userId: session.userId, bank_id });
-    return json(200, { ok: true });
+    const w = await getWallet(db, session.userId);
+    return json(200, { usd: Number(w.usd || 0), php: Number(w.php || 0) });
 
   } catch (err) {
-    console.error("banks-delete error:", err);
+    console.error("wallet-balance error:", err);
     const msg = String(err.message || err);
     const status = msg.includes("session") ? 401 : 500;
     return json(status, { error: msg });
