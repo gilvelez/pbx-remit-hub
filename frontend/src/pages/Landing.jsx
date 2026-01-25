@@ -67,7 +67,7 @@ export default function Landing() {
                       Log in
                     </Link>
                     <Link
-                      to="/welcome"
+                      to="/register"
                       className="block px-4 py-3 text-sm text-gray-200 hover:bg-neutral-800 hover:text-amber-400 transition border-t border-neutral-700"
                       onClick={() => setShowAuthMenu(false)}
                       data-testid="nav-create-account-dropdown"
@@ -79,7 +79,7 @@ export default function Landing() {
               </div>
               
               <Link
-                to="/welcome"
+                to="/register"
                 className="rounded-xl bg-red-600 hover:bg-red-700 px-5 py-2.5 font-bold text-white shadow transition"
                 data-testid="nav-get-started"
               >
@@ -97,7 +97,7 @@ export default function Landing() {
                 Log in
               </Link>
               <Link
-                to="/welcome"
+                to="/register"
                 className="rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2 font-bold text-white text-sm shadow transition"
                 data-testid="mobile-get-started"
               >
@@ -141,7 +141,7 @@ export default function Landing() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/welcome"
+              to="/register"
               className="inline-flex justify-center rounded-2xl bg-red-600 hover:bg-red-700 px-8 py-4 font-bold text-white shadow-lg transition"
               data-testid="hero-get-started"
             >
@@ -262,7 +262,7 @@ export default function Landing() {
             Join PBX today and take control of your international transfers with speed, savings, and security.
           </p>
           <Link
-            to="/welcome"
+            to="/register"
             className="inline-flex justify-center rounded-2xl bg-red-600 hover:bg-red-700 px-8 py-4 font-bold text-white shadow-lg transition"
           >
             Sign Up Now
