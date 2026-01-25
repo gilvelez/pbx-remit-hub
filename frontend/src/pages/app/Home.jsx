@@ -3,22 +3,13 @@
  * UI MERGE: Same for Personal and Business profiles
  * Quick Actions: Find People, Send External, Pay Bills, Receive
  */
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSession } from "../../contexts/SessionContext";
+import { useSession, authFetch } from "../../contexts/SessionContext";
 import { getConversations } from "../../lib/socialApi";
 import { getLinkedBanks } from "../../lib/bankApi";
-import { getWalletBalance } from "../../lib/circleApi";
 import { QRCodeSVG } from "qrcode.react";
-
-// Get API base - empty for localhost (uses proxy), full URL for deployed
-const getApiBase = () => {
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-    return '';
-  }
-  return process.env.REACT_APP_BACKEND_URL || '';
-};
-const API_BASE = getApiBase();
+import DemoTools from "../../components/DemoTools";
 
 export default function Home() {
   const { session } = useSession();
@@ -41,43 +32,30 @@ export default function Home() {
     : (activeProfile?.display_name || session?.user?.email?.split('@')[0] || 'there');
   const handle = activeProfile?.handle;
 
-  // Fetch wallet balance
-  useEffect(() => {
-    const fetchWallet = async () => {
-      if (!session?.token) return;
+  // Fetch wallet balance using JWT auth
+  const fetchWallet = useCallback(async () => {
+    if (!session?.token) return;
+    
+    try {
+      // Use authFetch with JWT Authorization header
+      const res = await authFetch('/api/circle/balance');
       
-      try {
-        // Try Circle API first (works in both local and deployed)
-        const circleBalance = await getWalletBalance();
+      if (res.ok) {
+        const data = await res.json();
         setWallet({
-          usd_balance: Number(circleBalance.usd || 0),
-          php_balance: Number(circleBalance.php || 0),
-          usdc_balance: Number(circleBalance.usd || 0), // USDC = USD (hidden from user)
-          circleWallet: circleBalance.hasWallet ? { active: true } : null,
+          usd_balance: Number(data.usd || 0),
+          php_balance: Number(data.php || 0),
+          usdc_balance: Number(data.usdc || 0),
+          circleWallet: data.circle_wallet || null,
         });
-      } catch (err) {
-        console.error("Failed to fetch wallet from Circle API:", err);
-        // Fallback to Netlify function for deployed version
-        try {
-          const res = await fetch(`${API_BASE}/.netlify/functions/wallet-balance`, {
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Session-Token': session.token,
-            },
-          });
-          
-          if (res.ok) {
-            const data = await res.json();
-            setWallet({
-              usd_balance: Number(data.usd || 0),
-              php_balance: Number(data.php || 0),
-              usdc_balance: Number(data.usdc || 0),
-              circleWallet: data.circleWallet || null,
-            });
-          }
-        } catch (fallbackErr) {
-          console.error("Fallback wallet fetch also failed:", fallbackErr);
-        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch wallet:", err);
+    }
+  }, [session?.token]);
+
+  useEffect(() => {
+    fetchWallet();
       }
     };
     
