@@ -13,7 +13,7 @@ import { QRCodeSVG } from "qrcode.react";
 export default function Home() {
   const { session } = useSession();
   const navigate = useNavigate();
-  const [wallet, setWallet] = useState({ usd_balance: 0, php_balance: 0 });
+  const [wallet, setWallet] = useState({ usd_balance: 0, php_balance: 0, usdc_balance: 0, circleWallet: null });
   const [recentActivity, setRecentActivity] = useState([]);
   const [recentChats, setRecentChats] = useState([]);
   const [loading, setLoading] = useState(true);
