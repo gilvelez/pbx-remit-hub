@@ -109,12 +109,19 @@ export function SessionProvider({ children }) {
       body: JSON.stringify({ email }),
     });
 
-    if (!res.ok) {
-      const msg = await res.text();
-      throw new Error(msg || 'Login failed');
+    // Read body ONCE
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (e) {
+      data = { error: text };
     }
 
-    const data = await res.json();
+    // Then check status
+    if (!res.ok) {
+      throw new Error(data.error || data.message || 'Login failed');
+    }
 
     setSession((prev) => ({
       ...prev,
