@@ -1,11 +1,14 @@
 """
-Magic Link Authentication Routes
+Magic Link Authentication Routes + Simple Login
 Handles magic link verification for passwordless login
+and simple email-based session login for development
 """
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Header
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 import logging
+import uuid
+from datetime import datetime
 
 from services.magic_link import verify_magic_link, create_magic_link
 from database.connection import get_database
@@ -14,12 +17,123 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 logger = logging.getLogger(__name__)
 
 
+class SimpleLoginRequest(BaseModel):
+    email: EmailStr
+
+
 class MagicLinkVerifyRequest(BaseModel):
     token: str
 
 
 class MagicLinkResendRequest(BaseModel):
     email: EmailStr
+
+
+@router.post("/login")
+async def simple_login(data: SimpleLoginRequest):
+    """
+    Simple email-based login that creates or retrieves a user and returns a session token.
+    This mimics the Netlify function auth-login.js behavior.
+    """
+    email = data.email.lower().strip()
+    
+    db = get_database()
+    users = db.users
+    sessions = db.sessions
+    
+    # Try to find existing user
+    existing = await users.find_one({"email": email})
+    
+    if existing:
+        user_id = existing.get("userId", str(existing.get("_id")))
+        display_name = existing.get("displayName") or email.split("@")[0]
+    else:
+        # Create new user
+        user_id = str(uuid.uuid4())
+        display_name = email.split("@")[0]
+        await users.insert_one({
+            "userId": user_id,
+            "email": email,
+            "displayName": display_name,
+            "createdAt": datetime.utcnow(),
+            "updatedAt": datetime.utcnow(),
+        })
+    
+    # Create session token
+    token = str(uuid.uuid4())
+    await sessions.insert_one({
+        "token": token,
+        "userId": user_id,
+        "email": email,
+        "verified": True,
+        "createdAt": datetime.utcnow(),
+        "lastSeenAt": datetime.utcnow(),
+    })
+    
+    logger.info(f"Login successful for {email}, userId={user_id}")
+    
+    return {
+        "token": token,
+        "user": {
+            "userId": user_id,
+            "email": email,
+            "displayName": display_name
+        }
+    }
+
+
+@router.get("/me")
+async def get_current_user(x_session_token: Optional[str] = Header(None)):
+    """
+    Get current user info and linked banks.
+    Requires X-Session-Token header.
+    This mimics the Netlify function auth-me.js behavior.
+    """
+    if not x_session_token:
+        raise HTTPException(status_code=401, detail="Missing session token")
+    
+    db = get_database()
+    sessions = db.sessions
+    users = db.users
+    banks = db.banks
+    
+    # Find session
+    session = await sessions.find_one({"token": x_session_token})
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    # Update last seen
+    await sessions.update_one(
+        {"token": x_session_token},
+        {"$set": {"lastSeenAt": datetime.utcnow()}}
+    )
+    
+    # Get user info
+    user = await users.find_one({"userId": session.get("userId")})
+    
+    # Get linked banks
+    linked_banks_cursor = banks.find({"userId": session.get("userId")}).sort("createdAt", -1)
+    linked_banks = await linked_banks_cursor.to_list(100)
+    
+    return {
+        "user": {
+            "userId": session.get("userId"),
+            "email": session.get("email"),
+            "displayName": user.get("displayName") if user else session.get("email", "").split("@")[0],
+        },
+        "linkedBanks": [
+            {
+                "bank_id": b.get("bank_id"),
+                "name": b.get("name"),
+                "mask": b.get("mask"),
+                "institution_id": b.get("institution_id"),
+                "institution_name": b.get("institution_name"),
+                "accounts": b.get("accounts", []),
+                "createdAt": b.get("createdAt"),
+            }
+            for b in linked_banks
+        ]
+    }
 
 
 @router.post("/magic/verify")
