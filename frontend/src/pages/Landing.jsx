@@ -219,26 +219,26 @@ export default function Landing() {
               name="Basic"
               price="Free"
               features={["PBX Wallet", "15-min FX Lock"]}
-              ctaLink="/welcome"
+              ctaLink="/register"
             />
             <PlanCard 
               name="Premium"
               price="$10/mo"
               features={["Better FX Rates", "Recurring Transfers", "Priority Support"]}
               highlight
-              ctaLink="/welcome"
+              ctaLink="/register"
             />
             <PlanCard 
               name="SME"
               price="$50/mo"
               features={["$100k/mo limit", "Recurring Transfers", "Priority Support"]}
-              ctaLink="/welcome"
+              ctaLink="/register"
             />
             <PlanCard 
               name="Enterprise"
               price="Custom"
               features={["Unlimited volume", "Dedicated Manager", "Custom rates"]}
-              ctaLink="/welcome"
+              ctaLink="/register"
             />
           </div>
 
