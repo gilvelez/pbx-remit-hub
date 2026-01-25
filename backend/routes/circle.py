@@ -285,13 +285,12 @@ async def mint_usdc(
 
 @router.get("/balance", response_model=BalanceResponse)
 async def get_circle_balance(
-    x_session_token: Optional[str] = Header(None)
+    user: dict = Depends(get_user_from_token)
 ):
     """
     Get user's wallet balance.
     Returns USD balance (USDC is hidden from user).
     """
-    user = await get_user_from_session(x_session_token)
     user_id = user["user_id"]
     
     db = get_database()
