@@ -309,7 +309,7 @@ async def get_circle_balance(
     if circle_wallet and circle_wallet.get("wallet_id") and circle_client.enabled:
         try:
             # Get real-time balance from Circle
-            balance_data = await circle_client.get_wallet_balance(
+            _ = await circle_client.get_wallet_balance(
                 circle_wallet["wallet_id"]
             )
             # Could sync USDC balance here
