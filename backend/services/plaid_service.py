@@ -144,7 +144,10 @@ class PlaidService:
                 client_name="PBX - Philippine Bayani Exchange",
                 products=[Products("auth"), Products("transactions")],
                 country_codes=[CountryCode("US")],
-                language='en'
+                language='en',
+                # Skip phone verification in sandbox - use First Platypus Bank (non-OAuth)
+                auth_type_select_enabled=False,
+                institution_id='ins_109508'
             )
             
             response = self.client.link_token_create(request)
