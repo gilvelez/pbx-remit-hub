@@ -140,7 +140,7 @@ async def get_current_user(x_session_token: Optional[str] = Header(None)):
                 "institution_id": b.get("institution_id"),
                 "institution_name": b.get("institution_name"),
                 "accounts": b.get("accounts", []),
-                "createdAt": b.get("createdAt"),
+                "createdAt": b.get("created_at") or b.get("createdAt"),
             }
             for b in linked_banks
         ]
