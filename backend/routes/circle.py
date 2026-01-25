@@ -2,7 +2,8 @@
 Circle USDC Integration Routes
 Handles wallet creation, USDC minting, and balance queries
 """
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -11,9 +12,11 @@ import logging
 
 from database.connection import get_database
 from utils.circle_client import circle_client
+from routes.auth import decode_jwt_token
 
 router = APIRouter(prefix="/api/circle", tags=["circle"])
 logger = logging.getLogger(__name__)
+security = HTTPBearer(auto_error=False)
 
 
 class CreateWalletRequest(BaseModel):
@@ -49,15 +52,36 @@ class BalanceResponse(BaseModel):
     circle_wallet: Optional[dict] = None
 
 
-async def get_user_from_session(x_session_token: str) -> dict:
-    """Validate session token and return user info"""
-    if not x_session_token:
-        raise HTTPException(status_code=401, detail="Missing session token")
+async def get_user_from_token(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    authorization: Optional[str] = Header(None),
+    x_session_token: Optional[str] = Header(None),
+) -> dict:
+    """Extract user from JWT token or legacy session token"""
+    token = None
     
+    # Try Bearer token first
+    if credentials:
+        token = credentials.credentials
+    elif authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+    elif x_session_token:
+        token = x_session_token
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing authentication token")
+    
+    # Try JWT decode first
+    payload = decode_jwt_token(token)
+    if payload:
+        return {
+            "user_id": payload.get("user_id"),
+            "email": payload.get("email"),
+        }
+    
+    # Fallback to session lookup
     db = get_database()
-    session = await db.sessions.find_one({"token": x_session_token})
-    
-    if not session:
+    session = await db.sessions.find_one({"token": token})
         raise HTTPException(status_code=401, detail="Invalid session")
     
     user_id = session.get("user_id") or session.get("userId")
