@@ -1,65 +1,46 @@
 const crypto = require("crypto");
-const { getDb } = require("./_mongoClient");
 
-function json(statusCode, body) {
-  return {
-    statusCode,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  };
-}
+const headers = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-headers": "content-type, authorization",
+  "access-control-allow-methods": "POST, OPTIONS",
+  "content-type": "application/json",
+};
 
-function normEmail(email) {
-  return String(email || "").trim().toLowerCase();
+function sign(payload) {
+  const secret = process.env.AUTH_SECRET || "dev-secret-change-me";
+  const data = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const sig = crypto.createHmac("sha256", secret).update(data).digest("base64url");
+  return `${data}.${sig}`;
 }
 
 exports.handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") return { statusCode: 200, headers, body: "" };
+  if (event.httpMethod !== "POST")
+    return { statusCode: 405, headers, body: JSON.stringify({ error: "Method not allowed" }) };
+
   try {
-    if (event.httpMethod !== "POST") return json(405, { error: "Method not allowed" });
+    const body = JSON.parse(event.body || "{}");
+    const email = String(body.email || "").trim().toLowerCase();
+    const password = String(body.password || "");
 
-    const { email } = JSON.parse(event.body || "{}");
-    const e = normEmail(email);
-    if (!e || !e.includes("@")) return json(400, { error: "Valid email required" });
-
-    const db = await getDb();
-
-    // upsert user
-    const users = db.collection("users");
-    const existing = await users.findOne({ email: e });
-    let userId;
-    let displayName;
-
-    if (existing) {
-      userId = existing.userId;
-      displayName = existing.displayName || e.split("@")[0];
-    } else {
-      userId = crypto.randomUUID();
-      displayName = e.split("@")[0];
-      await users.insertOne({
-        userId,
-        email: e,
-        displayName,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+    if (!email) {
+      return { statusCode: 400, headers, body: JSON.stringify({ error: "Email required" }) };
     }
 
-    // create session token
-    const token = crypto.randomUUID();
-    const sessions = db.collection("sessions");
-    await sessions.insertOne({
-      token,
-      userId,
-      email: e,
-      verified: true,
-      createdAt: new Date(),
-      lastSeenAt: new Date(),
-    });
+    // MVP AUTH: accept any email/password for now (replace later with DB + bcrypt)
+    const token = sign({ email, iat: Date.now() });
 
-    return json(200, { token, user: { userId, email: e, displayName } });
-
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({ success: true, token, user: { email } }),
+    };
   } catch (err) {
-    console.error("auth-login error:", err);
-    return json(500, { error: "Server error" });
+    return {
+      statusCode: 500,
+      headers,
+      body: JSON.stringify({ error: "Login failed", detail: err.message || String(err) }),
+    };
   }
 };
