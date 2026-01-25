@@ -145,6 +145,9 @@ export default function Home() {
 
   return (
     <div className="pb-20">
+      {/* Demo Tools - only visible in demo mode */}
+      <DemoTools onBalanceUpdate={handleBalanceUpdate} />
+
       {/* Welcome Header - Profile aware */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
