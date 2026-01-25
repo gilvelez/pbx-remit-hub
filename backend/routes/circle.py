@@ -82,7 +82,9 @@ async def get_user_from_token(
     # Fallback to session lookup
     db = get_database()
     session = await db.sessions.find_one({"token": token})
-        raise HTTPException(status_code=401, detail="Invalid session")
+    
+    if not session:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     
     user_id = session.get("user_id") or session.get("userId")
     email = session.get("email", "")
@@ -93,13 +95,12 @@ async def get_user_from_token(
 @router.post("/create-wallet", response_model=CreateWalletResponse)
 async def create_circle_wallet(
     request: CreateWalletRequest,
-    x_session_token: Optional[str] = Header(None)
+    user: dict = Depends(get_user_from_token)
 ):
     """
     Create a Circle USDC wallet for the user.
     This is automatically called on first Add Money action.
     """
-    user = await get_user_from_session(x_session_token)
     user_id = user["user_id"]
     
     db = get_database()
