@@ -105,21 +105,32 @@ async def get_current_user(x_session_token: Optional[str] = Header(None)):
     # Update last seen
     await sessions.update_one(
         {"token": x_session_token},
-        {"$set": {"lastSeenAt": datetime.utcnow()}}
+        {"$set": {"last_seen_at": datetime.utcnow()}}
     )
     
-    # Get user info
-    user = await users.find_one({"userId": session.get("userId")})
+    # Get user info - try both field names for backwards compatibility
+    user_id = session.get("user_id") or session.get("userId")
+    user = await users.find_one({"user_id": user_id})
+    if not user:
+        user = await users.find_one({"userId": user_id})
     
     # Get linked banks
-    linked_banks_cursor = banks.find({"userId": session.get("userId")}).sort("createdAt", -1)
+    linked_banks_cursor = banks.find({"user_id": user_id}).sort("created_at", -1)
     linked_banks = await linked_banks_cursor.to_list(100)
+    
+    # Get display name from user or fallback
+    display_name = None
+    if user:
+        display_name = user.get("display_name") or user.get("displayName")
+    if not display_name:
+        email = session.get("email", "")
+        display_name = email.split("@")[0] if email else "User"
     
     return {
         "user": {
-            "userId": session.get("userId"),
+            "userId": user_id,
             "email": session.get("email"),
-            "displayName": user.get("displayName") if user else session.get("email", "").split("@")[0],
+            "displayName": display_name,
         },
         "linkedBanks": [
             {
