@@ -39,12 +39,14 @@ export async function sendFriendRequest(addresseeUserId) {
     body: JSON.stringify({ addressee_user_id: addresseeUserId }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to send friend request');
+    throw new Error(data.detail || 'Failed to send friend request');
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -57,12 +59,14 @@ export async function handleFriendAction(friendshipId, action) {
     body: JSON.stringify({ friendship_id: friendshipId, action }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || `Failed to ${action} friend request`);
+    throw new Error(data.detail || `Failed to ${action} friend request`);
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -123,12 +127,14 @@ export async function getConversation(otherUserId) {
     headers: getHeaders(),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to get conversation');
+    throw new Error(data.detail || 'Failed to get conversation');
   }
   
-  return res.json();
+  return data;
 }
 
 // ============================================================
@@ -169,12 +175,14 @@ export async function sendMessage(conversationId, text) {
     }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to send message');
+    throw new Error(data.detail || 'Failed to send message');
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -191,10 +199,12 @@ export async function sendPaymentInChat(recipientUserId, amountUsd, note = null)
     }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to send payment');
+    throw new Error(data.detail || 'Failed to send payment');
   }
   
-  return res.json();
+  return data;
 }
