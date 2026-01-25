@@ -86,22 +86,20 @@ export default function AddMoney() {
     setError("");
     
     try {
-      // TODO: Wire to actual backend endpoint
-      const result = await initiateAddMoney(session?.token, {
-        amount: parseFloat(amount),
-        bank_id: selectedBank.id,
-      });
+      // Call Circle API to add money (mints USDC 1:1 with USD)
+      const result = await addMoneyFlow(parseFloat(amount));
       
       // Success - navigate back to home with success state
       navigate("/sender/dashboard", { 
         state: { 
           fundingSuccess: true, 
-          amount: parseFloat(amount),
-          message: "Funds are being added to your wallet"
+          amount: result.amountAdded,
+          newBalance: result.newBalance,
+          message: result.message || "Funds added to your wallet"
         } 
       });
     } catch (err) {
-      setError(err.message || "Failed to initiate transfer. Please try again.");
+      setError(err.message || "Failed to add money. Please try again.");
       setShowConfirm(false);
     } finally {
       setSubmitting(false);
