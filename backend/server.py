@@ -627,6 +627,7 @@ app.include_router(profiles_router)
 app.include_router(businesses_router)
 app.include_router(admin_router)
 app.include_router(banks_router)
+app.include_router(circle_router)
 
 # CORS middleware - allow specific origins or wildcard
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')
