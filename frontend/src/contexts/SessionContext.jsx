@@ -58,7 +58,7 @@ export function SessionProvider({ children }) {
       if (!session.token || session._meLoaded) return;
 
       try {
-        const res = await fetch('/.netlify/functions/auth-me', {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { 
             'Content-Type': 'application/json', 
             'X-Session-Token': session.token 
