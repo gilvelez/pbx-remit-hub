@@ -8,7 +8,17 @@ import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
 import { getConversations } from "../../lib/socialApi";
 import { getLinkedBanks } from "../../lib/bankApi";
+import { getWalletBalance } from "../../lib/circleApi";
 import { QRCodeSVG } from "qrcode.react";
+
+// Get API base - empty for localhost (uses proxy), full URL for deployed
+const getApiBase = () => {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return '';
+  }
+  return process.env.REACT_APP_BACKEND_URL || '';
+};
+const API_BASE = getApiBase();
 
 export default function Home() {
   const { session } = useSession();
@@ -37,25 +47,37 @@ export default function Home() {
       if (!session?.token) return;
       
       try {
-        // Use Netlify wallet-balance function for consistent data
-        const res = await fetch('/.netlify/functions/wallet-balance', {
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Session-Token': session.token,
-          },
+        // Try Circle API first (works in both local and deployed)
+        const circleBalance = await getWalletBalance();
+        setWallet({
+          usd_balance: Number(circleBalance.usd || 0),
+          php_balance: Number(circleBalance.php || 0),
+          usdc_balance: Number(circleBalance.usd || 0), // USDC = USD (hidden from user)
+          circleWallet: circleBalance.hasWallet ? { active: true } : null,
         });
-        
-        if (res.ok) {
-          const data = await res.json();
-          setWallet({
-            usd_balance: Number(data.usd || 0),
-            php_balance: Number(data.php || 0),
-            usdc_balance: Number(data.usdc || 0),
-            circleWallet: data.circleWallet || null,
-          });
-        }
       } catch (err) {
-        console.error("Failed to fetch wallet:", err);
+        console.error("Failed to fetch wallet from Circle API:", err);
+        // Fallback to Netlify function for deployed version
+        try {
+          const res = await fetch(`${API_BASE}/.netlify/functions/wallet-balance`, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Session-Token': session.token,
+            },
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            setWallet({
+              usd_balance: Number(data.usd || 0),
+              php_balance: Number(data.php || 0),
+              usdc_balance: Number(data.usdc || 0),
+              circleWallet: data.circleWallet || null,
+            });
+          }
+        } catch (fallbackErr) {
+          console.error("Fallback wallet fetch also failed:", fallbackErr);
+        }
       }
     };
     

@@ -6,11 +6,13 @@
  * 1. Check if user has linked banks
  * 2. If no banks → prompt to link bank first
  * 3. If banks exist → show amount input + bank selector
+ * 4. On confirm → Call Circle API to mint USDC (user sees USD)
  */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
-import { getLinkedBanks, initiateAddMoney } from "../../lib/bankApi";
+import { getLinkedBanks } from "../../lib/bankApi";
+import { addMoneyFlow } from "../../lib/circleApi";
 
 export default function AddMoney() {
   const navigate = useNavigate();
@@ -84,22 +86,20 @@ export default function AddMoney() {
     setError("");
     
     try {
-      // TODO: Wire to actual backend endpoint
-      const result = await initiateAddMoney(session?.token, {
-        amount: parseFloat(amount),
-        bank_id: selectedBank.id,
-      });
+      // Call Circle API to add money (mints USDC 1:1 with USD)
+      const result = await addMoneyFlow(parseFloat(amount));
       
       // Success - navigate back to home with success state
       navigate("/sender/dashboard", { 
         state: { 
           fundingSuccess: true, 
-          amount: parseFloat(amount),
-          message: "Funds are being added to your wallet"
+          amount: result.amountAdded,
+          newBalance: result.newBalance,
+          message: result.message || "Funds added to your wallet"
         } 
       });
     } catch (err) {
-      setError(err.message || "Failed to initiate transfer. Please try again.");
+      setError(err.message || "Failed to add money. Please try again.");
       setShowConfirm(false);
     } finally {
       setSubmitting(false);
