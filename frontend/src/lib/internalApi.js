@@ -37,12 +37,14 @@ export async function lookupPbxUser(identifier) {
     body: JSON.stringify({ identifier }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok && res.status !== 404) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to look up user');
+    throw new Error(data.detail || 'Failed to look up user');
   }
   
-  return res.json();
+  return data;
 }
 
 
@@ -61,12 +63,14 @@ export async function createInternalTransfer({ recipient_identifier, amount_usd,
     body: JSON.stringify({ recipient_identifier, amount_usd, note }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Transfer failed');
+    throw new Error(data.detail || 'Transfer failed');
   }
   
-  return res.json();
+  return data;
 }
 
 
@@ -80,12 +84,14 @@ export async function getIncomingTransfers(limit = 10) {
     headers: getHeaders(),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to get incoming transfers');
+    throw new Error(data.detail || 'Failed to get incoming transfers');
   }
   
-  return res.json();
+  return data;
 }
 
 
@@ -101,12 +107,14 @@ export async function generateInvite(identifier) {
     body: JSON.stringify({ identifier }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to generate invite');
+    throw new Error(data.detail || 'Failed to generate invite');
   }
   
-  return res.json();
+  return data;
 }
 
 
