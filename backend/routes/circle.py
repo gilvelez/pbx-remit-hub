@@ -2,7 +2,8 @@
 Circle USDC Integration Routes
 Handles wallet creation, USDC minting, and balance queries
 """
-from fastapi import APIRouter, HTTPException, Header
+from fastapi import APIRouter, HTTPException, Header, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
@@ -11,9 +12,11 @@ import logging
 
 from database.connection import get_database
 from utils.circle_client import circle_client
+from routes.auth import decode_jwt_token
 
 router = APIRouter(prefix="/api/circle", tags=["circle"])
 logger = logging.getLogger(__name__)
+security = HTTPBearer(auto_error=False)
 
 
 class CreateWalletRequest(BaseModel):
@@ -49,16 +52,39 @@ class BalanceResponse(BaseModel):
     circle_wallet: Optional[dict] = None
 
 
-async def get_user_from_session(x_session_token: str) -> dict:
-    """Validate session token and return user info"""
-    if not x_session_token:
-        raise HTTPException(status_code=401, detail="Missing session token")
+async def get_user_from_token(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    authorization: Optional[str] = Header(None),
+    x_session_token: Optional[str] = Header(None),
+) -> dict:
+    """Extract user from JWT token or legacy session token"""
+    token = None
     
+    # Try Bearer token first
+    if credentials:
+        token = credentials.credentials
+    elif authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+    elif x_session_token:
+        token = x_session_token
+    
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing authentication token")
+    
+    # Try JWT decode first
+    payload = decode_jwt_token(token)
+    if payload:
+        return {
+            "user_id": payload.get("user_id"),
+            "email": payload.get("email"),
+        }
+    
+    # Fallback to session lookup
     db = get_database()
-    session = await db.sessions.find_one({"token": x_session_token})
+    session = await db.sessions.find_one({"token": token})
     
     if not session:
-        raise HTTPException(status_code=401, detail="Invalid session")
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
     
     user_id = session.get("user_id") or session.get("userId")
     email = session.get("email", "")
@@ -69,13 +95,12 @@ async def get_user_from_session(x_session_token: str) -> dict:
 @router.post("/create-wallet", response_model=CreateWalletResponse)
 async def create_circle_wallet(
     request: CreateWalletRequest,
-    x_session_token: Optional[str] = Header(None)
+    user: dict = Depends(get_user_from_token)
 ):
     """
     Create a Circle USDC wallet for the user.
     This is automatically called on first Add Money action.
     """
-    user = await get_user_from_session(x_session_token)
     user_id = user["user_id"]
     
     db = get_database()
@@ -145,14 +170,13 @@ async def create_circle_wallet(
 @router.post("/mint-usdc", response_model=MintUSDCResponse)
 async def mint_usdc(
     request: MintUSDCRequest,
-    x_session_token: Optional[str] = Header(None)
+    user: dict = Depends(get_user_from_token)
 ):
     """
     Add money to wallet by minting USDC (1:1 with USD).
     Creates wallet if user doesn't have one.
     User only sees USD amounts - USDC is hidden implementation detail.
     """
-    user = await get_user_from_session(x_session_token)
     user_id = user["user_id"]
     
     db = get_database()
@@ -261,13 +285,12 @@ async def mint_usdc(
 
 @router.get("/balance", response_model=BalanceResponse)
 async def get_circle_balance(
-    x_session_token: Optional[str] = Header(None)
+    user: dict = Depends(get_user_from_token)
 ):
     """
     Get user's wallet balance.
     Returns USD balance (USDC is hidden from user).
     """
-    user = await get_user_from_session(x_session_token)
     user_id = user["user_id"]
     
     db = get_database()
@@ -286,7 +309,7 @@ async def get_circle_balance(
     if circle_wallet and circle_wallet.get("wallet_id") and circle_client.enabled:
         try:
             # Get real-time balance from Circle
-            balance_data = await circle_client.get_wallet_balance(
+            _ = await circle_client.get_wallet_balance(
                 circle_wallet["wallet_id"]
             )
             # Could sync USDC balance here

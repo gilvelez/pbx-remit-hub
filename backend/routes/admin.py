@@ -17,6 +17,7 @@ from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
 import logging
+import os
 
 from database.connection import get_database
 from utils.admin import (
@@ -539,3 +540,77 @@ async def admin_balance_adjustment(request: Request, data: BalanceAdjustmentRequ
     )
     
     return result
+
+
+
+# ============================================================
+# DEMO MINT ENDPOINT (for testing/demo purposes)
+# ============================================================
+
+class DemoMintRequest(BaseModel):
+    userId: str
+    currency: str = Field(..., pattern="^(USD|PHP|USDC)$")
+    amount: float = Field(..., gt=0, le=100000)
+
+
+ADMIN_MINT_KEY = os.environ.get("ADMIN_MINT_KEY", "demo-mint-key-12345")
+
+
+@router.post("/mint")
+async def demo_mint(
+    request: Request,
+    data: DemoMintRequest
+):
+    """
+    Demo mint endpoint for adding test balances.
+    Requires x-admin-mint-key header for authorization.
+    
+    This is for demo/testing purposes only.
+    """
+    # Check admin mint key
+    provided_key = request.headers.get("x-admin-mint-key", "")
+    if provided_key != ADMIN_MINT_KEY:
+        raise HTTPException(status_code=403, detail="Invalid admin mint key")
+    
+    db = get_database()
+    wallets = db.wallets
+    
+    # Map currency to field name
+    field_map = {
+        "USD": "usd",
+        "PHP": "php", 
+        "USDC": "usdc"
+    }
+    field_name = field_map.get(data.currency.upper())
+    if not field_name:
+        raise HTTPException(status_code=400, detail=f"Invalid currency: {data.currency}")
+    
+    # Update wallet balance
+    result = await wallets.find_one_and_update(
+        {"user_id": data.userId},
+        {
+            "$inc": {field_name: data.amount},
+            "$set": {"updated_at": datetime.now(timezone.utc)},
+            "$setOnInsert": {
+                "user_id": data.userId,
+                "created_at": datetime.now(timezone.utc)
+            }
+        },
+        upsert=True,
+        return_document=True
+    )
+    
+    logger.info(f"Demo mint: {data.amount} {data.currency} to user {data.userId}")
+    
+    return {
+        "success": True,
+        "userId": data.userId,
+        "currency": data.currency,
+        "amount": data.amount,
+        "newBalance": {
+            "usd": result.get("usd", 0),
+            "php": result.get("php", 0),
+            "usdc": result.get("usdc", 0)
+        }
+    }
+

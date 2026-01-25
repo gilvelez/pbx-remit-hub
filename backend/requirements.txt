@@ -80,3 +80,4 @@ aiohttp==3.13.3
 circle-configurations==9.1.0
 circle-developer-controlled-wallets==9.1.0
 circle-web3-sdk-util==9.1.0
+PyJWT==2.10.1

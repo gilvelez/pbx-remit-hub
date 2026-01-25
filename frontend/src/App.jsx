@@ -18,6 +18,7 @@ import Roadmap from "./pages/Roadmap.jsx";
 
 // Auth Pages
 import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
 import Verify from "./pages/Verify.jsx";
 import MagicLinkHandler from "./pages/auth/MagicLinkHandler.jsx";
 
@@ -99,6 +100,7 @@ function AppRoutes() {
           Role selection determines UX path
          ======================================== */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/verify" element={<Verify />} />
       
       {/* Progressive Onboarding Flow with Role Selection */}
