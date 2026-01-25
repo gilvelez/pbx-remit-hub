@@ -178,7 +178,6 @@ async def mint_usdc(
     User only sees USD amounts - USDC is hidden implementation detail.
     """
     user_id = user["user_id"]
-    user_id = user["user_id"]
     
     db = get_database()
     wallets = db.wallets
