@@ -1,44 +1,63 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auditLog } from '../lib/auditLog';
 
 const SessionContext = createContext(null);
 
-// Storage key for session data - using localStorage for persistence across tabs/sessions
-const STORAGE_KEY = 'pbx_session';
+// Storage keys
+const TOKEN_KEY = 'pbx_token';
 const ACTIVE_PROFILE_KEY = 'pbx_active_profile_id';
 
 // Get API base URL
-// When running locally (localhost), use empty string to let requests go to the same origin
-// When deployed, use REACT_APP_BACKEND_URL
 const getApiBase = () => {
-  const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
-  // If we're on localhost and backend URL is external, use empty string
-  // This allows the frontend to use relative URLs that work with local proxy
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return '';
   }
-  return backendUrl;
+  return process.env.REACT_APP_BACKEND_URL || '';
 };
 const API_BASE = getApiBase();
 
+/**
+ * Authenticated fetch helper - automatically adds JWT Authorization header
+ */
+export async function authFetch(url, options = {}) {
+  const token = localStorage.getItem(TOKEN_KEY);
+  const headers = { 
+    ...(options.headers || {}), 
+    'Content-Type': 'application/json' 
+  };
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
+  return fetch(fullUrl, { ...options, headers });
+}
+
 export function SessionProvider({ children }) {
-  // CRITICAL: Initialize state with function to avoid reading storage multiple times
   const [session, setSession] = useState(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const token = localStorage.getItem(TOKEN_KEY);
       const savedActiveProfileId = localStorage.getItem(ACTIVE_PROFILE_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (savedActiveProfileId && !parsed.activeProfileId) {
-          parsed.activeProfileId = savedActiveProfileId;
-        }
-        return parsed;
+      
+      if (token) {
+        return {
+          exists: true,
+          verified: true,
+          token,
+          user: null, // Will be loaded from /api/auth/me
+          role: null,
+          profiles: [],
+          activeProfile: null,
+          activeProfileId: savedActiveProfileId || null,
+          _meLoaded: false,
+        };
       }
     } catch (e) {
-      console.error('Failed to parse session from storage:', e);
-      localStorage.removeItem(STORAGE_KEY);
+      console.error('Failed to load session from storage:', e);
+      localStorage.removeItem(TOKEN_KEY);
     }
-    // Default state
+    
+    // Default state - not logged in
     return {
       exists: false,
       verified: false,
@@ -51,123 +70,167 @@ export function SessionProvider({ children }) {
     };
   });
 
-  // Persist to localStorage whenever session changes
+  // Persist active profile ID when it changes
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
-      if (session.activeProfileId) {
-        localStorage.setItem(ACTIVE_PROFILE_KEY, session.activeProfileId);
-      }
-    } catch (e) {
-      console.error('Failed to save session to storage:', e);
+    if (session.activeProfileId) {
+      localStorage.setItem(ACTIVE_PROFILE_KEY, session.activeProfileId);
     }
-  }, [session]);
+  }, [session.activeProfileId]);
 
-  // Load user data from auth-me when token is available
-  useEffect(() => {
-    const loadMe = async () => {
-      if (!session.token || session._meLoaded) return;
+  // Restore session from JWT on mount
+  const restore = useCallback(async () => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
 
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: { 
-            'Content-Type': 'application/json', 
-            'X-Session-Token': session.token 
-          },
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/me`, {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        console.log('Session invalid, clearing...');
+        localStorage.removeItem(TOKEN_KEY);
+        setSession({
+          exists: false,
+          verified: false,
+          token: null,
+          user: null,
+          role: null,
+          profiles: [],
+          activeProfile: null,
+          activeProfileId: null,
         });
-        if (!res.ok) {
-          // Session invalid - clear it
-          if (res.status === 401) {
-            console.log('Session invalid, clearing...');
-            localStorage.removeItem(STORAGE_KEY);
-            setSession({
-              exists: false,
-              verified: false,
-              token: null,
-              user: null,
-              role: null,
-              profiles: [],
-              activeProfile: null,
-              activeProfileId: null,
-            });
-          }
-          return;
-        }
-
-        const data = await res.json();
-        setSession((prev) => ({
-          ...prev,
-          user: { 
-            ...(prev.user || {}), 
-            ...data.user,
-            displayName: data.user.displayName,
-            userId: data.user.userId,
-          },
-          linkedBanks: data.linkedBanks || [],
-          _meLoaded: true,
-        }));
-        auditLog('AUTH_ME_LOADED', { email: data.user.email });
-      } catch (e) {
-        console.error('Failed to load auth-me:', e);
+        return;
       }
-    };
 
-    loadMe();
-  }, [session.token, session._meLoaded]);
+      const data = await res.json();
+      setSession((prev) => ({
+        ...prev,
+        exists: true,
+        verified: true,
+        token,
+        user: {
+          userId: data.user.userId,
+          email: data.user.email,
+          displayName: data.user.displayName,
+        },
+        linkedBanks: data.linkedBanks || [],
+        _meLoaded: true,
+      }));
+      auditLog('SESSION_RESTORED', { email: data.user.email });
+    } catch (e) {
+      console.error('Failed to restore session:', e);
+      localStorage.removeItem(TOKEN_KEY);
+      setSession({
+        exists: false,
+        verified: false,
+        token: null,
+        user: null,
+        role: null,
+        profiles: [],
+        activeProfile: null,
+        activeProfileId: null,
+      });
+    }
+  }, []);
 
-  // LOGIN: Call auth-login to get server-generated token
-  const login = async (email) => {
+  // Load user data on mount if token exists
+  useEffect(() => {
+    if (session.token && !session._meLoaded) {
+      restore();
+    }
+  }, [session.token, session._meLoaded, restore]);
+
+  /**
+   * LOGIN with email and password
+   */
+  const login = async (email, password) => {
     const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
     });
 
-    // Read body ONCE
-    const text = await res.text();
-    let data;
-    try {
-      data = text ? JSON.parse(text) : {};
-    } catch (e) {
-      data = { error: text };
-    }
-
-    // Then check status
+    const data = await res.json();
+    
     if (!res.ok) {
-      throw new Error(data.error || data.message || 'Login failed');
+      throw new Error(data?.error || data?.detail || 'Login failed');
     }
 
-    setSession((prev) => ({
-      ...prev,
+    // Store JWT token
+    localStorage.setItem(TOKEN_KEY, data.token);
+    
+    setSession({
       exists: true,
       verified: true,
       token: data.token,
-      user: { 
-        email: data.user.email, 
-        displayName: data.user.displayName, 
-        userId: data.user.userId 
+      user: {
+        userId: data.user.userId,
+        email: data.user.email,
+        displayName: data.user.displayName,
       },
-      _meLoaded: false, // Will trigger auth-me load
-      _profilesLoaded: true,
-    }));
-    auditLog('SESSION_CREATED', { email: data.user.email, token: data.token });
+      role: null,
+      profiles: [],
+      activeProfile: null,
+      activeProfileId: null,
+      _meLoaded: true,
+    });
+    
+    auditLog('SESSION_LOGIN', { email: data.user.email });
+    return data;
   };
 
-  // VERIFY: No-op since auth-login sets verified=true
-  const verify = async () => {
-    if (!session.token) throw new Error('No session token');
-    setSession((prev) => ({ ...prev, verified: true }));
-    auditLog('SESSION_VERIFIED', { token: session.token });
+  /**
+   * REGISTER new user with email, password, and optional display name
+   */
+  const register = async (email, password, displayName) => {
+    const res = await fetch(`${API_BASE}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, displayName }),
+    });
+
+    const data = await res.json();
+    
+    if (!res.ok) {
+      throw new Error(data?.error || data?.detail || 'Registration failed');
+    }
+
+    // Store JWT token
+    localStorage.setItem(TOKEN_KEY, data.token);
+    
+    setSession({
+      exists: true,
+      verified: true,
+      token: data.token,
+      user: {
+        userId: data.user.userId,
+        email: data.user.email,
+        displayName: data.user.displayName,
+      },
+      role: null,
+      profiles: [],
+      activeProfile: null,
+      activeProfileId: null,
+      _meLoaded: true,
+    });
+    
+    auditLog('SESSION_REGISTER', { email: data.user.email });
+    return data;
   };
 
+  /**
+   * LOGOUT - clear token and session
+   */
   const logout = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(ACTIVE_PROFILE_KEY);
-    setSession({ 
-      exists: false, 
-      verified: false, 
-      token: null, 
-      user: null, 
+    setSession({
+      exists: false,
+      verified: false,
+      token: null,
+      user: null,
       role: null,
       profiles: [],
       activeProfile: null,
@@ -176,13 +239,25 @@ export function SessionProvider({ children }) {
     auditLog('SESSION_LOGOUT');
   };
 
-  // Update user role
+  /**
+   * Legacy verify function (no-op with JWT)
+   */
+  const verify = async () => {
+    if (!session.token) throw new Error('No session token');
+    setSession((prev) => ({ ...prev, verified: true }));
+  };
+
+  /**
+   * Update user role
+   */
   const setRole = async (role) => {
     setSession((prev) => ({ ...prev, role }));
     auditLog('ROLE_SET', { role });
   };
 
-  // Switch active profile
+  /**
+   * Switch active profile
+   */
   const switchProfile = async (profile) => {
     setSession((prev) => ({
       ...prev,
@@ -192,23 +267,26 @@ export function SessionProvider({ children }) {
     auditLog('PROFILE_SWITCHED', { profileId: profile.profile_id, type: profile.type });
   };
 
-  // Refresh profiles (no-op for now, data comes from auth-me)
+  /**
+   * Refresh profiles from server
+   */
   const refreshProfiles = async () => {
     if (!session.token) return;
-    // Force re-fetch from auth-me
     setSession((prev) => ({ ...prev, _meLoaded: false }));
   };
 
   return (
-    <SessionContext.Provider value={{ 
-      session, 
-      setSession, 
-      login, 
-      verify, 
-      logout, 
+    <SessionContext.Provider value={{
+      session,
+      setSession,
+      login,
+      register,
+      logout,
+      verify,
       setRole,
       switchProfile,
       refreshProfiles,
+      authFetch,
     }}>
       {children}
     </SessionContext.Provider>
