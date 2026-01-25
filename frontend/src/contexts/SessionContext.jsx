@@ -106,7 +106,7 @@ export function SessionProvider({ children }) {
 
   // LOGIN: Call auth-login to get server-generated token
   const login = async (email) => {
-    const res = await fetch('/.netlify/functions/auth-login', {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
