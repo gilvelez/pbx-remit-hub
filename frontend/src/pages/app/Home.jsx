@@ -50,6 +50,8 @@ export default function Home() {
           setWallet({
             usd_balance: Number(data.usd || 0),
             php_balance: Number(data.php || 0),
+            usdc_balance: Number(data.usdc || 0),
+            circleWallet: data.circleWallet || null,
           });
         }
       } catch (err) {
