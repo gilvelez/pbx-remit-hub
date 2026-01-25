@@ -6,11 +6,13 @@
  * 1. Check if user has linked banks
  * 2. If no banks → prompt to link bank first
  * 3. If banks exist → show amount input + bank selector
+ * 4. On confirm → Call Circle API to mint USDC (user sees USD)
  */
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSession } from "../../contexts/SessionContext";
-import { getLinkedBanks, initiateAddMoney } from "../../lib/bankApi";
+import { getLinkedBanks } from "../../lib/bankApi";
+import { addMoneyFlow } from "../../lib/circleApi";
 
 export default function AddMoney() {
   const navigate = useNavigate();
