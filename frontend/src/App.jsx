@@ -18,6 +18,7 @@ import Roadmap from "./pages/Roadmap.jsx";
 
 // Auth Pages
 import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
 import Verify from "./pages/Verify.jsx";
 import MagicLinkHandler from "./pages/auth/MagicLinkHandler.jsx";
 
