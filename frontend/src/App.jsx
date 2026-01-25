@@ -100,6 +100,7 @@ function AppRoutes() {
           Role selection determines UX path
          ======================================== */}
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/verify" element={<Verify />} />
       
       {/* Progressive Onboarding Flow with Role Selection */}
