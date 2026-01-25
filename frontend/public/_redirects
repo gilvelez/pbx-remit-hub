@@ -11,6 +11,7 @@
 
 # Circle endpoints
 /api/circle/status          /.netlify/functions/circle-status           200
+/api/circle/webhook         /.netlify/functions/circle-webhook          200
 
 # Bank management
 /api/banks/linked           /.netlify/functions/banks-linked            200
@@ -18,6 +19,9 @@
 /api/banks/add-money        /.netlify/functions/banks-add-money         200
 /api/banks/withdraw         /.netlify/functions/banks-withdraw          200
 /api/banks/*                /.netlify/functions/banks-delete?bank_id=:splat  200
+
+# Unified Add Money (Plaid + Circle + USDC minting)
+/api/add-money              /.netlify/functions/add-money-unified       200
 
 # Wallet endpoints
 /api/wallet/balance         /.netlify/functions/wallet-balance          200

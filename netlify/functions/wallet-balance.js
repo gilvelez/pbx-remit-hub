@@ -22,8 +22,34 @@ exports.handler = async (event) => {
     const db = await getDb();
     const session = await requireSession(db, event);
 
-    const w = await getWallet(db, session.userId);
-    return json(200, { usd: Number(w.usd || 0), php: Number(w.php || 0) });
+    // Get wallet with USDC balance and Circle wallet info
+    const wallets = db.collection('wallets');
+    let wallet = await wallets.findOne({ userId: session.userId });
+    
+    if (!wallet) {
+      // Create default wallet
+      wallet = { 
+        userId: session.userId, 
+        usd: 0, 
+        php: 0, 
+        usdc: 0,
+        circleWallet: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      await wallets.insertOne(wallet);
+    }
+
+    return json(200, { 
+      usd: Number(wallet.usd || 0), 
+      php: Number(wallet.php || 0),
+      usdc: Number(wallet.usdc || 0),
+      circleWallet: wallet.circleWallet ? {
+        address: wallet.circleWallet.address,
+        blockchain: wallet.circleWallet.blockchain,
+        state: wallet.circleWallet.state,
+      } : null,
+    });
 
   } catch (err) {
     console.error("wallet-balance error:", err);

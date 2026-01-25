@@ -105,12 +105,14 @@ export async function startBusinessChat(businessProfileId) {
     headers: getHeaders(),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to start chat');
+    throw new Error(data.detail || 'Failed to start chat');
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -127,10 +129,12 @@ export async function payBusiness(businessProfileId, amountUsd, note = null) {
     }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to pay business');
+    throw new Error(data.detail || 'Failed to pay business');
   }
   
-  return res.json();
+  return data;
 }

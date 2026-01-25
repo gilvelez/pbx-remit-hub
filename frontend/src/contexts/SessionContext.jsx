@@ -7,6 +7,20 @@ const SessionContext = createContext(null);
 const STORAGE_KEY = 'pbx_session';
 const ACTIVE_PROFILE_KEY = 'pbx_active_profile_id';
 
+// Get API base URL
+// When running locally (localhost), use empty string to let requests go to the same origin
+// When deployed, use REACT_APP_BACKEND_URL
+const getApiBase = () => {
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+  // If we're on localhost and backend URL is external, use empty string
+  // This allows the frontend to use relative URLs that work with local proxy
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return '';
+  }
+  return backendUrl;
+};
+const API_BASE = getApiBase();
+
 export function SessionProvider({ children }) {
   // CRITICAL: Initialize state with function to avoid reading storage multiple times
   const [session, setSession] = useState(() => {
@@ -55,7 +69,7 @@ export function SessionProvider({ children }) {
       if (!session.token || session._meLoaded) return;
 
       try {
-        const res = await fetch('/.netlify/functions/auth-me', {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { 
             'Content-Type': 'application/json', 
             'X-Session-Token': session.token 
@@ -103,18 +117,25 @@ export function SessionProvider({ children }) {
 
   // LOGIN: Call auth-login to get server-generated token
   const login = async (email) => {
-    const res = await fetch('/.netlify/functions/auth-login', {
+    const res = await fetch(`${API_BASE}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     });
 
-    if (!res.ok) {
-      const msg = await res.text();
-      throw new Error(msg || 'Login failed');
+    // Read body ONCE
+    const text = await res.text();
+    let data;
+    try {
+      data = text ? JSON.parse(text) : {};
+    } catch (e) {
+      data = { error: text };
     }
 
-    const data = await res.json();
+    // Then check status
+    if (!res.ok) {
+      throw new Error(data.error || data.message || 'Login failed');
+    }
 
     setSession((prev) => ({
       ...prev,

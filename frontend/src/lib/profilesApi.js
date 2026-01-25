@@ -66,12 +66,14 @@ export async function switchProfile(profileId) {
     headers: getHeaders(),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to switch profile');
+    throw new Error(data.detail || 'Failed to switch profile');
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -88,12 +90,14 @@ export async function updatePersonalProfile({ handle, displayName, avatarUrl }) 
     }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to update profile');
+    throw new Error(data.detail || 'Failed to update profile');
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -111,12 +115,14 @@ export async function createBusinessProfile({ businessName, handle, category, lo
     }),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to create business profile');
+    throw new Error(data.detail || 'Failed to create business profile');
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -129,12 +135,14 @@ export async function updateProfile(profileId, updates) {
     body: JSON.stringify(updates),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to update profile');
+    throw new Error(data.detail || 'Failed to update profile');
   }
   
-  return res.json();
+  return data;
 }
 
 /**
@@ -146,12 +154,14 @@ export async function deleteBusinessProfile(profileId) {
     headers: getHeaders(),
   });
   
+  // Read body ONCE
+  const data = await res.json().catch(() => ({}));
+  
   if (!res.ok) {
-    const error = await res.json().catch(() => ({}));
-    throw new Error(error.detail || 'Failed to delete profile');
+    throw new Error(data.detail || 'Failed to delete profile');
   }
   
-  return res.json();
+  return data;
 }
 
 // ============================================================
