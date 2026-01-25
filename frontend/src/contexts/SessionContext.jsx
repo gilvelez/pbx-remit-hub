@@ -7,8 +7,19 @@ const SessionContext = createContext(null);
 const STORAGE_KEY = 'pbx_session';
 const ACTIVE_PROFILE_KEY = 'pbx_active_profile_id';
 
-// Get API base URL - use REACT_APP_BACKEND_URL for Emergent preview, empty for Netlify deployment
-const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
+// Get API base URL
+// When running locally (localhost), use empty string to let requests go to the same origin
+// When deployed, use REACT_APP_BACKEND_URL
+const getApiBase = () => {
+  const backendUrl = process.env.REACT_APP_BACKEND_URL || '';
+  // If we're on localhost and backend URL is external, use empty string
+  // This allows the frontend to use relative URLs that work with local proxy
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return '';
+  }
+  return backendUrl;
+};
+const API_BASE = getApiBase();
 
 export function SessionProvider({ children }) {
   // CRITICAL: Initialize state with function to avoid reading storage multiple times
