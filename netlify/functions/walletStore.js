@@ -4,7 +4,15 @@ async function getWallet(db, userId) {
   const col = db.collection("wallets");
   const doc = await col.findOne({ userId });
   if (doc) return doc;
-  const base = { userId, usd: 0, php: 0, updatedAt: new Date(), createdAt: new Date() };
+  const base = { 
+    userId, 
+    usd: 0, 
+    php: 0, 
+    usdc: 0,
+    circleWallet: null,
+    updatedAt: new Date(), 
+    createdAt: new Date() 
+  };
   await col.insertOne(base);
   return base;
 }
