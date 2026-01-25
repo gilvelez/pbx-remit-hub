@@ -12,8 +12,21 @@ export async function api(path, options = {}) {
     },
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  
+  // Read body ONCE
+  const text = await res.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {
+    data = { error: text };
+  }
+  
+  if (!res.ok) {
+    throw new Error(data.error || data.message || text || 'Request failed');
+  }
+  
+  return data;
 }
 
 // Example helper to get a Plaid link token
