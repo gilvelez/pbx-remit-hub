@@ -65,10 +65,7 @@ exports.handler = async (event) => {
       client_name: 'PBX',
       products,
       language: 'en',
-      country_codes: countryCodes,
-      // Skip phone verification in sandbox - use First Platypus Bank (non-OAuth)
-      auth_type_select_enabled: false,
-      institution_id: 'ins_109508'
+      country_codes: countryCodes
     });
 
     return {
