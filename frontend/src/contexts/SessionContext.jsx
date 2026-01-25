@@ -7,6 +7,9 @@ const SessionContext = createContext(null);
 const STORAGE_KEY = 'pbx_session';
 const ACTIVE_PROFILE_KEY = 'pbx_active_profile_id';
 
+// Get API base URL - use REACT_APP_BACKEND_URL for Emergent preview, empty for Netlify deployment
+const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
+
 export function SessionProvider({ children }) {
   // CRITICAL: Initialize state with function to avoid reading storage multiple times
   const [session, setSession] = useState(() => {
