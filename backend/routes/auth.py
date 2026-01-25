@@ -45,29 +45,29 @@ async def simple_login(data: SimpleLoginRequest):
     existing = await users.find_one({"email": email})
     
     if existing:
-        user_id = existing.get("userId", str(existing.get("_id")))
-        display_name = existing.get("displayName") or email.split("@")[0]
+        user_id = existing.get("user_id", str(existing.get("_id")))
+        display_name = existing.get("display_name") or existing.get("displayName") or email.split("@")[0]
     else:
         # Create new user
         user_id = str(uuid.uuid4())
         display_name = email.split("@")[0]
         await users.insert_one({
-            "userId": user_id,
+            "user_id": user_id,
             "email": email,
-            "displayName": display_name,
-            "createdAt": datetime.utcnow(),
-            "updatedAt": datetime.utcnow(),
+            "display_name": display_name,
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
         })
     
     # Create session token
     token = str(uuid.uuid4())
     await sessions.insert_one({
         "token": token,
-        "userId": user_id,
+        "user_id": user_id,
         "email": email,
         "verified": True,
-        "createdAt": datetime.utcnow(),
-        "lastSeenAt": datetime.utcnow(),
+        "created_at": datetime.utcnow(),
+        "last_seen_at": datetime.utcnow(),
     })
     
     logger.info(f"Login successful for {email}, userId={user_id}")
