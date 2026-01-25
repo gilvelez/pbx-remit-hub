@@ -170,14 +170,14 @@ async def create_circle_wallet(
 @router.post("/mint-usdc", response_model=MintUSDCResponse)
 async def mint_usdc(
     request: MintUSDCRequest,
-    x_session_token: Optional[str] = Header(None)
+    user: dict = Depends(get_user_from_token)
 ):
     """
     Add money to wallet by minting USDC (1:1 with USD).
     Creates wallet if user doesn't have one.
     User only sees USD amounts - USDC is hidden implementation detail.
     """
-    user = await get_user_from_session(x_session_token)
+    user_id = user["user_id"]
     user_id = user["user_id"]
     
     db = get_database()
