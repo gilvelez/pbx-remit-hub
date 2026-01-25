@@ -56,11 +56,17 @@ export default function Home() {
 
   useEffect(() => {
     fetchWallet();
-      }
-    };
-    
-    fetchWallet();
-  }, [session?.token]);
+  }, [fetchWallet]);
+
+  // Handle balance update from DemoTools
+  const handleBalanceUpdate = (newBalance) => {
+    setWallet({
+      usd_balance: Number(newBalance.usd || 0),
+      php_balance: Number(newBalance.php || 0),
+      usdc_balance: Number(newBalance.usdc || 0),
+      circleWallet: wallet.circleWallet,
+    });
+  };
 
   // Fetch linked banks for inline display
   useEffect(() => {
