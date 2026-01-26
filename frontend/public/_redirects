@@ -3,6 +3,7 @@
 # Auth endpoints
 /api/auth/login         /.netlify/functions/auth-login          200
 /api/auth/me            /.netlify/functions/auth-me             200
+/api/auth/register      /.netlify/functions/auth-register       200
 
 # Plaid endpoints
 /api/plaid/link-token       /.netlify/functions/create-link-token       200
@@ -12,6 +13,7 @@
 # Circle endpoints
 /api/circle/status          /.netlify/functions/circle-status           200
 /api/circle/webhook         /.netlify/functions/circle-webhook          200
+/api/circle/balance         /.netlify/functions/wallet-balance          200
 
 # Bank management
 /api/banks/linked           /.netlify/functions/banks-linked            200
@@ -36,6 +38,7 @@
 
 # FX conversion
 /api/fx/convert             /.netlify/functions/fx-convert              200
+/api/fx/quote               /.netlify/functions/get-fx-quote            200
 
 # SPA fallback - must be last
 /*  /index.html  200
