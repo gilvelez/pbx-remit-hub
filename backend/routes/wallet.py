@@ -3,10 +3,12 @@ Wallet routes - mirrors Netlify functions for local development
 Endpoints: /api/wallet/balance, /api/fx/quote, /api/fx/convert
 """
 from fastapi import APIRouter, HTTPException, Header, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 from typing import Optional
 import os
 import httpx
+import jwt
 from datetime import datetime, timezone
 
 from database.connection import get_database
@@ -17,18 +19,64 @@ router = APIRouter(prefix="/api")
 OPENEXCHANGERATES_API_KEY = os.environ.get("OPENEXCHANGERATES_API_KEY")
 FALLBACK_USD_PHP_RATE = 56.10  # Fallback if API unavailable
 
+# JWT Configuration (match auth.py)
+JWT_SECRET = os.environ.get("JWT_SECRET", "pbx-secret-key-change-in-production")
+JWT_ALGORITHM = "HS256"
 
-async def require_session(x_session_token: Optional[str] = Header(None, alias="X-Session-Token")):
-    """Validate session token and return session data"""
-    if not x_session_token:
+security = HTTPBearer(auto_error=False)
+
+
+def decode_jwt_token(token: str) -> Optional[dict]:
+    """Decode and verify JWT token"""
+    try:
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        return payload
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
+
+
+async def require_session(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    authorization: Optional[str] = Header(None),
+    x_session_token: Optional[str] = Header(None, alias="X-Session-Token")
+):
+    """
+    Validate session - supports both JWT and legacy session tokens.
+    Returns dict with userId and email.
+    """
+    token = None
+    
+    # Try Bearer token first
+    if credentials:
+        token = credentials.credentials
+    elif authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+    elif x_session_token:
+        token = x_session_token
+    
+    if not token:
         raise HTTPException(status_code=401, detail="Missing session token")
     
-    db = get_database()
-    session = await db.sessions.find_one({"token": x_session_token})
-    if not session:
-        raise HTTPException(status_code=401, detail="Invalid session")
+    # Try JWT decode first
+    payload = decode_jwt_token(token)
+    if payload:
+        return {
+            "userId": payload.get("user_id"),
+            "email": payload.get("email"),
+        }
     
-    return session
+    # Fallback to session lookup (Netlify function style)
+    db = get_database()
+    session = await db.sessions.find_one({"token": token})
+    if session:
+        return {
+            "userId": session.get("userId") or session.get("user_id"),
+            "email": session.get("email"),
+        }
+    
+    raise HTTPException(status_code=401, detail="Invalid session")
 
 
 @router.get("/wallet/balance")
