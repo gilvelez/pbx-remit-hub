@@ -249,12 +249,13 @@ async def register(data: RegisterRequest):
         "updated_at": datetime.utcnow(),
     })
     
-    # Create wallet with 0 balances
+    # Create wallet with demo amounts (same as Netlify functions)
     await wallets.insert_one({
         "user_id": user_id,
-        "usd": 0,
-        "php": 0,
+        "usd": 500,
+        "php": 28060,
         "usdc": 0,
+        "demoSeeded": True,
         "created_at": datetime.utcnow(),
         "updated_at": datetime.utcnow(),
     })

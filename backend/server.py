@@ -45,6 +45,7 @@ from routes.businesses import router as businesses_router
 from routes.admin import router as admin_router
 from routes.banks import router as banks_router
 from routes.circle import router as circle_router
+from routes.wallet import router as wallet_router
 
 # Import utilities
 from utils.user_helper import get_user_id, get_user_id_from_request
@@ -628,6 +629,7 @@ app.include_router(businesses_router)
 app.include_router(admin_router)
 app.include_router(banks_router)
 app.include_router(circle_router)
+app.include_router(wallet_router)
 
 # CORS middleware - allow specific origins or wildcard
 cors_origins_env = os.environ.get('CORS_ORIGINS', '*')

@@ -136,11 +136,22 @@ export default function ConnectBank() {
     }
   };
 
-  // Open Plaid when token is ready
+  // Open Plaid when token is ready - with DOM unlock for iOS
   React.useEffect(() => {
     if (linkToken && plaidReady && !loading) {
-      console.log("[ConnectBank] Opening Plaid Link...");
-      openPlaid();
+      console.log("[ConnectBank] Unlocking DOM and opening Plaid Link...");
+      
+      // Unlock DOM before opening Plaid (iOS Safari fix)
+      document.body.removeAttribute('data-scroll-locked');
+      document.documentElement.removeAttribute('data-scroll-locked');
+      document.body.style.overflow = 'auto';
+      document.body.style.pointerEvents = 'auto';
+      document.documentElement.style.overflow = 'auto';
+      
+      // Small delay to allow DOM to settle
+      setTimeout(() => {
+        openPlaid();
+      }, 50);
     }
   }, [linkToken, plaidReady, loading, openPlaid]);
 

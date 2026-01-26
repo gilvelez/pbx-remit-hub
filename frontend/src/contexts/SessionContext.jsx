@@ -5,6 +5,7 @@ const SessionContext = createContext(null);
 
 // Storage keys
 const TOKEN_KEY = 'pbx_token';
+const SESSION_KEY = 'pbx_session';
 const ACTIVE_PROFILE_KEY = 'pbx_active_profile_id';
 
 // Get API base URL
@@ -29,7 +30,24 @@ async function safeParseResponse(res) {
 }
 
 /**
- * Authenticated fetch helper - automatically adds JWT Authorization header
+ * Helper to write BOTH storage keys for compatibility
+ */
+function writeAuthToStorage(token) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ token, verified: true }));
+}
+
+/**
+ * Helper to clear BOTH storage keys
+ */
+function clearAuthFromStorage() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(ACTIVE_PROFILE_KEY);
+}
+
+/**
+ * Authenticated fetch helper - adds BOTH Authorization and X-Session-Token headers
  */
 export async function authFetch(url, options = {}) {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -39,6 +57,7 @@ export async function authFetch(url, options = {}) {
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+    headers['X-Session-Token'] = token;
   }
   
   const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
@@ -97,14 +116,17 @@ export function SessionProvider({ children }) {
     try {
       const res = await fetch(`${API_BASE}/api/auth/me`, {
         method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'X-Session-Token': token,
+        },
       });
 
       const data = await safeParseResponse(res);
 
       if (!res.ok) {
         console.log('Session invalid, clearing...');
-        localStorage.removeItem(TOKEN_KEY);
+        clearAuthFromStorage();
         setSession({
           exists: false,
           verified: false,
@@ -134,7 +156,7 @@ export function SessionProvider({ children }) {
       auditLog('SESSION_RESTORED', { email: data.user?.email });
     } catch (e) {
       console.error('Failed to restore session:', e);
-      localStorage.removeItem(TOKEN_KEY);
+      clearAuthFromStorage();
       setSession({
         exists: false,
         verified: false,
@@ -171,8 +193,8 @@ export function SessionProvider({ children }) {
       throw new Error(data?.error || data?.detail || 'Login failed');
     }
 
-    // Store JWT token
-    localStorage.setItem(TOKEN_KEY, data.token);
+    // Store JWT token in BOTH storage keys for compatibility
+    writeAuthToStorage(data.token);
     
     setSession({
       exists: true,
@@ -210,8 +232,8 @@ export function SessionProvider({ children }) {
       throw new Error(data?.error || data?.detail || 'Registration failed');
     }
 
-    // Store JWT token immediately
-    localStorage.setItem(TOKEN_KEY, data.token);
+    // Store JWT token in BOTH storage keys for compatibility
+    writeAuthToStorage(data.token);
     
     setSession({
       exists: true,
@@ -237,8 +259,7 @@ export function SessionProvider({ children }) {
    * LOGOUT - clear token and session
    */
   const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    clearAuthFromStorage();
     setSession({
       exists: false,
       verified: false,

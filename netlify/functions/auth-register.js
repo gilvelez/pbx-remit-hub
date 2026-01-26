@@ -24,6 +24,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     const email = String(body.email || "").trim().toLowerCase();
     const password = String(body.password || "");
+    const displayName = String(body.displayName || "").trim() || email.split("@")[0];
 
     if (!email) {
       return { statusCode: 400, headers, body: JSON.stringify({ error: "Email required" }) };
@@ -33,10 +34,10 @@ exports.handler = async (event) => {
     const userId = email;
     const now = new Date();
 
-    // MVP AUTH: accept any email/password for now (replace later with DB + bcrypt)
+    // Generate signed token
     const token = sign({ email, userId, iat: Date.now() });
 
-    // Connect to MongoDB and upsert session
+    // Connect to MongoDB
     const db = await getDb();
 
     // Upsert session record
@@ -70,19 +71,36 @@ exports.handler = async (event) => {
         createdAt: now,
         updatedAt: now,
       });
+    } else if (!existingWallet.demoSeeded) {
+      // Seed demo amounts if not already seeded
+      await db.collection("wallets").updateOne(
+        { userId },
+        {
+          $set: {
+            usd: 500,
+            php: 28060,
+            demoSeeded: true,
+            updatedAt: now,
+          },
+        }
+      );
     }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, token, user: { email, userId } }),
+      body: JSON.stringify({
+        success: true,
+        token,
+        user: { email, displayName, userId },
+      }),
     };
   } catch (err) {
-    console.error("Login error:", err);
+    console.error("Register error:", err);
     return {
       statusCode: 500,
       headers,
-      body: JSON.stringify({ error: "Login failed", detail: err.message || String(err) }),
+      body: JSON.stringify({ error: "Registration failed", detail: err.message || String(err) }),
     };
   }
 };

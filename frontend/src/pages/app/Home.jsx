@@ -24,6 +24,12 @@ export default function Home() {
   const [showSendSheet, setShowSendSheet] = useState(false);
   // Receive modal state
   const [showReceive, setShowReceive] = useState(false);
+  // FX Convert modal state
+  const [showConvert, setShowConvert] = useState(false);
+  const [convertAmount, setConvertAmount] = useState("");
+  const [convertQuote, setConvertQuote] = useState(null);
+  const [convertLoading, setConvertLoading] = useState(false);
+  const [convertError, setConvertError] = useState("");
 
   const activeProfile = session?.activeProfile;
   const isBusinessProfile = activeProfile?.type === "business";
@@ -37,8 +43,8 @@ export default function Home() {
     if (!session?.token) return;
     
     try {
-      // Use authFetch with JWT Authorization header
-      const res = await authFetch('/api/circle/balance');
+      // Use authFetch with JWT + X-Session-Token headers
+      const res = await authFetch('/api/wallet/balance');
       
       if (res.ok) {
         const data = await res.json();
@@ -46,7 +52,7 @@ export default function Home() {
           usd_balance: Number(data.usd || 0),
           php_balance: Number(data.php || 0),
           usdc_balance: Number(data.usdc || 0),
-          circleWallet: data.circle_wallet || null,
+          circleWallet: data.circleWallet || null,
         });
       }
     } catch (err) {
@@ -66,6 +72,67 @@ export default function Home() {
       usdc_balance: Number(newBalance.usdc || 0),
       circleWallet: wallet.circleWallet,
     });
+  };
+
+  // FX Convert: Get quote
+  const handleGetQuote = async () => {
+    if (!convertAmount || parseFloat(convertAmount) <= 0) {
+      setConvertError("Enter a valid amount");
+      return;
+    }
+    setConvertLoading(true);
+    setConvertError("");
+    try {
+      const res = await authFetch(`/api/fx/quote?from=USD&to=PHP&amount=${convertAmount}`);
+      const data = await res.json();
+      if (res.ok) {
+        setConvertQuote(data);
+      } else {
+        setConvertError(data.error || "Failed to get quote");
+      }
+    } catch (err) {
+      setConvertError(err.message);
+    } finally {
+      setConvertLoading(false);
+    }
+  };
+
+  // FX Convert: Execute conversion
+  const handleConvert = async () => {
+    if (!convertQuote) return;
+    setConvertLoading(true);
+    setConvertError("");
+    try {
+      const res = await authFetch('/api/fx/convert', {
+        method: 'POST',
+        body: JSON.stringify({
+          from: 'USD',
+          to: 'PHP',
+          amount: parseFloat(convertAmount),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Update balances
+        setWallet({
+          ...wallet,
+          usd_balance: data.new_balances.usd,
+          php_balance: data.new_balances.php,
+        });
+        // Close modal and reset
+        setShowConvert(false);
+        setConvertAmount("");
+        setConvertQuote(null);
+        // Refetch wallet to ensure sync
+        fetchWallet();
+      } else {
+        setConvertError(data.error || "Conversion failed");
+      }
+    } catch (err) {
+      setConvertError(err.message);
+    } finally {
+      setConvertLoading(false);
+    }
   };
 
   // Fetch linked banks for inline display
@@ -252,7 +319,15 @@ export default function Home() {
             <div className="text-xs text-white/60">PHP Wallet</div>
             <div className="font-semibold">{formatPHP(wallet.php_balance)}</div>
           </div>
-          {/* USDC hidden - used under the hood only */}
+          {/* Convert USD → PHP Button */}
+          <button
+            onClick={() => setShowConvert(true)}
+            disabled={wallet.usd_balance <= 0}
+            className="ml-auto px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="convert-usd-php-btn"
+          >
+            Convert →
+          </button>
         </div>
         
         {/* Circle Wallet hidden - internal implementation */}
@@ -475,6 +550,90 @@ export default function Home() {
           displayName={displayName}
           onClose={() => setShowReceive(false)}
         />
+      )}
+
+      {/* FX Convert Modal */}
+      {showConvert && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-[#0A2540]">Convert USD → PHP</h2>
+              <button
+                onClick={() => {
+                  setShowConvert(false);
+                  setConvertAmount("");
+                  setConvertQuote(null);
+                  setConvertError("");
+                }}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">USD Amount</label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  type="number"
+                  value={convertAmount}
+                  onChange={(e) => {
+                    setConvertAmount(e.target.value);
+                    setConvertQuote(null);
+                  }}
+                  placeholder="0.00"
+                  className="w-full h-12 pl-8 pr-4 border border-gray-200 rounded-xl focus:border-[#0A2540] focus:ring-1 focus:ring-[#0A2540] outline-none"
+                  data-testid="convert-amount-input"
+                />
+              </div>
+              <p className="text-xs text-gray-500 mt-1">Available: {formatUSD(wallet.usd_balance)}</p>
+            </div>
+
+            {!convertQuote ? (
+              <button
+                onClick={handleGetQuote}
+                disabled={convertLoading || !convertAmount || parseFloat(convertAmount) <= 0 || parseFloat(convertAmount) > wallet.usd_balance}
+                className="w-full h-12 bg-[#0A2540] text-white font-semibold rounded-xl hover:bg-[#0A2540]/90 transition disabled:opacity-50"
+                data-testid="get-quote-btn"
+              >
+                {convertLoading ? "Getting Quote..." : "Get Quote"}
+              </button>
+            ) : (
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">You Convert:</span>
+                    <span className="font-semibold">{formatUSD(convertQuote.amount)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Exchange Rate:</span>
+                    <span className="font-medium">1 USD = {convertQuote.rate} PHP</span>
+                  </div>
+                  <div className="flex justify-between text-lg pt-2 border-t border-gray-200">
+                    <span className="text-gray-600">You Receive:</span>
+                    <span className="font-bold text-green-600">{formatPHP(convertQuote.converted)}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleConvert}
+                  disabled={convertLoading}
+                  className="w-full h-12 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 transition disabled:opacity-50"
+                  data-testid="confirm-convert-btn"
+                >
+                  {convertLoading ? "Converting..." : "Confirm Conversion"}
+                </button>
+              </div>
+            )}
+
+            {convertError && (
+              <p className="text-red-600 text-sm mt-3">{convertError}</p>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
