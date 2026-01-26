@@ -319,7 +319,15 @@ export default function Home() {
             <div className="text-xs text-white/60">PHP Wallet</div>
             <div className="font-semibold">{formatPHP(wallet.php_balance)}</div>
           </div>
-          {/* USDC hidden - used under the hood only */}
+          {/* Convert USD → PHP Button */}
+          <button
+            onClick={() => setShowConvert(true)}
+            disabled={wallet.usd_balance <= 0}
+            className="ml-auto px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white text-xs font-medium rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="convert-usd-php-btn"
+          >
+            Convert →
+          </button>
         </div>
         
         {/* Circle Wallet hidden - internal implementation */}
