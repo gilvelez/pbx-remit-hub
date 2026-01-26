@@ -74,6 +74,67 @@ export default function Home() {
     });
   };
 
+  // FX Convert: Get quote
+  const handleGetQuote = async () => {
+    if (!convertAmount || parseFloat(convertAmount) <= 0) {
+      setConvertError("Enter a valid amount");
+      return;
+    }
+    setConvertLoading(true);
+    setConvertError("");
+    try {
+      const res = await authFetch(`/api/fx/quote?from=USD&to=PHP&amount=${convertAmount}`);
+      const data = await res.json();
+      if (res.ok) {
+        setConvertQuote(data);
+      } else {
+        setConvertError(data.error || "Failed to get quote");
+      }
+    } catch (err) {
+      setConvertError(err.message);
+    } finally {
+      setConvertLoading(false);
+    }
+  };
+
+  // FX Convert: Execute conversion
+  const handleConvert = async () => {
+    if (!convertQuote) return;
+    setConvertLoading(true);
+    setConvertError("");
+    try {
+      const res = await authFetch('/api/fx/convert', {
+        method: 'POST',
+        body: JSON.stringify({
+          from: 'USD',
+          to: 'PHP',
+          amount: parseFloat(convertAmount),
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // Update balances
+        setWallet({
+          ...wallet,
+          usd_balance: data.new_balances.usd,
+          php_balance: data.new_balances.php,
+        });
+        // Close modal and reset
+        setShowConvert(false);
+        setConvertAmount("");
+        setConvertQuote(null);
+        // Refetch wallet to ensure sync
+        fetchWallet();
+      } else {
+        setConvertError(data.error || "Conversion failed");
+      }
+    } catch (err) {
+      setConvertError(err.message);
+    } finally {
+      setConvertLoading(false);
+    }
+  };
+
   // Fetch linked banks for inline display
   useEffect(() => {
     const fetchBanks = async () => {
