@@ -229,8 +229,8 @@ export function SessionProvider({ children }) {
       throw new Error(data?.error || data?.detail || 'Registration failed');
     }
 
-    // Store JWT token immediately
-    localStorage.setItem(TOKEN_KEY, data.token);
+    // Store JWT token in BOTH storage keys for compatibility
+    writeAuthToStorage(data.token);
     
     setSession({
       exists: true,
@@ -256,8 +256,7 @@ export function SessionProvider({ children }) {
    * LOGOUT - clear token and session
    */
   const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(ACTIVE_PROFILE_KEY);
+    clearAuthFromStorage();
     setSession({
       exists: false,
       verified: false,
