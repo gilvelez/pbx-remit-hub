@@ -100,6 +100,8 @@ export function SessionProvider({ children }) {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      const data = await safeParseResponse(res);
+
       if (!res.ok) {
         console.log('Session invalid, clearing...');
         localStorage.removeItem(TOKEN_KEY);
@@ -116,21 +118,20 @@ export function SessionProvider({ children }) {
         return;
       }
 
-      const data = await res.json();
       setSession((prev) => ({
         ...prev,
         exists: true,
         verified: true,
         token,
         user: {
-          userId: data.user.userId,
-          email: data.user.email,
-          displayName: data.user.displayName,
+          userId: data.user?.userId,
+          email: data.user?.email,
+          displayName: data.user?.displayName,
         },
         linkedBanks: data.linkedBanks || [],
         _meLoaded: true,
       }));
-      auditLog('SESSION_RESTORED', { email: data.user.email });
+      auditLog('SESSION_RESTORED', { email: data.user?.email });
     } catch (e) {
       console.error('Failed to restore session:', e);
       localStorage.removeItem(TOKEN_KEY);
