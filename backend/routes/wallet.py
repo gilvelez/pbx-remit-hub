@@ -166,12 +166,15 @@ async def convert_currency(
 ):
     """Convert currency and update wallet balances"""
     db = get_database()
+    user_id = session["userId"]
     
     if request.amount <= 0:
         raise HTTPException(status_code=400, detail="Amount must be greater than 0")
     
-    # Get wallet
-    wallet = await db.wallets.find_one({"userId": session["userId"]})
+    # Get wallet (try both userId formats)
+    wallet = await db.wallets.find_one({"userId": user_id})
+    if not wallet:
+        wallet = await db.wallets.find_one({"user_id": user_id})
     if not wallet:
         raise HTTPException(status_code=404, detail="Wallet not found")
     
@@ -194,8 +197,11 @@ async def convert_currency(
     new_from_balance = round(current_balance - request.amount, 2)
     new_to_balance = round(float(wallet.get(to_field, 0)) + converted, 2)
     
+    # Update using the field that exists in wallet
+    wallet_filter = {"userId": user_id} if "userId" in wallet else {"user_id": user_id}
+    
     await db.wallets.update_one(
-        {"userId": session["userId"]},
+        wallet_filter,
         {
             "$set": {
                 from_field: new_from_balance,
@@ -207,7 +213,7 @@ async def convert_currency(
     
     # Log transaction
     await db.transactions.insert_one({
-        "userId": session["userId"],
+        "userId": user_id,
         "type": "conversion",
         "from": request.from_currency,
         "to": request.to_currency,
