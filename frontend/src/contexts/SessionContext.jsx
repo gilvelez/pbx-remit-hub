@@ -5,6 +5,7 @@ const SessionContext = createContext(null);
 
 // Storage keys
 const TOKEN_KEY = 'pbx_token';
+const SESSION_KEY = 'pbx_session';
 const ACTIVE_PROFILE_KEY = 'pbx_active_profile_id';
 
 // Get API base URL
@@ -29,7 +30,24 @@ async function safeParseResponse(res) {
 }
 
 /**
- * Authenticated fetch helper - automatically adds JWT Authorization header
+ * Helper to write BOTH storage keys for compatibility
+ */
+function writeAuthToStorage(token) {
+  localStorage.setItem(TOKEN_KEY, token);
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ token, verified: true }));
+}
+
+/**
+ * Helper to clear BOTH storage keys
+ */
+function clearAuthFromStorage() {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(ACTIVE_PROFILE_KEY);
+}
+
+/**
+ * Authenticated fetch helper - adds BOTH Authorization and X-Session-Token headers
  */
 export async function authFetch(url, options = {}) {
   const token = localStorage.getItem(TOKEN_KEY);
@@ -39,6 +57,7 @@ export async function authFetch(url, options = {}) {
   };
   if (token) {
     headers.Authorization = `Bearer ${token}`;
+    headers['X-Session-Token'] = token;
   }
   
   const fullUrl = url.startsWith('http') ? url : `${API_BASE}${url}`;
