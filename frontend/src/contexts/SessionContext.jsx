@@ -17,6 +17,18 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 
 /**
+ * Safe JSON parse from response - reads body ONCE to avoid "body disturbed" errors
+ */
+async function safeParseResponse(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text || 'Unknown error' };
+  }
+}
+
+/**
  * Authenticated fetch helper - automatically adds JWT Authorization header
  */
 export async function authFetch(url, options = {}) {
