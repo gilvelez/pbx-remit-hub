@@ -252,12 +252,7 @@ export default function Home() {
             <div className="text-xs text-white/60">PHP Wallet</div>
             <div className="font-semibold">{formatPHP(wallet.php_balance)}</div>
           </div>
-          {wallet.usdc_balance > 0 && (
-            <div>
-              <div className="text-xs text-white/60">USDC</div>
-              <div className="font-semibold">{wallet.usdc_balance.toFixed(2)}</div>
-            </div>
-          )}
+          {/* USDC hidden - used under the hood only */}
         </div>
         
         {/* Circle Wallet Address */}
