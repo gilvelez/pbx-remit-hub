@@ -17,6 +17,10 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Prevent double submit
+    if (loading) return;
+    
     setError("");
     
     if (!email || !password) {

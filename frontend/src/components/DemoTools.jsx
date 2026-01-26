@@ -1,15 +1,32 @@
 /**
  * DemoTools.jsx - Demo mint panel for testing
- * Only visible when REACT_APP_DEMO_MODE=true
+ * Visible when REACT_APP_DEMO_MODE=true OR ?demo=1 in URL
  */
 import React, { useState } from 'react';
-import { useSession, authFetch } from '../contexts/SessionContext';
-
-// Check if demo mode is enabled
-const DEMO_MODE = process.env.REACT_APP_DEMO_MODE === 'true';
+import { useSession } from '../contexts/SessionContext';
 
 /**
- * Admin mint helper
+ * Check if demo tools should be shown
+ * - REACT_APP_DEMO_MODE=true in env
+ * - OR ?demo=1 in URL (owner access)
+ */
+function shouldShowDemoTools() {
+  // Check env var
+  if (process.env.REACT_APP_DEMO_MODE === 'true') {
+    return true;
+  }
+  // Check URL param (owner access in production)
+  if (typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('demo') === '1') {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Admin mint helper - uses recipient-wallet endpoint with fund action
  */
 async function adminMint(userId, currency, amount) {
   const key = process.env.REACT_APP_ADMIN_MINT_KEY || 'demo-mint-key-12345';
@@ -21,7 +38,13 @@ async function adminMint(userId, currency, amount) {
     },
     body: JSON.stringify({ userId, currency, amount }),
   });
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error(text || 'Mint failed');
+  }
   if (!res.ok) throw new Error(data?.error || data?.detail || 'Mint failed');
   return data;
 }
@@ -31,18 +54,26 @@ export default function DemoTools({ onBalanceUpdate }) {
   const [loading, setLoading] = useState('');
   const [message, setMessage] = useState('');
 
-  // Don't render if not in demo mode or no user
-  if (!DEMO_MODE || !session?.user?.userId) {
+  // Don't render if demo tools not enabled or no user
+  if (!shouldShowDemoTools() || !session?.user) {
     return null;
   }
 
+  // Get user ID - handle both userId and email fallback
+  const userId = session.user.userId || session.user.email;
+
   const handleMint = async (currency, amount, label) => {
+    if (!userId) {
+      setMessage('Error: No user ID available');
+      return;
+    }
+    
     setLoading(currency);
     setMessage('');
     
     try {
-      const result = await adminMint(session.user.userId, currency, amount);
-      setMessage(`Added ${label}! New balance: $${result.newBalance.usd.toFixed(2)} USD, ₱${result.newBalance.php.toFixed(2)} PHP`);
+      const result = await adminMint(userId, currency, amount);
+      setMessage(`Added ${label}! New balance: $${result.newBalance?.usd?.toFixed(2) || 0} USD, ₱${result.newBalance?.php?.toFixed(2) || 0} PHP`);
       if (onBalanceUpdate) {
         onBalanceUpdate(result.newBalance);
       }
@@ -64,6 +95,7 @@ export default function DemoTools({ onBalanceUpdate }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        {/* USD Button */}
         <button
           onClick={() => handleMint('USD', 100, '$100 USD')}
           disabled={loading === 'USD'}
@@ -73,6 +105,7 @@ export default function DemoTools({ onBalanceUpdate }) {
           {loading === 'USD' ? 'Adding...' : '+ $100 USD'}
         </button>
 
+        {/* PHP Button */}
         <button
           onClick={() => handleMint('PHP', 5000, '₱5,000 PHP')}
           disabled={loading === 'PHP'}
@@ -82,14 +115,7 @@ export default function DemoTools({ onBalanceUpdate }) {
           {loading === 'PHP' ? 'Adding...' : '+ ₱5,000 PHP'}
         </button>
 
-        <button
-          onClick={() => handleMint('USDC', 100, '100 USDC')}
-          disabled={loading === 'USDC'}
-          className="px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 disabled:opacity-50 transition"
-          data-testid="demo-mint-usdc"
-        >
-          {loading === 'USDC' ? 'Adding...' : '+ 100 USDC'}
-        </button>
+        {/* USDC Button REMOVED - USDC is under the hood only */}
       </div>
 
       {message && (
@@ -99,7 +125,7 @@ export default function DemoTools({ onBalanceUpdate }) {
       )}
 
       <p className="mt-2 text-xs text-yellow-600">
-        User ID: {session.user.userId.slice(0, 8)}...
+        USDC is used under the hood (Circle rail). UI shows USD/PHP only.
       </p>
     </div>
   );

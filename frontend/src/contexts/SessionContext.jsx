@@ -17,6 +17,18 @@ const getApiBase = () => {
 const API_BASE = getApiBase();
 
 /**
+ * Safe JSON parse from response - reads body ONCE to avoid "body disturbed" errors
+ */
+async function safeParseResponse(res) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    return { error: text || 'Unknown error' };
+  }
+}
+
+/**
  * Authenticated fetch helper - automatically adds JWT Authorization header
  */
 export async function authFetch(url, options = {}) {
@@ -88,6 +100,8 @@ export function SessionProvider({ children }) {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      const data = await safeParseResponse(res);
+
       if (!res.ok) {
         console.log('Session invalid, clearing...');
         localStorage.removeItem(TOKEN_KEY);
@@ -104,21 +118,20 @@ export function SessionProvider({ children }) {
         return;
       }
 
-      const data = await res.json();
       setSession((prev) => ({
         ...prev,
         exists: true,
         verified: true,
         token,
         user: {
-          userId: data.user.userId,
-          email: data.user.email,
-          displayName: data.user.displayName,
+          userId: data.user?.userId,
+          email: data.user?.email,
+          displayName: data.user?.displayName,
         },
         linkedBanks: data.linkedBanks || [],
         _meLoaded: true,
       }));
-      auditLog('SESSION_RESTORED', { email: data.user.email });
+      auditLog('SESSION_RESTORED', { email: data.user?.email });
     } catch (e) {
       console.error('Failed to restore session:', e);
       localStorage.removeItem(TOKEN_KEY);
@@ -152,7 +165,7 @@ export function SessionProvider({ children }) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
+    const data = await safeParseResponse(res);
     
     if (!res.ok) {
       throw new Error(data?.error || data?.detail || 'Login failed');
@@ -166,9 +179,9 @@ export function SessionProvider({ children }) {
       verified: true,
       token: data.token,
       user: {
-        userId: data.user.userId,
-        email: data.user.email,
-        displayName: data.user.displayName,
+        userId: data.user?.userId,
+        email: data.user?.email,
+        displayName: data.user?.displayName,
       },
       role: null,
       profiles: [],
@@ -177,7 +190,7 @@ export function SessionProvider({ children }) {
       _meLoaded: true,
     });
     
-    auditLog('SESSION_LOGIN', { email: data.user.email });
+    auditLog('SESSION_LOGIN', { email: data.user?.email });
     return data;
   };
 
@@ -191,13 +204,13 @@ export function SessionProvider({ children }) {
       body: JSON.stringify({ email, password, displayName }),
     });
 
-    const data = await res.json();
+    const data = await safeParseResponse(res);
     
     if (!res.ok) {
       throw new Error(data?.error || data?.detail || 'Registration failed');
     }
 
-    // Store JWT token
+    // Store JWT token immediately
     localStorage.setItem(TOKEN_KEY, data.token);
     
     setSession({
@@ -205,9 +218,9 @@ export function SessionProvider({ children }) {
       verified: true,
       token: data.token,
       user: {
-        userId: data.user.userId,
-        email: data.user.email,
-        displayName: data.user.displayName,
+        userId: data.user?.userId,
+        email: data.user?.email,
+        displayName: data.user?.displayName,
       },
       role: null,
       profiles: [],
@@ -216,7 +229,7 @@ export function SessionProvider({ children }) {
       _meLoaded: true,
     });
     
-    auditLog('SESSION_REGISTER', { email: data.user.email });
+    auditLog('SESSION_REGISTER', { email: data.user?.email });
     return data;
   };
 
