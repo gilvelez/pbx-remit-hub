@@ -24,6 +24,12 @@ export default function Home() {
   const [showSendSheet, setShowSendSheet] = useState(false);
   // Receive modal state
   const [showReceive, setShowReceive] = useState(false);
+  // FX Convert modal state
+  const [showConvert, setShowConvert] = useState(false);
+  const [convertAmount, setConvertAmount] = useState("");
+  const [convertQuote, setConvertQuote] = useState(null);
+  const [convertLoading, setConvertLoading] = useState(false);
+  const [convertError, setConvertError] = useState("");
 
   const activeProfile = session?.activeProfile;
   const isBusinessProfile = activeProfile?.type === "business";
