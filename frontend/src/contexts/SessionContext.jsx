@@ -190,8 +190,8 @@ export function SessionProvider({ children }) {
       throw new Error(data?.error || data?.detail || 'Login failed');
     }
 
-    // Store JWT token
-    localStorage.setItem(TOKEN_KEY, data.token);
+    // Store JWT token in BOTH storage keys for compatibility
+    writeAuthToStorage(data.token);
     
     setSession({
       exists: true,
