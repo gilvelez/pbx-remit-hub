@@ -190,8 +190,17 @@ export default function BanksAndPayments() {
         return;
       }
       try {
-        console.log("[BanksAndPayments] Opening Plaid (existing token)…");
-        openPlaid();
+        console.log("[BanksAndPayments] Unlocking DOM and opening Plaid (existing token)…");
+        // Unlock DOM before opening Plaid (iOS Safari fix)
+        document.body.removeAttribute('data-scroll-locked');
+        document.documentElement.removeAttribute('data-scroll-locked');
+        document.body.style.overflow = 'auto';
+        document.body.style.pointerEvents = 'auto';
+        document.documentElement.style.overflow = 'auto';
+        
+        setTimeout(() => {
+          openPlaid();
+        }, 50);
       } catch (e) {
         console.error("[BanksAndPayments] Error opening Plaid:", e);
         setError("Failed to open Plaid. Please try again.");
