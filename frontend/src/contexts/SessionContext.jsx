@@ -116,14 +116,17 @@ export function SessionProvider({ children }) {
     try {
       const res = await fetch(`${API_BASE}/api/auth/me`, {
         method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'X-Session-Token': token,
+        },
       });
 
       const data = await safeParseResponse(res);
 
       if (!res.ok) {
         console.log('Session invalid, clearing...');
-        localStorage.removeItem(TOKEN_KEY);
+        clearAuthFromStorage();
         setSession({
           exists: false,
           verified: false,
@@ -153,7 +156,7 @@ export function SessionProvider({ children }) {
       auditLog('SESSION_RESTORED', { email: data.user?.email });
     } catch (e) {
       console.error('Failed to restore session:', e);
-      localStorage.removeItem(TOKEN_KEY);
+      clearAuthFromStorage();
       setSession({
         exists: false,
         verified: false,
