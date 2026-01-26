@@ -165,7 +165,7 @@ export function SessionProvider({ children }) {
       body: JSON.stringify({ email, password }),
     });
 
-    const data = await res.json();
+    const data = await safeParseResponse(res);
     
     if (!res.ok) {
       throw new Error(data?.error || data?.detail || 'Login failed');
@@ -179,9 +179,9 @@ export function SessionProvider({ children }) {
       verified: true,
       token: data.token,
       user: {
-        userId: data.user.userId,
-        email: data.user.email,
-        displayName: data.user.displayName,
+        userId: data.user?.userId,
+        email: data.user?.email,
+        displayName: data.user?.displayName,
       },
       role: null,
       profiles: [],
@@ -190,7 +190,7 @@ export function SessionProvider({ children }) {
       _meLoaded: true,
     });
     
-    auditLog('SESSION_LOGIN', { email: data.user.email });
+    auditLog('SESSION_LOGIN', { email: data.user?.email });
     return data;
   };
 
