@@ -83,14 +83,18 @@ async def require_session(
 async def get_wallet_balance(session: dict = Depends(require_session)):
     """Get wallet balances for authenticated user"""
     db = get_database()
+    user_id = session["userId"]
     
-    # Find or create wallet
-    wallet = await db.wallets.find_one({"userId": session["userId"]})
+    # Try both userId formats (Netlify uses userId, FastAPI uses user_id)
+    wallet = await db.wallets.find_one({"userId": user_id})
+    if not wallet:
+        wallet = await db.wallets.find_one({"user_id": user_id})
     
     if not wallet:
         # Create default wallet with demo amounts
         wallet = {
-            "userId": session["userId"],
+            "userId": user_id,
+            "user_id": user_id,  # Store both for compatibility
             "usd": 500,
             "php": 28060,
             "usdc": 0,
