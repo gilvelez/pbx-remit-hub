@@ -37,8 +37,8 @@ export default function Home() {
     if (!session?.token) return;
     
     try {
-      // Use authFetch with JWT Authorization header
-      const res = await authFetch('/api/circle/balance');
+      // Use authFetch with JWT + X-Session-Token headers
+      const res = await authFetch('/api/wallet/balance');
       
       if (res.ok) {
         const data = await res.json();
@@ -46,7 +46,7 @@ export default function Home() {
           usd_balance: Number(data.usd || 0),
           php_balance: Number(data.php || 0),
           usdc_balance: Number(data.usdc || 0),
-          circleWallet: data.circle_wallet || null,
+          circleWallet: data.circleWallet || null,
         });
       }
     } catch (err) {
