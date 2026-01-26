@@ -1,8 +1,9 @@
 const crypto = require("crypto");
+const { getDb } = require("./_mongoClient");
 
 const headers = {
   "access-control-allow-origin": "*",
-  "access-control-allow-headers": "content-type, authorization",
+  "access-control-allow-headers": "content-type, authorization, x-session-token",
   "access-control-allow-methods": "POST, OPTIONS",
   "content-type": "application/json",
 };
@@ -28,15 +29,56 @@ exports.handler = async (event) => {
       return { statusCode: 400, headers, body: JSON.stringify({ error: "Email required" }) };
     }
 
+    // Use email as stable userId for MVP
+    const userId = email;
+    const now = new Date();
+
     // MVP AUTH: accept any email/password for now (replace later with DB + bcrypt)
-    const token = sign({ email, iat: Date.now() });
+    const token = sign({ email, userId, iat: Date.now() });
+
+    // Connect to MongoDB and upsert session
+    const db = await getDb();
+
+    // Upsert session record
+    await db.collection("sessions").updateOne(
+      { token },
+      {
+        $set: {
+          token,
+          userId,
+          email,
+          lastSeenAt: now,
+        },
+        $setOnInsert: {
+          createdAt: now,
+        },
+      },
+      { upsert: true }
+    );
+
+    // Ensure wallet exists with demo seeding (only if not already seeded)
+    const existingWallet = await db.collection("wallets").findOne({ userId });
+    
+    if (!existingWallet) {
+      // Create new wallet with demo amounts
+      await db.collection("wallets").insertOne({
+        userId,
+        usd: 500,
+        php: 28060,
+        usdc: 0,
+        demoSeeded: true,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify({ success: true, token, user: { email } }),
+      body: JSON.stringify({ success: true, token, user: { email, userId } }),
     };
   } catch (err) {
+    console.error("Login error:", err);
     return {
       statusCode: 500,
       headers,
